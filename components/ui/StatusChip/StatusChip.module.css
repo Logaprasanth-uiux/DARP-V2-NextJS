@@ -1,0 +1,71 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.label {
+  display: inline-block;
+}
+
+/* Sizes */
+.sm {
+  padding: var(--space-0-5) var(--space-2);
+  font-size: var(--font-size-caption);
+}
+
+.md {
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--font-size-caption);
+}
+
+.lg {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-body);
+}
+
+/* Variants */
+.neutral {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border-color: var(--color-success-border);
+}
+
+.warning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border-color: var(--color-warning-border);
+}
+
+.danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border-color: var(--color-danger-border);
+}
+
+.info {
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
+  border-color: var(--color-info-border);
+}

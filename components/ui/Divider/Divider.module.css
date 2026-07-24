@@ -1,0 +1,30 @@
+.divider {
+  border: none;
+  background-color: var(--color-border);
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.horizontal {
+  width: 100%;
+  height: 1px;
+}
+
+.vertical {
+  width: 1px;
+  height: 100%;
+  min-height: 1rem;
+}
+
+/* Spacing Horizontal */
+.horizontal.spacing-none { margin-top: 0; margin-bottom: 0; }
+.horizontal.spacing-sm { margin-top: var(--space-2); margin-bottom: var(--space-2); }
+.horizontal.spacing-md { margin-top: var(--space-4); margin-bottom: var(--space-4); }
+.horizontal.spacing-lg { margin-top: var(--space-8); margin-bottom: var(--space-8); }
+
+/* Spacing Vertical */
+.vertical.spacing-none { margin-left: 0; margin-right: 0; }
+.vertical.spacing-sm { margin-left: var(--space-2); margin-right: var(--space-2); }
+.vertical.spacing-md { margin-left: var(--space-4); margin-right: var(--space-4); }
+.vertical.spacing-lg { margin-left: var(--space-8); margin-right: var(--space-8); }
