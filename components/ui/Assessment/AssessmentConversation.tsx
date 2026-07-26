@@ -1,6 +1,7 @@
 import React from 'react';
 import { AssessmentChatMessage } from './AssessmentChatMessage';
 import { AssessmentOptionCard } from './AssessmentOptionCard';
+import { AssessmentDocumentUpload } from './AssessmentDocumentUpload';
 import styles from './AssessmentConversation.module.css';
 
 export interface ConversationItem {
@@ -50,6 +51,20 @@ export const AssessmentConversation: React.FC<AssessmentConversationProps> = ({
                   />
                 ))}
               </div>
+            </AssessmentChatMessage>
+          );
+        }
+
+        if (item.type === 'upload') {
+          const { assessmentType, selectedId } = item.metadata || {};
+
+          return (
+            <AssessmentChatMessage key={item.id} role={item.role}>
+              <AssessmentDocumentUpload
+                assessmentType={assessmentType}
+                selectedId={selectedId}
+                onUploadComplete={() => onSelectOption('upload-complete')}
+              />
             </AssessmentChatMessage>
           );
         }

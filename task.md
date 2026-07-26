@@ -1,0 +1,7 @@
+- [x] Implement `AssessmentUploadZone` component and CSS Modules
+- [x] Implement `RequiredDocumentChecklist` component and CSS Modules
+- [x] Implement `UploadedFileList` component and CSS Modules
+- [x] Implement `AssessmentDocumentUpload` dashboard wrapper component and CSS Modules
+- [x] Integrate `'upload'` message handler in `AssessmentConversation.tsx`
+- [x] Update state flow and contextual follow-ups in `AssessmentWorkspace.tsx`
+- [x] Verify local Next.js server compiles cleanly and serves route

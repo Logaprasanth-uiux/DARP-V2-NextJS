@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Container, Button } from '@/components/ui';
+import { Container, Button, Link } from '@/components/ui';
 import { AssessmentConversation, ConversationItem } from './AssessmentConversation';
 import { AssessmentOptionCard } from './AssessmentOptionCard';
 import styles from './AssessmentWorkspace.module.css';
@@ -35,13 +35,315 @@ export const AssessmentWorkspace: React.FC = () => {
   };
 
   const handleSelectOption = (optionId: string) => {
+    // 1. Check if handling file upload completion lock
+    if (optionId === 'upload-complete') {
+      const updatedItems = items.map((item) => {
+        if (item.type === 'upload') {
+          return {
+            ...item,
+            metadata: {
+              ...item.metadata,
+              selectedId: 'completed',
+            },
+          };
+        }
+        return item;
+      });
+
+      const aiAcknowledgement: ConversationItem = {
+        id: `ai-ack-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: `Thank you. I've received your financial documents.
+
+Next, I'll validate them to ensure everything required for the assessment is available.`,
+      };
+
+      setItems([...updatedItems, aiAcknowledgement]);
+      return;
+    }
+
+    // 2. Interactive Discovery Questionnaire (Help Me Decide) Flow
+    if (optionId === 'help') {
+      setSelectedOptionId('help');
+
+      const userMsg: ConversationItem = {
+        id: `user-choice-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: 'Not Sure (Help Me Decide)',
+      };
+
+      const introMsg: ConversationItem = {
+        id: `ai-intro-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: `Excellent choice. Let's start with a few quick questions to identify the best assessment for your business.`,
+      };
+
+      const q1Msg: ConversationItem = {
+        id: 'q1-selection',
+        role: 'assistant',
+        type: 'selection',
+        content: 'What is your primary objective today?',
+        metadata: {
+          options: [
+            { id: 'q1-cost', title: 'Recover supplier overpayments and reduce costs' },
+            { id: 'q1-revenue', title: 'Identify missed or lost revenue' },
+            { id: 'q1-full', title: 'Perform a complete financial recovery review' },
+          ],
+          selectedId: null,
+        },
+      };
+
+      setItems([userMsg, introMsg, q1Msg]);
+      return;
+    }
+
+    // Handle Question 1 Answer Selection
+    if (optionId.startsWith('q1-')) {
+      const q1Options = [
+        { id: 'q1-cost', title: 'Recover supplier overpayments and reduce costs' },
+        { id: 'q1-revenue', title: 'Identify missed or lost revenue' },
+        { id: 'q1-full', title: 'Perform a complete financial recovery review' },
+      ];
+      const selected = q1Options.find((opt) => opt.id === optionId);
+      const chosenTitle = selected ? selected.title : optionId;
+
+      const updatedItems = items.map((item) => {
+        if (item.id === 'q1-selection') {
+          return {
+            ...item,
+            metadata: { ...item.metadata, selectedId: optionId },
+          };
+        }
+        return item;
+      });
+
+      const userMsg: ConversationItem = {
+        id: `user-q1-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: chosenTitle,
+      };
+
+      const q2Msg: ConversationItem = {
+        id: 'q2-selection',
+        role: 'assistant',
+        type: 'selection',
+        content: 'Which financial records do you currently have available?',
+        metadata: {
+          options: [
+            { id: 'q2-ap', title: 'Accounts Payable (AP)' },
+            { id: 'q2-ar', title: 'Accounts Receivable (AR)' },
+            { id: 'q2-both', title: 'Both AP and AR' },
+            { id: 'q2-unsure', title: "I'm not sure" },
+          ],
+          selectedId: null,
+        },
+      };
+
+      setItems([...updatedItems, userMsg, q2Msg]);
+      return;
+    }
+
+    // Handle Question 2 Answer Selection
+    if (optionId.startsWith('q2-')) {
+      const q2Options = [
+        { id: 'q2-ap', title: 'Accounts Payable (AP)' },
+        { id: 'q2-ar', title: 'Accounts Receivable (AR)' },
+        { id: 'q2-both', title: 'Both AP and AR' },
+        { id: 'q2-unsure', title: "I'm not sure" },
+      ];
+      const selected = q2Options.find((opt) => opt.id === optionId);
+      const chosenTitle = selected ? selected.title : optionId;
+
+      const updatedItems = items.map((item) => {
+        if (item.id === 'q2-selection') {
+          return {
+            ...item,
+            metadata: { ...item.metadata, selectedId: optionId },
+          };
+        }
+        return item;
+      });
+
+      const userMsg: ConversationItem = {
+        id: `user-q2-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: chosenTitle,
+      };
+
+      const q3Msg: ConversationItem = {
+        id: 'q3-selection',
+        role: 'assistant',
+        type: 'selection',
+        content: 'Which statement best describes your current situation?',
+        metadata: {
+          options: [
+            { id: 'q3-known', title: 'I already know where the issues are' },
+            { id: 'q3-suspect', title: 'I suspect there are financial recovery opportunities but need help identifying them' },
+            { id: 'q3-comprehensive', title: 'I want a comprehensive AI review of my financial data' },
+          ],
+          selectedId: null,
+        },
+      };
+
+      setItems([...updatedItems, userMsg, q3Msg]);
+      return;
+    }
+
+    // Handle Question 3 Answer Selection
+    if (optionId.startsWith('q3-')) {
+      const q3Options = [
+        { id: 'q3-known', title: 'I already know where the issues are' },
+        { id: 'q3-suspect', title: 'I suspect there are financial recovery opportunities but need help identifying them' },
+        { id: 'q3-comprehensive', title: 'I want a comprehensive AI review of my financial data' },
+      ];
+      const selected = q3Options.find((opt) => opt.id === optionId);
+      const chosenTitle = selected ? selected.title : optionId;
+
+      const updatedItems = items.map((item) => {
+        if (item.id === 'q3-selection') {
+          return {
+            ...item,
+            metadata: { ...item.metadata, selectedId: optionId },
+          };
+        }
+        return item;
+      });
+
+      const userMsg: ConversationItem = {
+        id: `user-q3-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: chosenTitle,
+      };
+
+      // Retrieve responses to form recommended category
+      let q1Ans = '';
+      let q2Ans = '';
+      updatedItems.forEach((item) => {
+        if (item.id === 'q1-selection') q1Ans = item.metadata.selectedId || '';
+        if (item.id === 'q2-selection') q2Ans = item.metadata.selectedId || '';
+      });
+
+      let recommended = 'cost'; // Default fallback
+      if (q1Ans === 'q1-revenue' || q2Ans === 'q2-ar') {
+        recommended = 'revenue';
+      } else if (q1Ans === 'q1-full' || q2Ans === 'q2-both' || optionId === 'q3-comprehensive') {
+        recommended = 'full';
+      }
+
+      let recommendationContent = '';
+      if (recommended === 'cost') {
+        recommendationContent = `Based on your responses, I recommend starting with a **Cost Recovery Assessment**.
+
+Your objectives and available financial data indicate that this assessment is the best starting point for identifying supplier overpayments, duplicate payments, pricing discrepancies, and other cost recovery opportunities.`;
+      } else if (recommended === 'revenue') {
+        recommendationContent = `Based on your responses, I recommend starting with a **Revenue Recovery Assessment**.
+
+Your objectives and available financial data indicate that this assessment is the best starting point for identifying billing leakages, forgotten customer credits, unbilled deliveries, and customer over-discounts.`;
+      } else {
+        recommendationContent = `Based on your responses, I recommend starting with a **Full Financial Recovery Assessment**.
+
+Your objectives and available financial data indicate that a comprehensive review of both accounts payable and receivable is the best starting point for identifying duplicate transactions, pricing deviations, tax matching mismatches, and credit recovery opportunities.`;
+      }
+
+      const recMsg: ConversationItem = {
+        id: `ai-rec-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: recommendationContent,
+      };
+
+      const continueMsg: ConversationItem = {
+        id: 'recommend-continue-selection',
+        role: 'assistant',
+        type: 'selection',
+        metadata: {
+          options: [
+            { id: `rec-continue:${recommended}`, title: 'Continue with Recommended Assessment' },
+          ],
+          selectedId: null,
+        },
+      };
+
+      setItems([...updatedItems, userMsg, recMsg, continueMsg]);
+      return;
+    }
+
+    // Handle Recommendation Accept Flow
+    if (optionId.startsWith('rec-continue:')) {
+      const recommendedType = optionId.split(':')[1];
+
+      const updatedItems = items.map((item) => {
+        if (item.id === 'recommend-continue-selection') {
+          return {
+            ...item,
+            metadata: { ...item.metadata, selectedId: optionId },
+          };
+        }
+        return item;
+      });
+
+      const userMsg: ConversationItem = {
+        id: `user-rec-continue-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: 'Continue with Recommended Assessment',
+      };
+
+      let followUpContent = '';
+      if (recommendedType === 'cost') {
+        followUpContent = `Excellent choice.
+
+For a Cost Recovery Assessment, we require your core accounts payable and supplier transaction records. These files will allow me to review your organization's financial transactions to pinpoint duplicate payments, supplier overpayments, pricing discrepancies, and tax recovery opportunities.
+
+Once you upload the files, I will automatically validate them to ensure they contain all necessary fields before beginning the recovery audit.`;
+      } else if (recommendedType === 'revenue') {
+        followUpContent = `Excellent choice.
+
+For a Revenue Recovery Assessment, we require your customer billing ledgers and sales registers. These files will allow me to review your customer-facing transactions to detect duplicate invoices, unbilled deliveries, unclaimed credits, and gross margin leakages.
+
+Once you upload the files, I will automatically validate them to ensure they contain all necessary fields before beginning the recovery audit.`;
+      } else {
+        followUpContent = `Excellent choice.
+
+For a Full Financial Recovery Assessment, we require a comprehensive set of vendor payables, sales ledgers, and tax compliance registers. These files will allow me to review both cost and revenue sides of your organization's financial transactions to identify duplicate billing, pricing variances, and uncollected credits.
+
+Once you upload the files, I will automatically validate them to ensure they contain all necessary fields before beginning the recovery audit.`;
+      }
+
+      const aiMessage: ConversationItem = {
+        id: `ai-response-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: followUpContent,
+      };
+
+      const uploadMessage: ConversationItem = {
+        id: `ai-upload-${Date.now()}`,
+        role: 'assistant',
+        type: 'upload',
+        metadata: {
+          assessmentType: recommendedType,
+          selectedId: null,
+        },
+      };
+
+      setItems([...updatedItems, userMsg, aiMessage, uploadMessage]);
+      return;
+    }
+
+    // 3. Standard Selection flow (Cost / Revenue / Full)
     if (selectedOptionId !== null) return;
     setSelectedOptionId(optionId);
 
     const selectedOption = options.find((opt) => opt.id === optionId);
     const optionTitle = selectedOption ? selectedOption.title : optionId;
 
-    // 1. First chat message: User selection choice (aligned right)
     const userMessage: ConversationItem = {
       id: `user-choice-${Date.now()}`,
       role: 'user',
@@ -49,45 +351,26 @@ export const AssessmentWorkspace: React.FC = () => {
       content: optionTitle,
     };
 
-    // 2. Contextual follow-up explanation message (aligned left)
     let followUpContent = '';
     if (optionId === 'cost') {
-      followUpContent = `Great choice.
+      followUpContent = `Excellent choice.
 
-Cost Recovery focuses on auditing payables and supplier relations. We will analyze your accounts payable ledger and transaction histories to pinpoint:
-• Vendor duplicate payments and invoice overcharges
-• Supplier contract pricing variances and rebate opportunities
-• Tax filing discrepancies and bank reconciliation errors
+For a Cost Recovery Assessment, we require your core accounts payable and supplier transaction records. These files will allow me to review your organization's financial transactions to pinpoint duplicate payments, supplier overpayments, pricing discrepancies, and tax recovery opportunities.
 
-Next, I will collect the financial documents required for this assessment.`;
+Once you upload the files, I will automatically validate them to ensure they contain all necessary fields before beginning the recovery audit.`;
     } else if (optionId === 'revenue') {
-      followUpContent = `Great choice.
+      followUpContent = `Excellent choice.
 
-Revenue Recovery targets uncollected customer income and billing leakages. We will examine your accounts receivable ledger and sales registers to detect:
-• Forgotten credit memos and unapplied customer balances
-• Unbilled customer deliveries and invoice discrepancies
-• Inaccuracies in tax collections and customer disputes
+For a Revenue Recovery Assessment, we require your customer billing ledgers and sales registers. These files will allow me to review your customer-facing transactions to detect duplicate invoices, unbilled deliveries, unclaimed credits, and gross margin leakages.
 
-Next, I will collect the financial documents required for this assessment.`;
-    } else if (optionId === 'full') {
-      followUpContent = `Great choice.
-
-Full Financial Recovery performs a comprehensive review of both cost and revenue sides. We will audit all ledgers, filings, and bank registers to pinpoint:
-• Duplicate payments, contract variances, and unclaimed vendor credits
-• Unbilled customer deliveries, unapplied notes, and sales errors
-• GSTR-2B compliance matching and unclaimed Input Tax Credits (ITC)
-
-Next, I will collect the financial documents required for this assessment.`;
+Once you upload the files, I will automatically validate them to ensure they contain all necessary fields before beginning the recovery audit.`;
     } else {
-      // help
-      followUpContent = `No problem at all.
+      // full
+      followUpContent = `Excellent choice.
 
-I will walk you through a brief interactive questionnaire to help map out your scope. We will examine:
-• Your organization's main transaction structures and volume levels
-• Known historical ledger discrepancies or concern areas
-• Primary focus areas (Vendor payables, sales billing, or tax credits)
+For a Full Financial Recovery Assessment, we require a comprehensive set of vendor payables, sales ledgers, and tax compliance registers. These files will allow me to review both cost and revenue sides of your organization's financial transactions to identify duplicate billing, pricing variances, and uncollected credits.
 
-Let's start by walking through a few quick scoping questions.`;
+Once you upload the files, I will automatically validate them to ensure they contain all necessary fields before beginning the recovery audit.`;
     }
 
     const aiMessage: ConversationItem = {
@@ -97,7 +380,17 @@ Let's start by walking through a few quick scoping questions.`;
       content: followUpContent,
     };
 
-    setItems([userMessage, aiMessage]);
+    const uploadMessage: ConversationItem = {
+      id: `ai-upload-${Date.now()}`,
+      role: 'assistant',
+      type: 'upload',
+      metadata: {
+        assessmentType: optionId,
+        selectedId: null,
+      },
+    };
+
+    setItems([userMessage, aiMessage, uploadMessage]);
   };
 
   return (
@@ -212,7 +505,7 @@ Let's start by walking through a few quick scoping questions.`;
                 <div className={styles.conversationWrapper}>
                   <AssessmentConversation
                     items={items}
-                    onSelectOption={() => {}}
+                    onSelectOption={handleSelectOption}
                   />
                   <div ref={messagesEndRef} />
                 </div>
@@ -221,6 +514,23 @@ Let's start by walking through a few quick scoping questions.`;
           </div>
         </Container>
       </main>
+
+      {/* MINIMAL ENTERPRISE FOOTER */}
+      <footer className={styles.footer}>
+        <Container className={styles.footerContainer}>
+          <div className={styles.footerLeft}>
+            <span>DARP Enterprise v2</span>
+            <span>(v2.0.0)</span>
+          </div>
+          <div className={styles.footerRight}>
+            <Link href="#privacy" underline="hover">Privacy</Link>
+            <span>•</span>
+            <Link href="#terms" underline="hover">Terms</Link>
+            <span>•</span>
+            <Link href="#support" underline="hover">Support</Link>
+          </div>
+        </Container>
+      </footer>
     </div>
   );
 };
