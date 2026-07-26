@@ -1,0 +1,51 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary); /* improved contrast from secondary to primary */
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-neutral-300); /* improved contrast from border to neutral-300 */
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  outline: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.pill:hover:not(:disabled):not(.selected) {
+  border-color: #35bc48; /* DARP logo green accent */
+  color: var(--color-text-primary);
+  background-color: #f2fbf4; /* soft brand green background tint */
+}
+
+.pill:focus-visible:not(:disabled) {
+  border-color: #35bc48;
+  box-shadow: 0 0 0 2px #f2fbf4, 0 0 0 3px #35bc48;
+}
+
+.selected {
+  background-color: #35bc48;
+  border-color: #35bc48;
+  color: var(--color-text-inverse) !important;
+  box-shadow: var(--shadow-sm), 0 0 0 1px #35bc48;
+}
+
+.disabled:not(.selected) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-surface-subtle);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.disabled.selected {
+  opacity: 0.85;
+  cursor: not-allowed;
+  background-color: #35bc48;
+  border-color: #35bc48;
+}

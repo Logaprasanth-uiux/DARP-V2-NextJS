@@ -13,3 +13,4 @@ export * from './Spinner/Spinner';
 export * from './StatusChip/StatusChip';
 export * from './TextArea/TextArea';
 export * from './Typography/Typography';
+export * from './Assessment/AssessmentWorkspace';

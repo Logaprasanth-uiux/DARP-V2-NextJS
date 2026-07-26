@@ -1,0 +1,84 @@
+.messageRow {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: var(--space-8);
+}
+
+.assistantRow {
+  justify-content: flex-start;
+  gap: var(--space-4);
+}
+
+.userRow {
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+/* AI Rounded-Square Avatar */
+.avatarAi {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
+  user-select: none;
+}
+
+/* User Circular Avatar */
+.avatarUser {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
+  user-select: none;
+}
+
+.avatarIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.bubble {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  word-wrap: break-word;
+  white-space: pre-line;
+}
+
+.assistantBubble {
+  flex: 1;
+  max-width: calc(100% - 3.5rem);
+  padding-top: var(--space-1);
+}
+
+.userBubble {
+  max-width: 75%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-xs);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-xs);
+}
+
+.systemContainer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: var(--space-4) 0;
+}

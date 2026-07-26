@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Badge,
   Button,
@@ -11,8 +11,9 @@ import {
 import styles from './page.module.css';
 
 export default function AssessmentEntryPage() {
+  const router = useRouter();
   const handleStartAnalysis = () => {
-    console.log('Initiating DARP Financial Recovery Analysis...');
+    router.push('/assessment');
   };
 
   return (

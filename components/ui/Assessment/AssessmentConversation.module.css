@@ -1,0 +1,19 @@
+.conversation {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.selectionPrompt {
+  margin: 0 0 var(--space-4) 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.optionsFlex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: 0; /* matches vertical alignment of AI avatar top */
+}
