@@ -1,0 +1,150 @@
+.progressPanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 540px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-3);
+}
+
+.loadingPulse {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--radius-full);
+  background-color: #3b82f6; /* Blue processing pulse */
+  animation: pulse 1.4s infinite ease-in-out;
+}
+
+.panelTitle {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.stagesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3-5);
+}
+
+.stageRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3-5);
+  opacity: 0.35;
+  transition: opacity var(--transition-normal) ease-out;
+}
+
+.stageRowActive {
+  opacity: 1;
+}
+
+.stageRowCompleted {
+  opacity: 0.95;
+}
+
+.statusCol {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.checkWrapper {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--radius-full);
+  background-color: #f0fdf4;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bbf7d0;
+  animation: scaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.checkIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.activeSpinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinnerIcon {
+  width: 1rem;
+  height: 1rem;
+  animation: rotate 1s linear infinite;
+}
+
+.spinnerIcon circle {
+  stroke: currentColor;
+  stroke-width: 3;
+}
+
+.pendingDot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border-strong);
+}
+
+.stageText {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.stageRowActive .stageText {
+  font-weight: var(--font-weight-medium);
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -2,12 +2,14 @@ import React from 'react';
 import { AssessmentChatMessage } from './AssessmentChatMessage';
 import { AssessmentOptionCard } from './AssessmentOptionCard';
 import { AssessmentDocumentUpload } from './AssessmentDocumentUpload';
+import { AssessmentValidationProgress } from './AssessmentValidationProgress';
+import { AssessmentOrganizationProfile } from './AssessmentOrganizationProfile';
 import styles from './AssessmentConversation.module.css';
 
 export interface ConversationItem {
   id: string;
   role: 'assistant' | 'user' | 'system';
-  type: 'text' | 'selection' | 'upload' | 'summary' | 'progress' | 'results';
+  type: 'text' | 'selection' | 'upload' | 'summary' | 'progress' | 'results' | 'profile';
   content?: string;
   metadata?: any;
 }
@@ -64,6 +66,29 @@ export const AssessmentConversation: React.FC<AssessmentConversationProps> = ({
                 assessmentType={assessmentType}
                 selectedId={selectedId}
                 onUploadComplete={() => onSelectOption('upload-complete')}
+              />
+            </AssessmentChatMessage>
+          );
+        }
+
+        if (item.type === 'progress') {
+          return (
+            <AssessmentChatMessage key={item.id} role={item.role}>
+              <AssessmentValidationProgress
+                onComplete={() => onSelectOption('progress-complete')}
+              />
+            </AssessmentChatMessage>
+          );
+        }
+
+        if (item.type === 'profile') {
+          const { selectedId } = item.metadata || {};
+
+          return (
+            <AssessmentChatMessage key={item.id} role={item.role}>
+              <AssessmentOrganizationProfile
+                selectedId={selectedId}
+                onConfirm={() => onSelectOption('profile-confirm')}
               />
             </AssessmentChatMessage>
           );

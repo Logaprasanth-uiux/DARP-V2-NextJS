@@ -1,0 +1,291 @@
+.profileCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--space-2);
+  max-width: 640px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.cardHeader {
+  margin-bottom: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cardTitle {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.cardDesc {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: var(--line-height-normal);
+}
+
+.fieldsGrid {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-border);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3-5) 0;
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
+  min-height: 4rem;
+}
+
+.rowLabelGroup {
+  flex: 1;
+}
+
+.fieldLabel {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.rowValueGroup {
+  flex: 1.5;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.staticValueWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  width: 100%;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.fieldValue {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editLinkBtn {
+  background: none;
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--font-size-caption);
+  color: #3b82f6; /* Blue action link color */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.editLinkBtn:hover {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.editLinkBtn:focus-visible {
+  outline: 2px solid #3b82f6;
+}
+
+.editIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.editInputWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  animation: slideIn 0.2s ease-out;
+}
+
+.editInput {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1-5) var(--space-2-5);
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.editInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.editActions {
+  display: flex;
+  gap: var(--space-1-5);
+}
+
+.saveBtn {
+  background-color: #35bc48; /* DARP Brand Green Accent */
+  color: var(--color-text-inverse);
+  border: none;
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  outline: none;
+}
+
+.saveBtn:hover {
+  background-color: #238932;
+}
+
+.saveBtn:focus-visible {
+  outline: 2px solid #35bc48;
+}
+
+.cancelBtn {
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-size-caption);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  outline: none;
+}
+
+.cancelBtn:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.cancelBtn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+}
+
+.actionsRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-6);
+}
+
+.profileConfirmedBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  margin-top: var(--space-6);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.bannerIcon {
+  color: #16a34a;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.bannerTextGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.bannerTitle {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: #15803d;
+}
+
+.bannerSub {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  color: #166534;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-3) 0;
+    gap: var(--space-1);
+    min-height: auto;
+  }
+
+  .rowValueGroup {
+    justify-content: flex-start;
+  }
+
+  .staticValueWrapper {
+    justify-content: flex-start;
+  }
+
+  .fieldValue {
+    text-align: left;
+  }
+
+  .editInputWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .editInput {
+    width: 100%;
+  }
+
+  .editActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

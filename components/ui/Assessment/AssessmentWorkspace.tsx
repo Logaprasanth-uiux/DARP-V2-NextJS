@@ -23,12 +23,14 @@ export const AssessmentWorkspace: React.FC = () => {
     { id: 'help', title: 'Not Sure (Help Me Decide)' },
   ];
 
-  // Handle conversation auto-scroll
+  // Handle conversation auto-scroll only when new items are appended
+  const prevItemsLengthRef = useRef(0);
   useEffect(() => {
-    if (items.length > 0) {
+    if (items.length > prevItemsLengthRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  }, [items]);
+    prevItemsLengthRef.current = items.length;
+  }, [items.length]);
 
   const handleExit = () => {
     router.push('/');
@@ -50,16 +52,90 @@ export const AssessmentWorkspace: React.FC = () => {
         return item;
       });
 
-      const aiAcknowledgement: ConversationItem = {
-        id: `ai-ack-${Date.now()}`,
+      // AI Begins Validation message
+      const aiValidationMsg: ConversationItem = {
+        id: `ai-val-start-${Date.now()}`,
         role: 'assistant',
         type: 'text',
-        content: `Thank you. I've received your financial documents.
+        content: `Thank you. Your financial documents have been received.
 
-Next, I'll validate them to ensure everything required for the assessment is available.`,
+I'm now validating your uploaded documents and extracting key business information required to begin the assessment.`,
       };
 
-      setItems([...updatedItems, aiAcknowledgement]);
+      // Validation progress bar timeline item
+      const validationProgressMsg: ConversationItem = {
+        id: `ai-val-progress-${Date.now()}`,
+        role: 'assistant',
+        type: 'progress',
+      };
+
+      setItems([...updatedItems, aiValidationMsg, validationProgressMsg]);
+      return;
+    }
+
+    // 2. Check if validation progress completed successfully
+    if (optionId === 'progress-complete') {
+      // AI Validation Complete message
+      const aiValidationCompleteMsg: ConversationItem = {
+        id: `ai-val-complete-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: `Validation completed successfully.
+
+I've identified your uploaded financial documents and extracted your organization profile.`,
+      };
+
+      // Extracted Profile Card timeline item
+      const profileCardMsg: ConversationItem = {
+        id: `ai-profile-card-${Date.now()}`,
+        role: 'assistant',
+        type: 'profile',
+        metadata: {
+          selectedId: null,
+        },
+      };
+
+      setItems([...items, aiValidationCompleteMsg, profileCardMsg]);
+      return;
+    }
+
+    // 3. Check if user confirmed the profile card information
+    if (optionId === 'profile-confirm') {
+      // Lock the profile card
+      const updatedItems = items.map((item) => {
+        if (item.type === 'profile') {
+          return {
+            ...item,
+            metadata: {
+              ...item.metadata,
+              selectedId: 'completed',
+            },
+          };
+        }
+        return item;
+      });
+
+      // User confirmation message
+      const userConfirmMsg: ConversationItem = {
+        id: `user-profile-confirm-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: 'Confirm Organization Information',
+      };
+
+      // Final AI confirmation message
+      const aiConfirmationMsg: ConversationItem = {
+        id: `ai-profile-confirmed-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: `Thank you.
+
+Your organization information has been confirmed.
+
+Your assessment is now ready to begin.`,
+      };
+
+      setItems([...updatedItems, userConfirmMsg, aiConfirmationMsg]);
       return;
     }
 
