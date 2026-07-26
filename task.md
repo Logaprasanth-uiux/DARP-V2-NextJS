@@ -1,5 +1,4 @@
-- [x] Implement `AssessmentValidationProgress` stage list component and CSS Modules
-- [x] Implement `AssessmentOrganizationProfile` inline-editable profile component and CSS Modules
-- [x] Register `'progress'` and `'profile'` cases in `AssessmentConversation.tsx`
-- [x] Update timeline events and confirmation handlers inside `AssessmentWorkspace.tsx`
-- [x] Verify local server compiles cleanly and serves route cleanly
+- [x] Configure scroll-margin-top: 100px on summaryCard inside `RecoverySummaryCard.module.css` to offset sticky page headers
+- [x] Change scrollIntoView block parameter to `start` to align to the top margin boundary
+- [x] Configure scrollIntoView block parameter to `start` targeting the summary card ID (`ai-summary-card`) with a 100px scroll margin offset
+- [x] Verify local server compiles and serves route cleanly

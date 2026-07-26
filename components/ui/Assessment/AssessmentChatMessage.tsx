@@ -5,18 +5,20 @@ import styles from './AssessmentChatMessage.module.css';
 export interface AssessmentChatMessageProps {
   role: 'assistant' | 'user' | 'system';
   children: React.ReactNode;
+  id?: string;
 }
 
 export const AssessmentChatMessage: React.FC<AssessmentChatMessageProps> = ({
   role,
   children,
+  id,
 }) => {
   const isAssistant = role === 'assistant';
   const isUser = role === 'user';
 
   if (role === 'system') {
     return (
-      <div className={styles.systemContainer}>
+      <div id={id} className={styles.systemContainer}>
         {children}
       </div>
     );
@@ -51,10 +53,13 @@ export const AssessmentChatMessage: React.FC<AssessmentChatMessageProps> = ({
   };
 
   return (
-    <div className={classNames(
-      styles.messageRow,
-      isAssistant ? styles.assistantRow : styles.userRow
-    )}>
+    <div
+      id={id}
+      className={classNames(
+        styles.messageRow,
+        isAssistant ? styles.assistantRow : styles.userRow
+      )}
+    >
       {isAssistant && renderAvatar()}
       <div className={classNames(
         styles.bubble,

@@ -1,0 +1,319 @@
+.summaryCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--space-2);
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  animation: fadeIn 0.4s ease-out;
+  scroll-margin-top: 100px; /* default scroll margin for general timeline scroll steps */
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.completedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background-color: #f0fdf4;
+  color: #16a34a;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid #bbf7d0;
+}
+
+.badgeCheckIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.heroSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-1-5);
+  padding: var(--space-2) 0 var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.heroLabel {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.heroValue {
+  font-family: var(--font-family-base);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.oppCount {
+  display: inline-block;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: #3b82f6;
+  background-color: #eff6ff;
+  padding: var(--space-0-5) var(--space-2-5);
+  border-radius: var(--radius-full);
+  margin-top: var(--space-1);
+}
+
+.heroDesc {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0 0;
+  max-width: 480px;
+  line-height: var(--line-height-normal);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-6);
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-1);
+}
+
+.metricLabel {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.metricVal {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.previewSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: relative;
+}
+
+.previewTitle {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.opportunitiesContainer {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+.opportunitiesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.oppRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3-5) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
+}
+
+.oppRow:last-child {
+  border-bottom: none;
+}
+
+.oppMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.oppCategoryBadge {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-hover);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.oppTitle {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.oppValueBlurred {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  filter: blur(5px);
+  user-select: none;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.unlockOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(248, 250, 252, 0.88) 35%, rgba(248, 250, 252, 0.98) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.unlockCard {
+  background-color: var(--color-surface);
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-lg);
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3); /* tightened gap to 12px for visual balance */
+  max-width: 440px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.unlockCardHeaderIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-full);
+  background-color: #f1f5f9;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0; /* removed additional margins to rely on visual card gaps */
+  border: 1px solid var(--color-border);
+}
+
+.lockHeaderIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.unlockTitle {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.unlockDesc {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  margin: 0; /* removed manual bottom margins to keep card compact and centered */
+  line-height: var(--line-height-normal);
+}
+
+.unlockBtn {
+  margin-top: 0; /* aligned naturally with Card flex gaps */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-8);
+}
+
+.unlockBtnIcon {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-right: var(--space-2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .heroValue {
+    font-size: 2rem;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .oppRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .oppValueBlurred {
+    align-self: flex-end;
+  }
+
+  .opportunitiesContainer {
+    min-height: 400px;
+  }
+}

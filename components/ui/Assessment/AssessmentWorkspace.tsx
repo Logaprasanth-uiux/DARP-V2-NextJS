@@ -23,14 +23,25 @@ export const AssessmentWorkspace: React.FC = () => {
     { id: 'help', title: 'Not Sure (Help Me Decide)' },
   ];
 
-  // Handle conversation auto-scroll only when new items are appended
-  const prevItemsLengthRef = useRef(0);
+  // Handle conversation auto-scroll only when a new item is added to the tail of the timeline
+  const lastItemId = items[items.length - 1]?.id;
+  const prevLastItemIdRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (items.length > prevItemsLengthRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (lastItemId && lastItemId !== prevLastItemIdRef.current) {
+      setTimeout(() => {
+        if (lastItemId.startsWith('ai-summary-card')) {
+          const element = document.getElementById(lastItemId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+          }
+        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 80);
     }
-    prevItemsLengthRef.current = items.length;
-  }, [items.length]);
+    prevLastItemIdRef.current = lastItemId;
+  }, [lastItemId]);
 
   const handleExit = () => {
     router.push('/');
@@ -126,19 +137,40 @@ I've identified your uploaded financial documents and extracted your organizatio
         content: 'Confirm Organization Information',
       };
 
-      // Final AI confirmation message
-      const aiConfirmationMsg: ConversationItem = {
-        id: `ai-profile-confirmed-${Date.now()}`,
+      // AI message starting analysis
+      const aiStartAnalysisMsg: ConversationItem = {
+        id: `ai-start-analysis-${Date.now()}`,
         role: 'assistant',
         type: 'text',
-        content: `Thank you.
+        content: `Thank you. Your organization profile has been confirmed.
 
-Your organization information has been confirmed.
-
-Your assessment is now ready to begin.`,
+I'm now analyzing your financial records to identify recovery opportunities, financial leakages, and optimization opportunities.`,
       };
 
-      setItems([...updatedItems, userConfirmMsg, aiConfirmationMsg]);
+      // Analysis progress timeline item
+      const analysisProgressMsg: ConversationItem = {
+        id: `ai-analysis-progress-${Date.now()}`,
+        role: 'assistant',
+        type: 'analysis-progress',
+      };
+
+      setItems([...updatedItems, userConfirmMsg, aiStartAnalysisMsg, analysisProgressMsg]);
+      return;
+    }
+
+    // 4. Check if financial assessment progress completed successfully
+    if (optionId === 'analysis-complete') {
+      // Filter out the analysis progress item to keep history clean
+      const updatedItems = items.filter((item) => item.type !== 'analysis-progress');
+
+      // Summary dashboard timeline item
+      const summaryCardMsg: ConversationItem = {
+        id: `ai-summary-card-${Date.now()}`,
+        role: 'assistant',
+        type: 'summary-card',
+      };
+
+      setItems([...updatedItems, summaryCardMsg]);
       return;
     }
 
