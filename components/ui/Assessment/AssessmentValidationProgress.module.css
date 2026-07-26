@@ -10,6 +10,20 @@
   gap: var(--space-5);
   max-width: 540px;
   animation: fadeIn 0.4s ease-out;
+  transition: opacity 0.4s ease-in-out, max-height 0.4s ease-in-out, padding 0.4s ease-in-out, margin 0.4s ease-in-out, border-color 0.4s ease-in-out;
+  max-height: 500px; /* large enough default height */
+  opacity: 1;
+  overflow: hidden;
+}
+
+.fadeOut {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-color: transparent;
 }
 
 .panelHeader {

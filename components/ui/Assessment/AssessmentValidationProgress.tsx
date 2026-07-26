@@ -17,37 +17,49 @@ export const AssessmentValidationProgress: React.FC<AssessmentValidationProgress
     'Preparing assessment profile',
   ];
 
+  // currentStage tracks the active index (0 to stages.length)
   const [currentStage, setCurrentStage] = useState(0);
-  const [completed, setCompleted] = useState<number[]>([]);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   // Track onComplete using a ref to prevent recreation loops
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    let stage = 0;
     const delay = 700; // milliseconds per stage transition
 
     const interval = setInterval(() => {
-      setCompleted((prev) => [...prev, stage]);
-      
-      if (stage < stages.length - 1) {
-        stage++;
-        setCurrentStage(stage);
-      } else {
-        clearInterval(interval);
-        // Briefly wait to let the last checkmark render, then call onComplete
-        setTimeout(() => {
-          onCompleteRef.current();
-        }, 400);
-      }
+      setCurrentStage((prev) => {
+        if (prev < stages.length) {
+          return prev + 1;
+        } else {
+          clearInterval(interval);
+          return prev;
+        }
+      });
     }, delay);
 
     return () => clearInterval(interval);
-  }, [stages.length]); // empty dependency style to execute only once on mount
+  }, [stages.length]);
+
+  // Handle validation completion triggers when all stages are completed (currentStage === 5)
+  useEffect(() => {
+    if (currentStage === stages.length) {
+      // Briefly wait to let the last checkmark render, then start smooth fade out
+      const fadeTimer = setTimeout(() => {
+        setIsFadingOut(true);
+        // Wait for the collapse animation (400ms) to complete before triggering parent timeline update
+        const completeTimer = setTimeout(() => {
+          onCompleteRef.current();
+        }, 400);
+        return () => clearTimeout(completeTimer);
+      }, 400);
+      return () => clearTimeout(fadeTimer);
+    }
+  }, [currentStage, stages.length]);
 
   return (
-    <div className={styles.progressPanel}>
+    <div className={classNames(styles.progressPanel, isFadingOut && styles.fadeOut)}>
       <div className={styles.panelHeader}>
         <div className={styles.loadingPulse} aria-hidden="true" />
         <h3 className={styles.panelTitle}>Validating Financial Documents</h3>
@@ -55,9 +67,8 @@ export const AssessmentValidationProgress: React.FC<AssessmentValidationProgress
       
       <div className={styles.stagesList}>
         {stages.map((stage, idx) => {
-          const isCompleted = completed.includes(idx);
-          const isActive = idx === currentStage && !isCompleted;
-          const isPending = idx > currentStage;
+          const isCompleted = idx < currentStage;
+          const isActive = idx === currentStage;
 
           return (
             <div

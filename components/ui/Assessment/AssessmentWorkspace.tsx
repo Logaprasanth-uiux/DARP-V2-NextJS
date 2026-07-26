@@ -75,6 +75,9 @@ I'm now validating your uploaded documents and extracting key business informati
 
     // 2. Check if validation progress completed successfully
     if (optionId === 'progress-complete') {
+      // Filter out the validation progress item to keep history clean
+      const updatedItems = items.filter((item) => item.type !== 'progress');
+
       // AI Validation Complete message
       const aiValidationCompleteMsg: ConversationItem = {
         id: `ai-val-complete-${Date.now()}`,
@@ -95,7 +98,7 @@ I've identified your uploaded financial documents and extracted your organizatio
         },
       };
 
-      setItems([...items, aiValidationCompleteMsg, profileCardMsg]);
+      setItems([...updatedItems, aiValidationCompleteMsg, profileCardMsg]);
       return;
     }
 
