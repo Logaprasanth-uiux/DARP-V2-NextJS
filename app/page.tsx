@@ -9,11 +9,12 @@ import {
   Link,
 } from '@/components/ui';
 import styles from './page.module.css';
+import HeroLottieAnimations from '@/components/HeroLottieAnimations';
 
 export default function AssessmentEntryPage() {
   const router = useRouter();
   const handleStartAnalysis = () => {
-    router.push('/assessment');
+    router.push('/demo-selection');
   };
 
   return (
@@ -63,7 +64,11 @@ export default function AssessmentEntryPage() {
 
       {/* 1. HERO SECTION */}
       <section className={styles.heroSection}>
-        <Container>
+        <Container className={styles.heroContainer}>
+          <HeroLottieAnimations
+            classLeft={styles.lottieLeft}
+            classRight={styles.lottieRight}
+          />
           <div className={styles.heroContent}>
             <Badge variant="neutral" className={styles.heroBadge}>
               AI-Powered Financial Recovery Platform
