@@ -20,6 +20,10 @@ export default function DemoSelectionPage() {
     router.push('/assessment');
   };
 
+  const handleLaunchDemo2 = () => {
+    router.push('/demo2-login');
+  };
+
   const handleBackToHome = () => {
     router.push('/');
   };
@@ -95,25 +99,26 @@ export default function DemoSelectionPage() {
             </div>
 
             {/* DEMO 2 CARD */}
-            <Card className={`${styles.demoCard} ${styles.disabledCard}`}>
-              <CardContent className={styles.cardInner}>
-                <div className={styles.cardHeaderArea}>
-                  <div className={styles.badgeRow}>
-                    <Badge variant="neutral" size="sm" className={styles.demoBadge}>Demo 2</Badge>
-                    <Badge variant="warning" size="sm" className={styles.comingSoonBadge}>Coming Soon</Badge>
+            <div onClick={handleLaunchDemo2} className={styles.cardWrapper}>
+              <Card elevated className={styles.demoCard}>
+                <CardContent className={styles.cardInner}>
+                  <div className={styles.cardHeaderArea}>
+                    <div className={styles.badgeRow}>
+                      <Badge variant="neutral" size="sm" className={styles.demoBadge}>Demo 2</Badge>
+                    </div>
+                    <h3 className={styles.demoTitle}>Automated Prevention</h3>
                   </div>
-                  <h3 className={styles.demoTitle}>Coming Soon</h3>
-                </div>
-                <p className={styles.demoDescription}>
-                  Future expansion of DARP platform with automated prevention controls and ledger protection features.
-                </p>
-                <div className={styles.cardFooterArea}>
-                  <Button variant="secondary" size="md" disabled className={styles.launchButton}>
-                    Unavailable
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <p className={styles.demoDescription}>
+                    Future expansion of DARP platform with automated prevention controls and ledger protection features.
+                  </p>
+                  <div className={styles.cardFooterArea}>
+                    <Button variant="primary" size="md" className={styles.launchButton} onClick={(e) => { e.stopPropagation(); handleLaunchDemo2(); }}>
+                      Launch Demo →
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
           </div>
         </Container>

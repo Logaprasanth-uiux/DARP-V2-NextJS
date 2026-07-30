@@ -55,6 +55,9 @@ export default function AssessmentEntryPage() {
           </nav>
 
           <div className={styles.navAction}>
+            <Button variant="outline" size="md" onClick={() => router.push('/demo2-login')}>
+              Existing User Login
+            </Button>
             <Button variant="primary" size="md" onClick={handleStartAnalysis}>
               Start Free Analysis →
             </Button>

@@ -1,0 +1,365 @@
+/* ==========================================================================
+   DARP Enterprise v2 - Demo 2 Login Experience
+   ========================================================================== */
+
+.wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background);
+}
+
+/* ==========================================================================
+   TOP NAVBAR (Replicated 1:1 from Landing Page)
+   ========================================================================== */
+.topHeader {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3) 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topHeaderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.brandLogoSvg {
+  height: 1.625rem;
+  width: auto;
+  display: block;
+}
+
+.brandSubtext {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.navAction {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.backButton {
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   MAIN CONTENT & RESPONSIVE GRID
+   ========================================================================== */
+.mainContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) 0;
+}
+
+.gridContainer {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+/* ==========================================================================
+   LEFT PANEL - ILLUSTRATION PLACEHOLDER
+   ========================================================================== */
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.illustrationPlaceholder {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-10);
+  text-align: center;
+  min-height: 480px;
+  max-height: 560px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-normal);
+}
+
+.illustrationPlaceholder:hover {
+  border-color: var(--color-border-hover);
+}
+
+.placeholderIconWrapper {
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.placeholderIcon {
+  color: var(--color-text-muted);
+}
+
+.placeholderLabel {
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  letter-spacing: -0.01em;
+}
+
+/* ==========================================================================
+   RIGHT PANEL - AUTHENTICATION SECTION
+   ========================================================================== */
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.authWrapper {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.headline {
+  font-size: clamp(1.625rem, 2.8vw, 2.125rem);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.greenHighlight {
+  color: var(--color-success);
+  font-weight: var(--font-weight-bold);
+}
+
+.description {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+  margin: 0;
+  text-align: center;
+}
+
+/* Trust Indicators Row (Horizontal Layout) */
+.trustRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: var(--space-4);
+  margin: var(--space-1) 0;
+}
+
+.trustItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-1-5);
+}
+
+.trustIcon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.trustLabel {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+/* Card overrides */
+.authCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  width: 100%;
+}
+
+.cardInner {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.cardHeader {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cardTitle {
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.cardSubtitle {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Button & Google Branding integration */
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  height: 2.75rem;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-body);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.googleBtn:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.googleIcon {
+  flex-shrink: 0;
+}
+
+/* Premium Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin: var(--space-1) 0;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.dividerText {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* Form inputs & buttons */
+.inputWrapper {
+  width: 100%;
+}
+
+.emailInput {
+  width: 100%;
+}
+
+.emailSubmitBtn {
+  height: 2.75rem;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-body);
+}
+
+.termsText {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0;
+  line-height: var(--line-height-normal);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 960px) {
+  .mainContent {
+    padding: var(--space-8) 0;
+  }
+
+  .gridContainer {
+    grid-template-columns: 1fr;
+    gap: var(--space-10);
+  }
+
+  .leftPanel {
+    order: 2;
+  }
+
+  .rightPanel {
+    order: 1;
+  }
+
+  .illustrationPlaceholder {
+    min-height: 320px;
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .authWrapper {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topHeaderContainer {
+    flex-direction: column;
+    gap: var(--space-3);
+    text-align: center;
+  }
+
+  .brandBlock {
+    align-items: center;
+  }
+
+  .mainContent {
+    padding: var(--space-6) 0;
+  }
+
+  .illustrationPlaceholder {
+    min-height: 260px;
+  }
+
+  .cardInner {
+    padding: var(--space-6);
+  }
+}
