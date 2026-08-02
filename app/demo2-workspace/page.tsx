@@ -25,6 +25,7 @@ interface MessageBlock {
     description: string;
     optional?: boolean;
   }[];
+  isUpdated?: boolean;
 }
 
 interface DocumentUploadState {
