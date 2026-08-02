@@ -17,7 +17,7 @@ const welcomeMessage = {
 interface MessageBlock {
   id: string;
   role: 'user' | 'assistant';
-  type: 'text' | 'document_request';
+  type: 'text' | 'document_request' | 'processing_indicator' | 'executive_assessment' | 'recommended_documents' | 'enterprise_alert';
   content?: string;
   documents?: {
     id: string;
@@ -27,12 +27,73 @@ interface MessageBlock {
   }[];
 }
 
+interface DocumentUploadState {
+  id: string;
+  name: string;
+  description: string;
+  status: 'idle' | 'uploading' | 'uploaded' | 'validating' | 'validated';
+  progress: number;
+  fileName?: string;
+  fileSize?: string;
+  uploadedAt?: string;
+  confidenceScore?: number;
+  error?: string;
+}
+
 export default function Demo2WorkspacePage() {
   const router = useRouter();
   const [isTransitioned, setIsTransitioned] = useState(false);
   const [promptValue, setPromptValue] = useState("");
   const [conversation, setConversation] = useState<MessageBlock[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const assessmentCardRef = useRef<HTMLDivElement>(null);
+  const [reconcile1Started, setReconcile1Started] = useState(false);
+  const [reconcile2Started, setReconcile2Started] = useState(false);
+
+  const [uploadStates, setUploadStates] = useState<Record<string, DocumentUploadState>>({
+    'bank-statements': {
+      id: 'bank-statements',
+      name: 'Bank Statements',
+      description: 'Last 6 months',
+      status: 'idle',
+      progress: 0
+    },
+    'ar-report': {
+      id: 'ar-report',
+      name: 'Accounts Receivable Report',
+      description: 'Customer receivables',
+      status: 'idle',
+      progress: 0
+    },
+    'ap-ledger': {
+      id: 'ap-ledger',
+      name: 'Accounts Payable Ledger',
+      description: 'Vendor payables',
+      status: 'idle',
+      progress: 0
+    },
+    'gst-returns': {
+      id: 'gst-returns',
+      name: 'GST / Tax Returns',
+      description: 'Latest GST filings',
+      status: 'idle',
+      progress: 0
+    },
+    'sales-register': {
+      id: 'sales-register',
+      name: 'Sales Register',
+      description: 'Sales transaction records',
+      status: 'idle',
+      progress: 0
+    },
+    'customer-ledger': {
+      id: 'customer-ledger',
+      name: 'Customer Ledger',
+      description: 'Customer outstanding balances',
+      status: 'idle',
+      progress: 0
+    }
+  });
 
   // Auto scroll to the bottom when the conversation changes
   useEffect(() => {
@@ -58,6 +119,290 @@ export default function Demo2WorkspacePage() {
       }
     }
   }, [conversation]);
+
+  // Trigger AI response when all documents are validated
+  useEffect(() => {
+    const coreDocs = ['bank-statements', 'ar-report', 'ap-ledger'];
+    const allCoreValidated = coreDocs.every(id => uploadStates[id].status === 'validated');
+    
+    if (allCoreValidated && isTransitioned && !reconcile1Started) {
+      setReconcile1Started(true);
+
+      const aiMsgId = `ai-batch-complete-${Math.random().toString(36).substring(2, 9)}`;
+      const processingMsgId = `ai-processing-${Math.random().toString(36).substring(2, 9)}`;
+      const completedTextMsgId = `ai-completed-text-1-${Math.random().toString(36).substring(2, 9)}`;
+      const assessmentMsgId = `ai-assessment-card-1-${Math.random().toString(36).substring(2, 9)}`;
+      const recommendTextMsgId = `ai-recommend-text-${Math.random().toString(36).substring(2, 9)}`;
+      const enterpriseAlertMsgId = `ai-enterprise-alert-${Math.random().toString(36).substring(2, 9)}`;
+      const recommendDocsMsgId = `ai-recommend-docs-${Math.random().toString(36).substring(2, 9)}`;
+
+      const aiMsg: MessageBlock = {
+        id: aiMsgId,
+        role: 'assistant',
+        type: 'text',
+        content: `Excellent. I now have sufficient information to perform an initial recovery assessment.`
+      };
+
+      const processingMsg: MessageBlock = {
+        id: processingMsgId,
+        role: 'assistant',
+        type: 'processing_indicator'
+      };
+
+      setConversation(prevHistory => [...prevHistory, aiMsg]);
+
+      // Schedule secondary processing message
+      setTimeout(() => {
+        setConversation(h => {
+          const hasProcessing = h.some(msg => msg.id === processingMsgId);
+          if (hasProcessing) return h;
+          return [...h, processingMsg];
+        });
+
+        // Schedule transitioning to Executive Assessment Card after 3.5 seconds
+        setTimeout(() => {
+          setConversation(h => {
+            // Replace the processing indicator with a finished text block, and append the assessment card
+            const withoutProcessing = h.filter(msg => msg.id !== processingMsgId);
+            
+            // If already appended, skip
+            const hasAssessment = h.some(msg => msg.id === assessmentMsgId);
+            if (hasAssessment) return h;
+
+            const completedTextMsg: MessageBlock = {
+              id: completedTextMsgId,
+              role: 'assistant',
+              type: 'text',
+              content: `✓ Analysis completed successfully.`
+            };
+
+            const assessmentMsg: MessageBlock = {
+              id: assessmentMsgId,
+              role: 'assistant',
+              type: 'executive_assessment'
+            };
+
+            // Schedule Refinement 1: AI Recommendation After Assessment (800ms after card)
+            setTimeout(() => {
+              setConversation(prev => {
+                const hasRecommendText = prev.some(msg => msg.id === recommendTextMsgId);
+                if (hasRecommendText) return prev;
+
+                const recommendTextMsg: MessageBlock = {
+                  id: recommendTextMsgId,
+                  role: 'assistant',
+                  type: 'text',
+                  content: `Based on the initial assessment, I identified additional recovery opportunities that require further financial validation.`
+                };
+
+                return [...prev, recommendTextMsg];
+              });
+
+              // Schedule Refinement 2: Standalone Enterprise Alert Callout (600ms after text, i.e. 1400ms after card)
+              setTimeout(() => {
+                setConversation(prev => {
+                  const hasEnterpriseAlert = prev.some(msg => msg.id === enterpriseAlertMsgId);
+                  if (hasEnterpriseAlert) return prev;
+
+                  const enterpriseAlertMsg: MessageBlock = {
+                    id: enterpriseAlertMsgId,
+                    role: 'assistant',
+                    type: 'enterprise_alert'
+                  };
+
+                  return [...prev, enterpriseAlertMsg];
+                });
+
+                // Schedule Refinement 3: Additional Supporting Documents request block (600ms after alert, i.e. 2000ms after card)
+                setTimeout(() => {
+                  setConversation(prev => {
+                    const hasRecommendDocs = prev.some(msg => msg.id === recommendDocsMsgId);
+                    if (hasRecommendDocs) return prev;
+
+                    const recommendDocsMsg: MessageBlock = {
+                      id: recommendDocsMsgId,
+                      role: 'assistant',
+                      type: 'recommended_documents',
+                      documents: [
+                        { id: 'gst-returns', name: 'GST / Tax Returns', description: 'Latest GST filings' },
+                        { id: 'sales-register', name: 'Sales Register', description: 'Sales transaction records' },
+                        { id: 'customer-ledger', name: 'Customer Ledger', description: 'Customer outstanding balances' }
+                      ]
+                    };
+
+                    return [...prev, recommendDocsMsg];
+                  });
+                }, 600);
+
+              }, 600);
+
+            }, 800);
+
+            return [...withoutProcessing, completedTextMsg, assessmentMsg];
+          });
+        }, 3500);
+
+      }, 600);
+    }
+  }, [uploadStates, isTransitioned, reconcile1Started]);
+
+  // Trigger second reconciliation when all recommended documents are validated
+  useEffect(() => {
+    const recommendedDocs = ['gst-returns', 'sales-register', 'customer-ledger'];
+    const allRecommendedValidated = recommendedDocs.every(id => uploadStates[id].status === 'validated');
+    
+    if (allRecommendedValidated && isTransitioned && !reconcile2Started) {
+      setReconcile2Started(true);
+
+      const aiMsgId2 = `ai-second-complete-${Math.random().toString(36).substring(2, 9)}`;
+      const processingMsgId2 = `ai-processing-2-${Math.random().toString(36).substring(2, 9)}`;
+      const completedTextMsgId2 = `ai-completed-text-2-${Math.random().toString(36).substring(2, 9)}`;
+      const assessmentMsgId2 = `ai-assessment-card-2-${Math.random().toString(36).substring(2, 9)}`;
+
+      const aiMsg: MessageBlock = {
+        id: aiMsgId2,
+        role: 'assistant',
+        type: 'text',
+        content: `Excellent. I have received the additional supporting documents and will now perform a deeper reconciliation across your financial records.`
+      };
+
+      const processingMsg: MessageBlock = {
+        id: processingMsgId2,
+        role: 'assistant',
+        type: 'processing_indicator'
+      };
+
+      setConversation(prevHistory => [...prevHistory, aiMsg]);
+
+      // Schedule secondary processing message
+      setTimeout(() => {
+        setConversation(h => {
+          const hasProcessing = h.some(msg => msg.id === processingMsgId2);
+          if (hasProcessing) return h;
+          return [...h, processingMsg];
+        });
+
+        // Schedule transition to Completed text after 3.5 seconds
+        setTimeout(() => {
+          setConversation(h => {
+            const withoutProcessing = h.filter(msg => msg.id !== processingMsgId2);
+            
+            const hasAssessment2 = h.some(msg => msg.id === assessmentMsgId2);
+            if (hasAssessment2) return h;
+
+            const completedTextMsg: MessageBlock = {
+              id: completedTextMsgId2,
+              role: 'assistant',
+              type: 'text',
+              content: `✓ Analysis completed successfully.`
+            };
+
+            const assessmentMsg: MessageBlock = {
+              id: assessmentMsgId2,
+              role: 'assistant',
+              type: 'executive_assessment',
+              isUpdated: true
+            };
+
+            return [...withoutProcessing, completedTextMsg, assessmentMsg];
+          });
+        }, 3500);
+
+      }, 600);
+    }
+  }, [uploadStates, isTransitioned, reconcile2Started]);
+
+  // Scroll to the top of the executive assessment card on render
+  useEffect(() => {
+    const hasAssessment = conversation.some(msg => msg.type === 'executive_assessment');
+    if (hasAssessment && assessmentCardRef.current) {
+      setTimeout(() => {
+        if (assessmentCardRef.current) {
+          assessmentCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+    }
+  }, [conversation]);
+
+  const handleUploadClick = (docId: string) => {
+    // Check if any other document is uploading/validating, or if this document is already uploaded/processing
+    const isAnyDocProcessing = Object.values(uploadStates).some(
+      u => u.status === 'uploading' || u.status === 'validating'
+    );
+    if (isAnyDocProcessing || uploadStates[docId].status !== 'idle') return;
+
+    // Transition to Uploading State
+    setUploadStates(prev => ({
+      ...prev,
+      [docId]: {
+        ...prev[docId],
+        status: 'uploading',
+        progress: 0
+      }
+    }));
+
+    let currentProgress = 0;
+    const progressInterval = setInterval(() => {
+      currentProgress += 10;
+      if (currentProgress >= 100) {
+        clearInterval(progressInterval);
+
+        // Map mock filenames
+        let fileName = 'document.pdf';
+        if (docId === 'bank-statements') fileName = 'Bank_Statement_Jan-Jun_2026.pdf';
+        else if (docId === 'ar-report') fileName = 'Accounts_Receivable_Report_Q2.xlsx';
+        else if (docId === 'ap-ledger') fileName = 'Accounts_Payable_Ledger_v1.csv';
+        else if (docId === 'gst-returns') fileName = 'GST_Returns_FY26.xlsx';
+        else if (docId === 'sales-register') fileName = 'Sales_Register_Q1-Q2.csv';
+        else if (docId === 'customer-ledger') fileName = 'Customer_Ledger_Balances.xlsx';
+
+        // Move to Uploaded state
+        setUploadStates(prev => ({
+          ...prev,
+          [docId]: {
+            ...prev[docId],
+            status: 'uploaded',
+            progress: 100,
+            fileName,
+            uploadedAt: new Date().toISOString()
+          }
+        }));
+
+        // Move to Validating state after 600ms
+        setTimeout(() => {
+          setUploadStates(prev => ({
+            ...prev,
+            [docId]: {
+              ...prev[docId],
+              status: 'validating'
+            }
+          }));
+
+          // Move to Validated state after 1500ms
+          setTimeout(() => {
+            setUploadStates(prev => ({
+              ...prev,
+              [docId]: {
+                ...prev[docId],
+                status: 'validated',
+                confidenceScore: 0.98
+              }
+            }));
+          }, 1500);
+
+        }, 600);
+
+      } else {
+        setUploadStates(prev => ({
+          ...prev,
+          [docId]: {
+            ...prev[docId],
+            progress: currentProgress
+          }
+        }));
+      }
+    }, 150);
+  };
 
   const handleBackToHome = () => {
     router.push('/');
@@ -211,6 +556,10 @@ To perform an initial assessment, please upload the following financial document
                         </div>
                       );
                     } else {
+                      const isAnyDocProcessing = Object.values(uploadStates).some(
+                        u => u.status === 'uploading' || u.status === 'validating'
+                      );
+
                       if (msg.type === 'text') {
                         return (
                           <div key={msg.id} className={styles.aiMessageRow}>
@@ -242,25 +591,454 @@ To perform an initial assessment, please upload the following financial document
                               </div>
                               
                               <div className={styles.docRequestList}>
-                                {msg.documents?.map((doc) => (
-                                  <div key={doc.id} className={styles.uploadCard}>
-                                    <div className={styles.uploadCardContent}>
-                                      <span className={styles.docTitle}>
-                                        {doc.name}
-                                        {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
-                                      </span>
-                                      <span className={styles.docDesc}>{doc.description}</span>
+                                {msg.documents?.map((doc) => {
+                                  const state = uploadStates[doc.id];
+                                  if (!state) return null;
+
+                                  const isDisabled = isAnyDocProcessing || state.status !== 'idle';
+
+                                  return (
+                                    <div key={doc.id} className={`${styles.uploadCard} ${state.status !== 'idle' ? styles.activeUploadCard : ''}`}>
+                                      <div className={styles.uploadCardContent}>
+                                        <span className={styles.docTitle}>
+                                          {state.name}
+                                          {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
+                                        </span>
+                                        
+                                        {/* Helper descriptions by state */}
+                                        {state.status === 'idle' && (
+                                          <span className={styles.docDesc}>{state.description}</span>
+                                        )}
+                                        {state.status === 'uploading' && (
+                                          <span className={styles.docDescUploading}>Uploading document...</span>
+                                        )}
+                                        {state.status === 'uploaded' && (
+                                          <span className={styles.docDescUploaded}>{state.fileName}</span>
+                                        )}
+                                        {state.status === 'validating' && (
+                                          <span className={styles.docDescValidating}>{state.fileName}</span>
+                                        )}
+                                        {state.status === 'validated' && (
+                                          <span className={styles.docDescValidated}>{state.fileName}</span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Action configurations by state */}
+                                      {state.status === 'idle' && (
+                                        <button 
+                                          className={`${styles.uploadIconButton} ${isDisabled ? styles.disabledButton : ''}`}
+                                          type="button" 
+                                          aria-label={`Upload ${state.name}`}
+                                          onClick={() => handleUploadClick(doc.id)}
+                                          disabled={isDisabled}
+                                        >
+                                          <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                            <polyline points="17 8 12 3 7 8" />
+                                            <line x1="12" y1="3" x2="12" y2="15" />
+                                          </svg>
+                                        </button>
+                                      )}
+
+                                      {state.status === 'uploading' && (
+                                        <div className={styles.uploadingActionArea}>
+                                          <svg className={styles.spinner} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" />
+                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" />
+                                          </svg>
+                                          <span className={styles.progressText}>{state.progress}%</span>
+                                        </div>
+                                      )}
+
+                                      {state.status === 'uploaded' && (
+                                        <span className={styles.badgeUploaded}>
+                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          Uploaded
+                                        </span>
+                                      )}
+
+                                      {state.status === 'validating' && (
+                                        <span className={styles.badgeValidating}>
+                                          <span>Validating...</span>
+                                          <div className={styles.pulseDots}>
+                                            <div className={styles.pulseDot} />
+                                            <div className={styles.pulseDot} />
+                                            <div className={styles.pulseDot} />
+                                          </div>
+                                        </span>
+                                      )}
+
+                                      {state.status === 'validated' && (
+                                        <span className={styles.badgeValidated}>
+                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          Ready for Analysis
+                                        </span>
+                                      )}
                                     </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'processing_indicator') {
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRow}>
+                            <div className={styles.aiAvatar} title="DARP AI Assistant">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                                <rect x="3" y="11" width="18" height="10" rx="2" />
+                                <circle cx="12" cy="5" r="2" />
+                                <path d="M12 7v4" />
+                                <line x1="8" y1="16" x2="8" y2="16.01" />
+                                <line x1="16" y1="16" x2="16" y2="16.01" />
+                              </svg>
+                            </div>
+                            <div className={styles.aiBubble}>
+                              <div className={styles.processingBlock}>
+                                <div className={styles.processingItem}>
+                                  <div className={styles.processingSpinner} />
+                                  <span>Analyzing financial records...</span>
+                                </div>
+                                <div className={styles.processingItem}>
+                                  <div className={styles.processingSpinner} />
+                                  <span>Identifying recovery opportunities...</span>
+                                </div>
+                                <div className={styles.processingItem}>
+                                  <div className={styles.processingSpinner} />
+                                  <span>Calculating potential recoverable value...</span>
+                                </div>
+                                <div className={styles.processingDots}>
+                                  <span>AI Engine Processing</span>
+                                  <div className={styles.pulseDots}>
+                                    <div className={styles.pulseDot} />
+                                    <div className={styles.pulseDot} />
+                                    <div className={styles.pulseDot} />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'executive_assessment') {
+                        const isCard2 = msg.isUpdated === true;
+                        return (
+                          <div 
+                            key={msg.id} 
+                            ref={isCard2 ? assessmentCardRef : (!conversation.some(m => m.isUpdated) ? assessmentCardRef : null)} 
+                            className={styles.aiMessageRowCentered}
+                          >
+                            <div className={styles.assessmentMainCard}>
+                              {/* Header */}
+                              <div className={styles.assessmentHeader}>
+                                <h3 className={styles.assessmentTitle}>Initial Recovery Assessment</h3>
+                                <p className={styles.assessmentSubtitle}>Generated from the uploaded financial documents.</p>
+                              </div>
+                              
+                              {/* Primary Metric Section */}
+                              <div className={styles.metricSection}>
+                                <span className={styles.primaryMetric}>
+                                  {isCard2 ? '₹31.4 Lakhs' : '₹18.6 Lakhs'}
+                                </span>
+                                <p className={styles.metricLabel}>
+                                  {isCard2 
+                                    ? 'Cross-document reconciliation has increased assessment confidence and uncovered additional verified recovery opportunities worth an estimated ₹31.4 Lakhs.'
+                                    : 'Estimated recoverable value identified from the uploaded financial records.'
+                                  }
+                                </p>
+                              </div>
+
+                              {/* Enterprise Indicators Row for Card 2 */}
+                              {isCard2 && (
+                                <div className={styles.assessmentIndicatorsRow}>
+                                  <div className={styles.indicatorBadge}>
+                                    <span className={styles.indicatorLabel}>AI Confidence:</span>
+                                    <span className={styles.indicatorValue}>98.6%</span>
+                                  </div>
+                                  <div className={styles.indicatorBadge}>
+                                    <span className={styles.indicatorLabel}>Recovery Opportunities:</span>
+                                    <span className={styles.indicatorValue}>8 Identified</span>
+                                  </div>
+                                  <div className={styles.indicatorBadge}>
+                                    <span className={styles.indicatorLabel}>Cross Validation:</span>
+                                    <span className={styles.indicatorValue}>Completed</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Business Insight Section */}
+                              <div className={styles.insightBox}>
+                                <div className={styles.insightHeader}>
+                                  <svg className={styles.warningIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                    <line x1="12" y1="9" x2="12" y2="13" />
+                                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                                  </svg>
+                                  <span className={styles.insightTitle}>Enterprise Insight</span>
+                                </div>
+                                <div className={styles.insightText}>
+                                  {isCard2 ? (
+                                    <>
+                                      <strong>Cross-document validation confirms additional financial recovery opportunities.</strong>
+                                      <br /><br />
+                                      Projected Annual Exposure: <strong>₹52 Lakhs</strong>
+                                      <br />
+                                      If current financial patterns continue, the projected annual revenue exposure could exceed ₹52 Lakhs.
+                                    </>
+                                  ) : (
+                                    <>
+                                      Revenue leakage has been identified across the last six months. If similar financial patterns continue, your annual exposure could exceed <strong>₹38 Lakhs</strong>.
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Divider */}
+                              <div className={styles.cardDivider} />
+                              
+                              {/* Locked Opportunity Preview Container */}
+                              <div className={styles.lockedPreviewContainer}>
+                                <h4 className={styles.previewSectionTitle}>Identified Opportunities (Preview)</h4>
+                                
+                                <div className={styles.blurredListOuter}>
+                                  {/* Blurred structured enterprise table */}
+                                  <div className={styles.blurredOpportunityTableWrapper}>
+                                    <table className={styles.previewTable}>
+                                      <thead>
+                                        <tr>
+                                          <th>Recovery Opportunity</th>
+                                          <th>Estimated Value</th>
+                                          <th>Confidence</th>
+                                          <th>Status</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>Duplicate Vendor Payments</td>
+                                          <td>₹4.2 Lakhs</td>
+                                          <td>98%</td>
+                                          <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                        </tr>
+                                        <tr>
+                                          <td>Outstanding Customer Recoveries</td>
+                                          <td>₹5.8 Lakhs</td>
+                                          <td>94%</td>
+                                          <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                        </tr>
+                                        <tr>
+                                          <td>Unclaimed Tax Credits</td>
+                                          <td>₹3.1 Lakhs</td>
+                                          <td>90%</td>
+                                          <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                        </tr>
+                                        <tr>
+                                          <td>Pricing Variance Opportunities</td>
+                                          <td>₹2.4 Lakhs</td>
+                                          <td>88%</td>
+                                          <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                        </tr>
+                                        <tr>
+                                          <td>Contract Billing Exceptions</td>
+                                          <td>₹1.8 Lakhs</td>
+                                          <td>92%</td>
+                                          <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                        </tr>
+                                        <tr>
+                                          <td>Early Payment Discount Recovery</td>
+                                          <td>₹1.3 Lakhs</td>
+                                          <td>96%</td>
+                                          <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                        </tr>
+                                        {isCard2 && (
+                                          <>
+                                            <tr>
+                                              <td>Tax Compliance Variances</td>
+                                              <td>₹8.5 Lakhs</td>
+                                              <td>95%</td>
+                                              <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Cross-border Billing Audit</td>
+                                              <td>₹4.3 Lakhs</td>
+                                              <td>91%</td>
+                                              <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                            </tr>
+                                          </>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  
+                                  {/* Premium Lock Overlay Panel */}
+                                  <div className={styles.lockOverlayPanel}>
+                                    <div className={styles.lockIconCircle}>
+                                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                      </svg>
+                                    </div>
+                                    <h5 className={styles.lockPanelTitle}>
+                                      {isCard2 ? 'Executive Recovery Report Ready' : 'Unlock Complete Recovery Report'}
+                                    </h5>
+                                    <p className={styles.lockPanelDescription}>
+                                      {isCard2 
+                                        ? 'Unlock the complete executive recovery report to access detailed recovery intelligence and business recommendations.'
+                                        : 'Continue the assessment to explore all identified recovery opportunities, AI recommendations, and executive insights.'
+                                      }
+                                    </p>
+
+                                    {/* Premium lock bullet list for Card 2 */}
+                                    {isCard2 && (
+                                      <ul className={styles.lockBulletList}>
+                                        <li className={styles.lockBulletItem}>Executive Summary</li>
+                                        <li className={styles.lockBulletItem}>Detailed Recovery Opportunities</li>
+                                        <li className={styles.lockBulletItem}>AI Recommendations</li>
+                                        <li className={styles.lockBulletItem}>Root Cause Analysis</li>
+                                        <li className={styles.lockBulletItem}>Financial Impact Assessment</li>
+                                        <li className={styles.lockBulletItem}>Executive Presentation Deck</li>
+                                      </ul>
+                                    )}
                                     
-                                    <button className={styles.uploadIconButton} type="button" aria-label={`Upload ${doc.name}`}>
-                                      <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                        <polyline points="17 8 12 3 7 8" />
-                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    <button className={styles.continueCTA} type="button">
+                                      {isCard2 ? '🔒 Unlock Executive Recovery Report' : '🔒 Unlock Full Recovery Report'}
+                                      <svg className={styles.arrowIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                        <polyline points="12 5 19 12 12 19" />
                                       </svg>
                                     </button>
                                   </div>
-                                ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'enterprise_alert') {
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRowCentered}>
+                            <div className={styles.recommendAlertBox}>
+                              <div className={styles.recommendAlertHeader}>
+                                <svg className={styles.warningIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                  <line x1="12" y1="9" x2="12" y2="13" />
+                                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                                </svg>
+                                <span className={styles.recommendAlertTitle}>Additional Recoverable Value Detected</span>
+                              </div>
+                              <div className={styles.recommendAlertBody}>
+                                <span className={styles.recommendAlertLabel}>Estimated Additional Recovery Potential</span>
+                                <h1 className={styles.recommendAlertValue}>₹12–15 Lakhs</h1>
+                                <p className={styles.recommendAlertDesc}>
+                                  Upload the supporting financial documents below to validate these findings and uncover additional recovery opportunities.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'recommended_documents') {
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRowCentered}>
+                            <div className={styles.documentRequestCard}>
+                              <div className={styles.docRequestHeader}>
+                                <h3 className={styles.docRequestTitle}>Additional Documents Recommended</h3>
+                                <p className={styles.docRequestDesc}>
+                                  Upload any of the following supporting documents to improve analysis confidence and discover additional recovery opportunities.
+                                </p>
+                              </div>
+                              
+                              <div className={styles.docRequestList}>
+                                {msg.documents?.map((doc) => {
+                                  const state = uploadStates[doc.id];
+                                  if (!state) return null;
+
+                                  const isDisabled = isAnyDocProcessing || state.status !== 'idle';
+
+                                  return (
+                                    <div key={doc.id} className={`${styles.uploadCard} ${state.status !== 'idle' ? styles.activeUploadCard : ''}`}>
+                                      <div className={styles.uploadCardContent}>
+                                        <span className={styles.docTitle}>
+                                          {state.name}
+                                          {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
+                                        </span>
+                                        
+                                        {/* Helper descriptions by state */}
+                                        {state.status === 'idle' && (
+                                          <span className={styles.docDesc}>{state.description}</span>
+                                        )}
+                                        {state.status === 'uploading' && (
+                                          <span className={styles.docDescUploading}>Uploading document...</span>
+                                        )}
+                                        {state.status === 'uploaded' && (
+                                          <span className={styles.docDescUploaded}>{state.fileName}</span>
+                                        )}
+                                        {state.status === 'validating' && (
+                                          <span className={styles.docDescValidating}>{state.fileName}</span>
+                                        )}
+                                        {state.status === 'validated' && (
+                                          <span className={styles.docDescValidated}>{state.fileName}</span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Action configurations by state */}
+                                      {state.status === 'idle' && (
+                                        <button 
+                                          className={`${styles.uploadIconButton} ${isDisabled ? styles.disabledButton : ''}`}
+                                          type="button" 
+                                          aria-label={`Upload ${state.name}`}
+                                          onClick={() => handleUploadClick(doc.id)}
+                                          disabled={isDisabled}
+                                        >
+                                          <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                            <polyline points="17 8 12 3 7 8" />
+                                            <line x1="12" y1="3" x2="12" y2="15" />
+                                          </svg>
+                                        </button>
+                                      )}
+
+                                      {state.status === 'uploading' && (
+                                        <div className={styles.uploadingActionArea}>
+                                          <svg className={styles.spinner} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" />
+                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" />
+                                          </svg>
+                                          <span className={styles.progressText}>{state.progress}%</span>
+                                        </div>
+                                      )}
+
+                                      {state.status === 'uploaded' && (
+                                        <span className={styles.badgeUploaded}>
+                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          Uploaded
+                                        </span>
+                                      )}
+
+                                      {state.status === 'validating' && (
+                                        <span className={styles.badgeValidating}>
+                                          <span>Validating...</span>
+                                          <div className={styles.pulseDots}>
+                                            <div className={styles.pulseDot} />
+                                            <div className={styles.pulseDot} />
+                                            <div className={styles.pulseDot} />
+                                          </div>
+                                        </span>
+                                      )}
+
+                                      {state.status === 'validated' && (
+                                        <span className={styles.badgeValidated}>
+                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          Ready for Analysis
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
