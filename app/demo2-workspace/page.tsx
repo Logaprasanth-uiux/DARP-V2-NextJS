@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Button,
@@ -14,10 +14,50 @@ const welcomeMessage = {
   description: "Describe your financial recovery challenge and our AI will identify opportunities, risks, and recommended actions."
 };
 
+interface MessageBlock {
+  id: string;
+  role: 'user' | 'assistant';
+  type: 'text' | 'document_request';
+  content?: string;
+  documents?: {
+    id: string;
+    name: string;
+    description: string;
+    optional?: boolean;
+  }[];
+}
+
 export default function Demo2WorkspacePage() {
   const router = useRouter();
   const [isTransitioned, setIsTransitioned] = useState(false);
   const [promptValue, setPromptValue] = useState("");
+  const [conversation, setConversation] = useState<MessageBlock[]>([]);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll to the bottom when the conversation changes
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      if (conversation.length > 3) {
+        setTimeout(() => {
+          if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTo({
+              top: chatScrollRef.current.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
+      } else {
+        chatScrollRef.current.scrollTop = 0;
+        // Reinforce scroll position after transition animation completes
+        const timer = setTimeout(() => {
+          if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTop = 0;
+          }
+        }, 150);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [conversation]);
 
   const handleBackToHome = () => {
     router.push('/');
@@ -27,10 +67,51 @@ export default function Demo2WorkspacePage() {
     setPromptValue(e.target.value);
   };
 
+  const triggerConversation = (queryText: string) => {
+    if (!queryText.trim()) return;
+
+    const userMsg: MessageBlock = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      type: 'text',
+      content: queryText,
+    };
+
+    if (!isTransitioned) {
+      setIsTransitioned(true);
+      setPromptValue("");
+
+      const aiMsg: MessageBlock = {
+        id: `ai-text-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: `Thank you for sharing your recovery challenge.
+
+To perform an initial assessment, please upload the following financial documents.`,
+      };
+
+      const docReqMsg: MessageBlock = {
+        id: `ai-doc-req-${Date.now()}`,
+        role: 'assistant',
+        type: 'document_request',
+        documents: [
+          { id: 'bank-statements', name: 'Bank Statements', description: 'Last 6 months' },
+          { id: 'ar-report', name: 'Accounts Receivable Report', description: 'Customer receivables' },
+          { id: 'ap-ledger', name: 'Accounts Payable Ledger', description: 'Vendor payables' },
+        ]
+      };
+
+      setConversation([userMsg, aiMsg, docReqMsg]);
+    } else {
+      setConversation((prev) => [...prev, userMsg]);
+      setPromptValue("");
+    }
+  };
+
   const handlePromptSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (promptValue.trim()) {
-      setIsTransitioned(true);
+      triggerConversation(promptValue);
     }
   };
 
@@ -41,12 +122,19 @@ export default function Demo2WorkspacePage() {
   };
 
   const handlePillClick = (pillText: string) => {
-    setPromptValue(pillText);
-    setIsTransitioned(true);
+    let customText = pillText;
+    if (pillText === "Revenue Recovery") {
+      customText = "We are facing revenue leakage in our company and would like to identify potential recovery opportunities.";
+    } else if (pillText === "Cost Recovery") {
+      customText = "We would like to analyze our vendor payments to identify cost recovery and optimization opportunities.";
+    } else if (pillText === "Tax Recovery") {
+      customText = "We want to perform a tax recovery review to identify potential tax overpayments or unclaimed credits.";
+    }
+    triggerConversation(customText);
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} ${isTransitioned ? styles.transitionedWrapper : ''}`}>
       {/* GLOBAL NAVBAR (Persistent DARP Header with Centered User) */}
       <header className={styles.topHeader}>
         <Container className={styles.topHeaderContainer}>
@@ -101,18 +189,97 @@ export default function Demo2WorkspacePage() {
           {/* Main workspace container that transitions layout */}
           <div className={`${styles.workspaceMain} ${isTransitioned ? styles.transitioned : ''}`}>
             
-            {/* Future-Ready Conversation Container (appears above prompt when transitioned) */}
+            {/* Scrollable Conversation Container */}
             {isTransitioned && (
-              <div className={styles.conversationContainer} aria-live="polite">
-                {/* Empty container for now; to be populated in future phases */}
+              <div className={styles.conversationContainer} ref={chatScrollRef} aria-live="polite">
+                <div className={styles.conversationContentWidth}>
+                  {conversation.map((msg) => {
+                    const isUser = msg.role === 'user';
+                    
+                    if (isUser) {
+                      return (
+                        <div key={msg.id} className={styles.userMessageRow}>
+                          <div className={styles.userBubble}>
+                            {msg.content}
+                          </div>
+                          <div className={styles.userAvatar} title="User">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      if (msg.type === 'text') {
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRow}>
+                            <div className={styles.aiAvatar} title="DARP AI Assistant">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                                <rect x="3" y="11" width="18" height="10" rx="2" />
+                                <circle cx="12" cy="5" r="2" />
+                                <path d="M12 7v4" />
+                                <line x1="8" y1="16" x2="8" y2="16.01" />
+                                <line x1="16" y1="16" x2="16" y2="16.01" />
+                              </svg>
+                            </div>
+                            <div className={styles.aiBubble}>
+                              {msg.content?.split('\n\n').map((para, i) => (
+                                <p key={i} className={styles.aiTextParagraph}>{para}</p>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'document_request') {
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRowCentered}>
+                            <div className={styles.documentRequestCard}>
+                              <div className={styles.docRequestHeader}>
+                                <h3 className={styles.docRequestTitle}>Documents Required for Initial Assessment</h3>
+                                <p className={styles.docRequestDesc}>
+                                  Upload the following financial documents to perform an initial recovery assessment.
+                                </p>
+                              </div>
+                              
+                              <div className={styles.docRequestList}>
+                                {msg.documents?.map((doc) => (
+                                  <div key={doc.id} className={styles.uploadCard}>
+                                    <div className={styles.uploadCardContent}>
+                                      <span className={styles.docTitle}>
+                                        {doc.name}
+                                        {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
+                                      </span>
+                                      <span className={styles.docDesc}>{doc.description}</span>
+                                    </div>
+                                    
+                                    <button className={styles.uploadIconButton} type="button" aria-label={`Upload ${doc.name}`}>
+                                      <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }
+                  })}
+                </div>
               </div>
             )}
 
             {/* WELCOME EXPERIENCE */}
-            <div className={styles.welcomeSection}>
-              <h1 className={styles.welcomeTitle}>{welcomeMessage.headline}</h1>
-              <p className={styles.welcomeSubtitle}>{welcomeMessage.description}</p>
-            </div>
+            {!isTransitioned && (
+              <div className={styles.welcomeSection}>
+                <h1 className={styles.welcomeTitle}>{welcomeMessage.headline}</h1>
+                <p className={styles.welcomeSubtitle}>{welcomeMessage.description}</p>
+              </div>
+            )}
 
             {/* PROMPT SECTION */}
             <div className={styles.promptSection}>
