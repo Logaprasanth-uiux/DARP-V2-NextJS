@@ -41,6 +41,57 @@ interface DocumentUploadState {
   error?: string;
 }
 
+function AnimatedCounter({ targetValue, startValue, start }: { targetValue: number; startValue: number; start: boolean }) {
+  const [displayVal, setDisplayVal] = useState(startValue);
+  const animatedRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!start || animatedRef.current) return;
+    animatedRef.current = true;
+
+    const duration = 1800; // 1.8 seconds
+    const startTimestamp = performance.now();
+    let frameId: number;
+
+    const update = (now: number) => {
+      if (!active) return;
+      const elapsed = now - startTimestamp;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      
+      const currentValue = Math.floor(startValue + easeProgress * (targetValue - startValue));
+      setDisplayVal(currentValue);
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(update);
+      } else {
+        setDisplayVal(targetValue);
+      }
+    };
+
+    frameId = requestAnimationFrame(update);
+    return () => {
+      active = false;
+      cancelAnimationFrame(frameId);
+    };
+  }, [targetValue, startValue, start]);
+
+  // Indian formatting function
+  const formatIndianCurrency = (value: number) => {
+    const str = value.toString();
+    if (str.length <= 3) return str;
+    const lastThree = str.substring(str.length - 3);
+    const otherNumbers = str.substring(0, str.length - 3);
+    const formattedOthers = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    return `${formattedOthers},${lastThree}`;
+  };
+
+  return <span>₹{formatIndianCurrency(displayVal)}</span>;
+}
+
+type ScrollStage = 'none' | 'ai_acknowledgement' | 'processing' | 'executive_assessment';
+
 export default function Demo2WorkspacePage() {
   const router = useRouter();
   const [isTransitioned, setIsTransitioned] = useState(false);
@@ -50,6 +101,10 @@ export default function Demo2WorkspacePage() {
   const assessmentCardRef = useRef<HTMLDivElement>(null);
   const [reconcile1Started, setReconcile1Started] = useState(false);
   const [reconcile2Started, setReconcile2Started] = useState(false);
+  const [scrolledCards, setScrolledCards] = useState<Record<string, boolean>>({});
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrolledMsgIdRef = useRef<string | null>(null);
+  const [scrollStage, setScrollStage] = useState<ScrollStage>('none');
 
   const [uploadStates, setUploadStates] = useState<Record<string, DocumentUploadState>>({
     'bank-statements': {
@@ -98,28 +153,155 @@ export default function Demo2WorkspacePage() {
 
   // Auto scroll to the bottom when the conversation changes
   useEffect(() => {
-    if (chatScrollRef.current) {
-      if (conversation.length > 3) {
-        setTimeout(() => {
-          if (chatScrollRef.current) {
-            chatScrollRef.current.scrollTo({
-              top: chatScrollRef.current.scrollHeight,
-              behavior: 'smooth'
-            });
-          }
-        }, 100);
-      } else {
-        chatScrollRef.current.scrollTop = 0;
-        // Reinforce scroll position after transition animation completes
-        const timer = setTimeout(() => {
-          if (chatScrollRef.current) {
-            chatScrollRef.current.scrollTop = 0;
-          }
-        }, 150);
-        return () => clearTimeout(timer);
+    if (chatScrollRef.current && conversation.length > 0) {
+      const lastMsg = conversation[conversation.length - 1];
+      const isUserMessage = lastMsg?.role === 'user';
+      
+      if (isUserMessage) {
+        if (scrollTimerRef.current) {
+          clearTimeout(scrollTimerRef.current);
+        }
+        chatScrollRef.current.scrollTo({
+          top: chatScrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
       }
+    } else if (chatScrollRef.current && conversation.length === 0) {
+      chatScrollRef.current.scrollTop = 0;
     }
   }, [conversation]);
+
+  // Centralized scroll handler for text blocks or processing indicator
+  const scrollToElement = (element: HTMLElement | null, msgId: string, stage: ScrollStage) => {
+    if (!element || scrollStage !== stage || lastScrolledMsgIdRef.current === msgId) return;
+
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current);
+    }
+
+    scrollTimerRef.current = setTimeout(() => {
+      lastScrolledMsgIdRef.current = msgId;
+      
+      const container = chatScrollRef.current;
+      if (!container) {
+        setScrollStage('none');
+        return;
+      }
+
+      // Check distance: if already at the bottom or close to it (within 10px tolerance)
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const currentDiff = Math.abs(elementRect.bottom - containerRect.bottom);
+
+      if (currentDiff < 10) {
+        setTimeout(() => {
+          setScrollStage('none');
+        }, 180);
+        return;
+      }
+
+      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+      let scrollTimeout: NodeJS.Timeout;
+      const onScroll = () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          container.removeEventListener('scroll', onScroll);
+          setTimeout(() => {
+            setScrollStage('none');
+          }, 180);
+        }, 100);
+      };
+
+      container.addEventListener('scroll', onScroll);
+
+      // Fallback timer
+      const fallbackTimeout = setTimeout(() => {
+        container.removeEventListener('scroll', onScroll);
+        setScrollStage('none');
+      }, 1200);
+
+      const originalOnScroll = onScroll;
+      const wrappedOnScroll = () => {
+        clearTimeout(fallbackTimeout);
+        originalOnScroll();
+      };
+      container.removeEventListener('scroll', onScroll);
+      container.addEventListener('scroll', wrappedOnScroll);
+
+    }, 150);
+  };
+
+  // Centralized scroll handler with resilient scroll settle listeners for assessment
+  const scrollToAssessmentTop = (element: HTMLDivElement | null, msgId: string) => {
+    if (!element || scrollStage !== 'executive_assessment' || lastScrolledMsgIdRef.current === msgId) return;
+
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current);
+    }
+
+    scrollTimerRef.current = setTimeout(() => {
+      lastScrolledMsgIdRef.current = msgId;
+      
+      const container = chatScrollRef.current;
+      if (!container) {
+        setScrolledCards(prev => ({ ...prev, [msgId]: true }));
+        setScrollStage('none');
+        return;
+      }
+
+      // Check distance: if element is already aligned to the top of the container (within 5px tolerance)
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const currentDiff = Math.abs(elementRect.top - containerRect.top);
+
+      if (currentDiff < 5) {
+        // Already at position! Trigger after 180ms buffer
+        setTimeout(() => {
+          setScrolledCards(prev => ({ ...prev, [msgId]: true }));
+          setScrollStage('none');
+        }, 180);
+        return;
+      }
+
+      // Otherwise, trigger smooth scroll and listen to container scroll settle
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      let scrollTimeout: NodeJS.Timeout;
+      
+      const onScroll = () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          container.removeEventListener('scroll', onScroll);
+          // Wait 150-200ms buffer after scroll settles
+          setTimeout(() => {
+            setScrolledCards(prev => ({ ...prev, [msgId]: true }));
+            setScrollStage('none');
+          }, 180);
+        }, 100);
+      };
+
+      container.addEventListener('scroll', onScroll);
+
+      // Fallback timer: in case scroll listener fails to fire (e.g. system lags or edge case)
+      // after 1200ms we force-settle
+      const fallbackTimeout = setTimeout(() => {
+        container.removeEventListener('scroll', onScroll);
+        setScrolledCards(prev => ({ ...prev, [msgId]: true }));
+        setScrollStage('none');
+      }, 1200);
+
+      // Clear fallback timeout if scroll listener does fire
+      const originalOnScroll = onScroll;
+      const wrappedOnScroll = () => {
+        clearTimeout(fallbackTimeout);
+        originalOnScroll();
+      };
+      container.removeEventListener('scroll', onScroll);
+      container.addEventListener('scroll', wrappedOnScroll);
+
+    }, 300); // 300ms layout settle time
+  };
 
   // Trigger AI response when all documents are validated
   useEffect(() => {
@@ -150,10 +332,12 @@ export default function Demo2WorkspacePage() {
         type: 'processing_indicator'
       };
 
+      setScrollStage('ai_acknowledgement');
       setConversation(prevHistory => [...prevHistory, aiMsg]);
 
       // Schedule secondary processing message
       setTimeout(() => {
+        setScrollStage('processing');
         setConversation(h => {
           const hasProcessing = h.some(msg => msg.id === processingMsgId);
           if (hasProcessing) return h;
@@ -239,6 +423,7 @@ export default function Demo2WorkspacePage() {
 
             }, 800);
 
+            setScrollStage('executive_assessment');
             return [...withoutProcessing, completedTextMsg, assessmentMsg];
           });
         }, 3500);
@@ -273,10 +458,12 @@ export default function Demo2WorkspacePage() {
         type: 'processing_indicator'
       };
 
+      setScrollStage('ai_acknowledgement');
       setConversation(prevHistory => [...prevHistory, aiMsg]);
 
       // Schedule secondary processing message
       setTimeout(() => {
+        setScrollStage('processing');
         setConversation(h => {
           const hasProcessing = h.some(msg => msg.id === processingMsgId2);
           if (hasProcessing) return h;
@@ -305,6 +492,7 @@ export default function Demo2WorkspacePage() {
               isUpdated: true
             };
 
+            setScrollStage('executive_assessment');
             return [...withoutProcessing, completedTextMsg, assessmentMsg];
           });
         }, 3500);
@@ -313,17 +501,7 @@ export default function Demo2WorkspacePage() {
     }
   }, [uploadStates, isTransitioned, reconcile2Started]);
 
-  // Scroll to the top of the executive assessment card on render
-  useEffect(() => {
-    const hasAssessment = conversation.some(msg => msg.type === 'executive_assessment');
-    if (hasAssessment && assessmentCardRef.current) {
-      setTimeout(() => {
-        if (assessmentCardRef.current) {
-          assessmentCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 150);
-    }
-  }, [conversation]);
+
 
   const handleUploadClick = (docId: string) => {
     // Check if any other document is uploading/validating, or if this document is already uploaded/processing
@@ -563,7 +741,11 @@ To perform an initial assessment, please upload the following financial document
 
                       if (msg.type === 'text') {
                         return (
-                          <div key={msg.id} className={styles.aiMessageRow}>
+                          <div 
+                            key={msg.id} 
+                            ref={el => scrollToElement(el, msg.id, 'ai_acknowledgement')}
+                            className={styles.aiMessageRow}
+                          >
                             <div className={styles.aiAvatar} title="DARP AI Assistant">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                                 <rect x="3" y="11" width="18" height="10" rx="2" />
@@ -688,7 +870,11 @@ To perform an initial assessment, please upload the following financial document
                         );
                       } else if (msg.type === 'processing_indicator') {
                         return (
-                          <div key={msg.id} className={styles.aiMessageRow}>
+                          <div 
+                            key={msg.id} 
+                            ref={el => scrollToElement(el, msg.id, 'processing')}
+                            className={styles.aiMessageRow}
+                          >
                             <div className={styles.aiAvatar} title="DARP AI Assistant">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                                 <rect x="3" y="11" width="18" height="10" rx="2" />
@@ -729,7 +915,7 @@ To perform an initial assessment, please upload the following financial document
                         return (
                           <div 
                             key={msg.id} 
-                            ref={isCard2 ? assessmentCardRef : (!conversation.some(m => m.isUpdated) ? assessmentCardRef : null)} 
+                            ref={el => scrollToAssessmentTop(el, msg.id)} 
                             className={styles.aiMessageRowCentered}
                           >
                             <div className={styles.assessmentMainCard}>
@@ -742,11 +928,15 @@ To perform an initial assessment, please upload the following financial document
                               {/* Primary Metric Section */}
                               <div className={styles.metricSection}>
                                 <span className={styles.primaryMetric}>
-                                  {isCard2 ? '₹31.4 Lakhs' : '₹18.6 Lakhs'}
+                                  {isCard2 ? (
+                                    <AnimatedCounter targetValue={3140000} startValue={785000} start={!!scrolledCards[msg.id]} />
+                                  ) : (
+                                    <AnimatedCounter targetValue={1860000} startValue={465000} start={!!scrolledCards[msg.id]} />
+                                  )}
                                 </span>
                                 <p className={styles.metricLabel}>
                                   {isCard2 
-                                    ? 'Cross-document reconciliation has increased assessment confidence and uncovered additional verified recovery opportunities worth an estimated ₹31.4 Lakhs.'
+                                    ? 'Cross-document reconciliation has increased assessment confidence and uncovered additional verified recovery opportunities worth an estimated ₹31,40,000.'
                                     : 'Estimated recoverable value identified from the uploaded financial records.'
                                   }
                                 </p>
@@ -785,13 +975,13 @@ To perform an initial assessment, please upload the following financial document
                                     <>
                                       <strong>Cross-document validation confirms additional financial recovery opportunities.</strong>
                                       <br /><br />
-                                      Projected Annual Exposure: <strong>₹52 Lakhs</strong>
+                                      Projected Annual Exposure: <strong>₹52,00,000</strong>
                                       <br />
-                                      If current financial patterns continue, the projected annual revenue exposure could exceed ₹52 Lakhs.
+                                      If current financial patterns continue, the projected annual revenue exposure could exceed ₹52,00,000.
                                     </>
                                   ) : (
                                     <>
-                                      Revenue leakage has been identified across the last six months. If similar financial patterns continue, your annual exposure could exceed <strong>₹38 Lakhs</strong>.
+                                      Revenue leakage has been identified across the last six months. If similar financial patterns continue, your annual exposure could exceed <strong>₹38,00,000</strong>.
                                     </>
                                   )}
                                 </div>
@@ -819,37 +1009,37 @@ To perform an initial assessment, please upload the following financial document
                                       <tbody>
                                         <tr>
                                           <td>Duplicate Vendor Payments</td>
-                                          <td>₹4.2 Lakhs</td>
+                                          <td>₹4,20,000</td>
                                           <td>98%</td>
                                           <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
                                         </tr>
                                         <tr>
                                           <td>Outstanding Customer Recoveries</td>
-                                          <td>₹5.8 Lakhs</td>
+                                          <td>₹5,80,000</td>
                                           <td>94%</td>
                                           <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
                                         </tr>
                                         <tr>
                                           <td>Unclaimed Tax Credits</td>
-                                          <td>₹3.1 Lakhs</td>
+                                          <td>₹3,10,000</td>
                                           <td>90%</td>
                                           <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
                                         </tr>
                                         <tr>
                                           <td>Pricing Variance Opportunities</td>
-                                          <td>₹2.4 Lakhs</td>
+                                          <td>₹2,40,000</td>
                                           <td>88%</td>
                                           <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
                                         </tr>
                                         <tr>
                                           <td>Contract Billing Exceptions</td>
-                                          <td>₹1.8 Lakhs</td>
+                                          <td>₹1,80,000</td>
                                           <td>92%</td>
                                           <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
                                         </tr>
                                         <tr>
                                           <td>Early Payment Discount Recovery</td>
-                                          <td>₹1.3 Lakhs</td>
+                                          <td>₹1,30,000</td>
                                           <td>96%</td>
                                           <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
                                         </tr>
@@ -857,13 +1047,13 @@ To perform an initial assessment, please upload the following financial document
                                           <>
                                             <tr>
                                               <td>Tax Compliance Variances</td>
-                                              <td>₹8.5 Lakhs</td>
+                                              <td>₹8,50,000</td>
                                               <td>95%</td>
                                               <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
                                             </tr>
                                             <tr>
                                               <td>Cross-border Billing Audit</td>
-                                              <td>₹4.3 Lakhs</td>
+                                              <td>₹4,30,000</td>
                                               <td>91%</td>
                                               <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
                                             </tr>
