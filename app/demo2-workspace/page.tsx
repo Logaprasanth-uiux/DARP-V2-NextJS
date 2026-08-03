@@ -41,6 +41,487 @@ interface DocumentUploadState {
   error?: string;
 }
 
+interface TransactionDetail {
+  invoiceNo: string;
+  poNo: string;
+  vendor: string;
+  invoiceDate: string;
+  paymentDate: string;
+  recoveryValue: string;
+  gstInfo: string;
+  confidenceScore: string;
+  aiExplanation: string;
+  recommendedAction: string;
+}
+
+interface Invoice {
+  id: string;
+  invoiceNo: string;
+  potentialRecovery: string;
+  matchedBankEntries: number;
+  confidence: string;
+  details: TransactionDetail;
+}
+
+interface VendorOpportunity {
+  id: string;
+  name: string;
+  potentialRecovery: string;
+  invoiceCount: number;
+  invoices: Invoice[];
+}
+
+interface RecoveryCategory {
+  id: string;
+  name: string;
+  recoverableValue: string;
+  confidence: string;
+  vendors: VendorOpportunity[];
+}
+
+const mockRecoveryCategories: RecoveryCategory[] = [
+  {
+    id: 'duplicate-payments',
+    name: 'Duplicate Vendor Payments',
+    recoverableValue: '₹4,20,000',
+    confidence: '98%',
+    vendors: [
+      {
+        id: 'dup-abc',
+        name: 'ABC Pvt Ltd',
+        potentialRecovery: '₹1,60,000',
+        invoiceCount: 3,
+        invoices: [
+          {
+            id: 'inv-20341',
+            invoiceNo: 'INV-20341',
+            potentialRecovery: '₹60,000',
+            matchedBankEntries: 3,
+            confidence: '98%',
+            details: {
+              invoiceNo: 'INV-20341',
+              poNo: 'PO-2026-089',
+              vendor: 'ABC Pvt Ltd',
+              invoiceDate: '2026-04-12',
+              paymentDate: '2026-04-15',
+              recoveryValue: '₹60,000',
+              gstInfo: '18% GST (₹10,800)',
+              confidenceScore: '98%',
+              aiExplanation: 'The vendor ledger reports three distinct payments of ₹60,000 against a single invoice entry on 2026-04-15. Bank statements confirm three matching debits with identical transaction reference IDs.',
+              recommendedAction: 'Issue a formal recovery debit note to ABC Pvt Ltd and initiate payment reconciliation.'
+            }
+          },
+          {
+            id: 'inv-20377',
+            invoiceNo: 'INV-20377',
+            potentialRecovery: '₹50,000',
+            matchedBankEntries: 2,
+            confidence: '97%',
+            details: {
+              invoiceNo: 'INV-20377',
+              poNo: 'PO-2026-112',
+              vendor: 'ABC Pvt Ltd',
+              invoiceDate: '2026-04-28',
+              paymentDate: '2026-05-02',
+              recoveryValue: '₹50,000',
+              gstInfo: '18% GST (₹9,000)',
+              confidenceScore: '97%',
+              aiExplanation: 'Two bank debits matching INV-20377 were processed across ledger databases due to manual data-entry mismatch.',
+              recommendedAction: 'Request credit adjustment or direct refund from the vendor accounting team.'
+            }
+          },
+          {
+            id: 'inv-20410',
+            invoiceNo: 'INV-20410',
+            potentialRecovery: '₹50,000',
+            matchedBankEntries: 2,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'INV-20410',
+              poNo: 'PO-2026-145',
+              vendor: 'ABC Pvt Ltd',
+              invoiceDate: '2026-05-10',
+              paymentDate: '2026-05-12',
+              recoveryValue: '₹50,000',
+              gstInfo: '18% GST (₹9,000)',
+              confidenceScore: '96%',
+              aiExplanation: 'A duplicate invoice balance was settled twice during manual record sync cycles.',
+              recommendedAction: 'Offset next monthly vendor payable cycle by ₹50,000.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'dup-xyz',
+        name: 'XYZ Industries',
+        potentialRecovery: '₹1,40,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'inv-88201',
+            invoiceNo: 'INV-88201',
+            potentialRecovery: '₹90,000',
+            matchedBankEntries: 2,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'INV-88201',
+              poNo: 'PO-2026-440',
+              vendor: 'XYZ Industries',
+              invoiceDate: '2026-03-20',
+              paymentDate: '2026-03-24',
+              recoveryValue: '₹90,000',
+              gstInfo: '12% GST (₹10,800)',
+              confidenceScore: '95%',
+              aiExplanation: 'Double ledger posting resulted in two identical payouts being released to XYZ Industries.',
+              recommendedAction: 'Submit statement audit reports to the vendor account executive.'
+            }
+          },
+          {
+            id: 'inv-88299',
+            invoiceNo: 'INV-88299',
+            potentialRecovery: '₹50,000',
+            matchedBankEntries: 2,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'INV-88299',
+              poNo: 'PO-2026-499',
+              vendor: 'XYZ Industries',
+              invoiceDate: '2026-04-05',
+              paymentDate: '2026-04-09',
+              recoveryValue: '₹50,000',
+              gstInfo: '12% GST (₹6,000)',
+              confidenceScore: '96%',
+              aiExplanation: 'Re-entry of transaction ledger generated matching payments across two separate banks.',
+              recommendedAction: 'Reconcile ledger entry variance and request bank refund.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'dup-delta',
+        name: 'Delta Manufacturing',
+        potentialRecovery: '₹1,20,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'inv-30911',
+            invoiceNo: 'INV-30911',
+            potentialRecovery: '₹70,000',
+            matchedBankEntries: 2,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'INV-30911',
+              poNo: 'PO-2026-801',
+              vendor: 'Delta Manufacturing',
+              invoiceDate: '2026-05-18',
+              paymentDate: '2026-05-20',
+              recoveryValue: '₹70,000',
+              gstInfo: '18% GST (₹12,600)',
+              confidenceScore: '94%',
+              aiExplanation: 'Multiple automated system sync batches generated duplicate validation entries.',
+              recommendedAction: 'Inform Delta accounting desk of overpayment and request credit balance.'
+            }
+          },
+          {
+            id: 'inv-30950',
+            invoiceNo: 'INV-30950',
+            potentialRecovery: '₹50,000',
+            matchedBankEntries: 2,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'INV-30950',
+              poNo: 'PO-2026-840',
+              vendor: 'Delta Manufacturing',
+              invoiceDate: '2026-05-25',
+              paymentDate: '2026-05-28',
+              recoveryValue: '₹50,000',
+              gstInfo: '18% GST (₹9,000)',
+              confidenceScore: '95%',
+              aiExplanation: 'Double payout detected on raw material purchase invoice record.',
+              recommendedAction: 'Process recovery claim forms with verified payment logs.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'customer-recoveries',
+    name: 'Outstanding Customer Recoveries',
+    recoverableValue: '₹5,80,000',
+    confidence: '94%',
+    vendors: [
+      {
+        id: 'cust-global',
+        name: 'Global Traders',
+        potentialRecovery: '₹3,20,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'inv-cust-101',
+            invoiceNo: 'INV-C-101',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 0,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'INV-C-101',
+              poNo: 'PO-GT-880',
+              vendor: 'Global Traders',
+              invoiceDate: '2026-02-10',
+              paymentDate: 'Pending',
+              recoveryValue: '₹1,80,000',
+              gstInfo: '18% GST (₹32,400)',
+              confidenceScore: '94%',
+              aiExplanation: 'Unapplied bank deposits left this ledger balance open. Customers report payment, but bank reconciliation shows no matching inbound transaction reference.',
+              recommendedAction: 'Reach out to customer accounts contact to verify transaction trace reference ID.'
+            }
+          },
+          {
+            id: 'inv-cust-102',
+            invoiceNo: 'INV-C-102',
+            potentialRecovery: '₹1,40,000',
+            matchedBankEntries: 0,
+            confidence: '93%',
+            details: {
+              invoiceNo: 'INV-C-102',
+              poNo: 'PO-GT-895',
+              vendor: 'Global Traders',
+              invoiceDate: '2026-03-05',
+              paymentDate: 'Pending',
+              recoveryValue: '₹1,40,000',
+              gstInfo: '18% GST (₹25,200)',
+              confidenceScore: '93%',
+              aiExplanation: 'Sales ledger records this invoice as outstanding; no bank matching reference trace detected.',
+              recommendedAction: 'Follow up on unpaid invoice collections immediately.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'cust-technova',
+        name: 'TechNova Pvt Ltd',
+        potentialRecovery: '₹2,60,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'inv-cust-201',
+            invoiceNo: 'INV-C-201',
+            potentialRecovery: '₹1,50,000',
+            matchedBankEntries: 0,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'INV-C-201',
+              poNo: 'PO-TN-410',
+              vendor: 'TechNova Pvt Ltd',
+              invoiceDate: '2026-03-12',
+              paymentDate: 'Pending',
+              recoveryValue: '₹1,50,000',
+              gstInfo: '18% GST (₹27,000)',
+              confidenceScore: '95%',
+              aiExplanation: 'Invoice billed but ledger entries list no matching credit entries from TechNova bank portals.',
+              recommendedAction: 'Submit ledger discrepancy reports to client accounts payable representative.'
+            }
+          },
+          {
+            id: 'inv-cust-202',
+            invoiceNo: 'INV-C-202',
+            potentialRecovery: '₹1,10,000',
+            matchedBankEntries: 0,
+            confidence: '92%',
+            details: {
+              invoiceNo: 'INV-C-202',
+              poNo: 'PO-TN-432',
+              vendor: 'TechNova Pvt Ltd',
+              invoiceDate: '2026-04-18',
+              paymentDate: 'Pending',
+              recoveryValue: '₹1,10,000',
+              gstInfo: '18% GST (₹19,800)',
+              confidenceScore: '92%',
+              aiExplanation: 'System reconciliation logs outstanding balances exceeding 90 days past payment terms.',
+              recommendedAction: 'Issue past-due notifications and request status update.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'tax-variances',
+    name: 'Tax Compliance Variances',
+    recoverableValue: '₹8,50,000',
+    confidence: '95%',
+    vendors: [
+      {
+        id: 'tax-direct',
+        name: 'Internal Compliance Audits',
+        potentialRecovery: '₹8,50,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'gst-compliance-fy26',
+            invoiceNo: 'GST-FY26-REC',
+            potentialRecovery: '₹8,50,000',
+            matchedBankEntries: 1,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'GST-FY26-REC',
+              poNo: 'TAX-AUDIT-FY26',
+              vendor: 'Direct Tax Audit',
+              invoiceDate: '2026-06-30',
+              paymentDate: 'Completed',
+              recoveryValue: '₹8,50,000',
+              gstInfo: 'Unclaimed GST Input Tax Credit',
+              confidenceScore: '95%',
+              aiExplanation: 'A gap between raw GSTR-2B logs and vendor AP ledgers has left ₹8,50,000 in unclaimed input tax credits. Reconciling transaction registers reveals active filings that were omitted from monthly filings.',
+              recommendedAction: 'Amend upcoming GSTR filing returns to claim historical Input Tax Credits (ITC).'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'pricing-variances',
+    name: 'Pricing Variance Opportunities',
+    recoverableValue: '₹2,40,000',
+    confidence: '88%',
+    vendors: [
+      {
+        id: 'pv-omega',
+        name: 'Omega Supplies',
+        potentialRecovery: '₹2,40,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-omega-901',
+            invoiceNo: 'INV-OMEGA-901',
+            potentialRecovery: '₹2,40,000',
+            matchedBankEntries: 1,
+            confidence: '88%',
+            details: {
+              invoiceNo: 'INV-OMEGA-901',
+              poNo: 'PO-OMEGA-771',
+              vendor: 'Omega Supplies',
+              invoiceDate: '2026-05-02',
+              paymentDate: '2026-05-05',
+              recoveryValue: '₹2,40,000',
+              gstInfo: '18% GST (₹43,200)',
+              confidenceScore: '88%',
+              aiExplanation: 'The vendor invoiced raw material purchases at a unit price of ₹250 instead of the contracted rate of ₹200. This pricing variance accounts for a leak of ₹2,40,000 across 4,800 units.',
+              recommendedAction: 'Issue billing exception alert and recover overbilled pricing variance credit note.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'billing-exceptions',
+    name: 'Contract Billing Exceptions',
+    recoverableValue: '₹1,80,000',
+    confidence: '92%',
+    vendors: [
+      {
+        id: 'be-apex',
+        name: 'Apex Logistics',
+        potentialRecovery: '₹1,80,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-apex-412',
+            invoiceNo: 'INV-APEX-412',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 1,
+            confidence: '92%',
+            details: {
+              invoiceNo: 'INV-APEX-412',
+              poNo: 'PO-APEX-998',
+              vendor: 'Apex Logistics',
+              invoiceDate: '2026-04-20',
+              paymentDate: '2026-04-25',
+              recoveryValue: '₹1,80,000',
+              gstInfo: '18% GST (₹32,400)',
+              confidenceScore: '92%',
+              aiExplanation: 'Apex Logistics billed additional freight surcharges not covered in the master service contract.',
+              recommendedAction: 'Dispute overbilled freight charge entries with client account representatives.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'early-discount',
+    name: 'Early Payment Discount Recovery',
+    recoverableValue: '₹1,30,000',
+    confidence: '96%',
+    vendors: [
+      {
+        id: 'ed-matrix',
+        name: 'Matrix Tech Solutions',
+        potentialRecovery: '₹1,30,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-matrix-703',
+            invoiceNo: 'INV-MATRIX-703',
+            potentialRecovery: '₹1,30,000',
+            matchedBankEntries: 1,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'INV-MATRIX-703',
+              poNo: 'PO-MATRIX-302',
+              vendor: 'Matrix Tech Solutions',
+              invoiceDate: '2026-04-02',
+              paymentDate: '2026-04-08',
+              recoveryValue: '₹1,30,000',
+              gstInfo: '18% GST (₹23,400)',
+              confidenceScore: '96%',
+              aiExplanation: 'The invoice was settled within the 10-day early discount window, but the discount of 2% (₹1,30,000) was not deducted from the processed payment.',
+              recommendedAction: 'Submit a debit note for early payment rebate adjustment on next billing cycles.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'cross-border',
+    name: 'Cross-border Billing Audit',
+    recoverableValue: '₹4,30,000',
+    confidence: '91%',
+    vendors: [
+      {
+        id: 'cb-quantum',
+        name: 'Quantum Services Inc',
+        potentialRecovery: '₹4,30,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-quantum-500',
+            invoiceNo: 'INV-QUANTUM-500',
+            potentialRecovery: '₹4,30,000',
+            matchedBankEntries: 1,
+            confidence: '91%',
+            details: {
+              invoiceNo: 'INV-QUANTUM-500',
+              poNo: 'PO-QUANT-012',
+              vendor: 'Quantum Services Inc',
+              invoiceDate: '2026-05-01',
+              paymentDate: '2026-05-04',
+              recoveryValue: '₹4,30,000',
+              gstInfo: 'Integrated GST (Import of Service)',
+              confidenceScore: '91%',
+              aiExplanation: 'Invoice was billed in USD but processed locally with double currency conversion fee overrides.',
+              recommendedAction: 'Claim bank processing correction and billing adjustments.'
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
 function AnimatedCounter({ targetValue, startValue, start }: { targetValue: number; startValue: number; start: boolean }) {
   const [displayVal, setDisplayVal] = useState(startValue);
   const animatedRef = useRef(false);
@@ -111,6 +592,27 @@ export default function Demo2WorkspacePage() {
   const [activeReportId, setActiveReportId] = useState<string>('current-assessment');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [currentAssessmentTitle, setCurrentAssessmentTitle] = useState("New Assessment");
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+  const [expandedVendorId, setExpandedVendorId] = useState<string | null>(null);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+
+  // Assign Owner Modal & Toast States
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [assignModalData, setAssignModalData] = useState<{
+    contextName: string;
+    owner: string;
+    priority: string;
+    targetDate: string;
+    comments: string;
+  }>({
+    contextName: '',
+    owner: 'Sarah Williams',
+    priority: 'High',
+    targetDate: '2026-08-15',
+    comments: ''
+  });
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const [uploadStates, setUploadStates] = useState<Record<string, DocumentUploadState>>({
     'bank-statements': {
@@ -176,6 +678,33 @@ export default function Demo2WorkspacePage() {
       chatScrollRef.current.scrollTop = 0;
     }
   }, [conversation]);
+
+  const openAssignModal = (contextName: string) => {
+    setAssignModalData({
+      contextName,
+      owner: 'Sarah Williams',
+      priority: 'High',
+      targetDate: '2026-08-15',
+      comments: `Please validate duplicate payment and initiate recovery for ${contextName}.`
+    });
+    setIsAssignModalOpen(true);
+  };
+
+  const handleAssignSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAssignModalOpen(false);
+    setToastMessage(`✓ Recovery opportunity assigned successfully. Assigned to ${assignModalData.owner}.`);
+    setShowToast(true);
+  };
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   // Centralized scroll handler for text blocks or processing indicator
   const scrollToElement = (element: HTMLElement | null, msgId: string, stage: ScrollStage) => {
@@ -1386,134 +1915,249 @@ To perform an initial assessment, please upload the following financial document
               </div>
 
               <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>Executive Summary</h4>
-                <p className={styles.reportText}>
-                  Our AI has completed a double-entry reconciliation across uploaded AP Ledgers, bank statements, sales registers, and GST filings. We validated 8 leakage categories with a high confidence rating, highlighting immediate cash recovery avenues.
-                </p>
-              </div>
-
-              <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>Recovery Opportunity Breakdown</h4>
+                <h4 className={styles.reportSectionTitle}>Recovery Opportunities</h4>
                 <div className={styles.opportunitiesList}>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Duplicate Vendor Payments</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹4,20,000</span>
-                      <span className={styles.opportunityConf}>98% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Outstanding Customer Recoveries</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹5,80,000</span>
-                      <span className={styles.opportunityConf}>94% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Unclaimed Tax Credits</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹3,10,000</span>
-                      <span className={styles.opportunityConf}>90% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Pricing Variance Opportunities</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹2,40,000</span>
-                      <span className={styles.opportunityConf}>88% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Contract Billing Exceptions</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹1,80,000</span>
-                      <span className={styles.opportunityConf}>92% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Early Discount Penalties</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹1,30,000</span>
-                      <span className={styles.opportunityConf}>96% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Tax Compliance Variances</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹8,50,000</span>
-                      <span className={styles.opportunityConf}>95% Confidence</span>
-                    </div>
-                  </div>
-                  <div className={styles.opportunityItem}>
-                    <span className={styles.opportunityName}>Cross-border Billing Audit</span>
-                    <div className={styles.opportunityDetails}>
-                      <span className={styles.opportunityVal}>₹4,30,000</span>
-                      <span className={styles.opportunityConf}>91% Confidence</span>
-                    </div>
-                  </div>
+                  {mockRecoveryCategories.map((cat) => {
+                    const isCatExpanded = expandedCategoryId === cat.id;
+
+                    return (
+                      <div 
+                        key={cat.id} 
+                        className={`${styles.opportunityAccordionItem} ${isCatExpanded ? styles.activeAccordionItem : ''}`}
+                        onClick={() => {
+                          setExpandedCategoryId(isCatExpanded ? null : cat.id);
+                          setExpandedVendorId(null);
+                          setExpandedInvoiceId(null);
+                        }}
+                      >
+                        {/* Level 1: Category Header Row */}
+                        <div className={styles.accordionHeaderRow}>
+                          <div className={styles.headerLeftZone}>
+                            <svg 
+                              className={`${styles.chevronIcon} ${isCatExpanded ? styles.rotatedChevron : ''}`} 
+                              viewBox="0 0 24 24" 
+                              width="16" 
+                              height="16" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2.5"
+                            >
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                            <span className={styles.opportunityName}>{cat.name}</span>
+                          </div>
+                          <div className={styles.opportunityDetails}>
+                            <span className={styles.opportunityVal}>{cat.recoverableValue}</span>
+                            <span className={styles.opportunityConf}>{cat.confidence} Confidence</span>
+                          </div>
+                        </div>
+
+                        {/* Level 2: Vendor List Expansion */}
+                        {isCatExpanded && (
+                          <div className={styles.categoryExpansion} onClick={(e) => e.stopPropagation()}>
+                            <h5 className={styles.expansionSubheading}>Affected Vendors</h5>
+                            <div className={styles.vendorsList}>
+                              {cat.vendors.map((vendor) => {
+                                const isVendorExpanded = expandedVendorId === vendor.id;
+
+                                return (
+                                  <div 
+                                    key={vendor.id} 
+                                    className={`${styles.vendorCard} ${isVendorExpanded ? styles.activeVendorCard : ''}`}
+                                    onClick={() => {
+                                      setExpandedVendorId(isVendorExpanded ? null : vendor.id);
+                                      setExpandedInvoiceId(null);
+                                    }}
+                                  >
+                                    <div className={styles.vendorHeaderRow}>
+                                      <div className={styles.vendorLeftZone}>
+                                        <svg 
+                                          className={`${styles.chevronIcon} ${isVendorExpanded ? styles.rotatedChevron : ''}`} 
+                                          viewBox="0 0 24 24" 
+                                          width="14" 
+                                          height="14" 
+                                          fill="none" 
+                                          stroke="currentColor" 
+                                          strokeWidth="2.5"
+                                        >
+                                          <polyline points="9 18 15 12 9 6" />
+                                        </svg>
+                                        <span className={styles.vendorNameText}>{vendor.name}</span>
+                                      </div>
+                                      <div className={styles.vendorRightZone}>
+                                        <span className={styles.vendorValText}>{vendor.potentialRecovery}</span>
+                                        <span className={styles.vendorMetaText}>{vendor.invoiceCount} invoices</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Level 3: Invoice List Expansion */}
+                                    {isVendorExpanded && (
+                                      <div className={styles.vendorExpansion} onClick={(e) => e.stopPropagation()}>
+                                        <h6 className={styles.expansionSubheading}>Invoices</h6>
+                                        <div className={styles.invoicesList}>
+                                          {vendor.invoices.map((inv) => {
+                                            const isInvSelected = expandedInvoiceId === inv.id;
+
+                                            return (
+                                              <div key={inv.id} className={styles.invoiceItemWrapper}>
+                                                <div 
+                                                  className={`${styles.invoiceCard} ${isInvSelected ? styles.activeInvoiceCard : ''}`}
+                                                  onClick={() => setExpandedInvoiceId(isInvSelected ? null : inv.id)}
+                                                >
+                                                  <div className={styles.invoiceLeftZone}>
+                                                    <svg 
+                                                      className={`${styles.chevronIcon} ${isInvSelected ? styles.rotatedChevron : ''}`} 
+                                                      viewBox="0 0 24 24" 
+                                                      width="12" 
+                                                      height="12" 
+                                                      fill="none" 
+                                                      stroke="currentColor" 
+                                                      strokeWidth="2.5"
+                                                    >
+                                                      <polyline points="9 18 15 12 9 6" />
+                                                    </svg>
+                                                    <span className={styles.invoiceNoText}>{inv.invoiceNo}</span>
+                                                  </div>
+                                                  <div className={styles.invoiceRightZone}>
+                                                    <span className={styles.invoiceValText}>{inv.potentialRecovery}</span>
+                                                    <span className={styles.invoiceConfText}>{inv.confidence}</span>
+                                                  </div>
+                                                </div>
+
+                                                {/* Level 4: Transaction Detail Context Card */}
+                                                {isInvSelected && (
+                                                  <div className={styles.detailCard} onClick={(e) => e.stopPropagation()}>
+                                                    <h5 className={styles.detailCardHeader}>Transaction Details — {inv.invoiceNo}</h5>
+                                                    <div className={styles.detailGrid}>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>Invoice Number</span>
+                                                        <span className={styles.fieldValue}>{inv.details.invoiceNo}</span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>PO Number</span>
+                                                        <span className={styles.fieldValue}>{inv.details.poNo}</span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>Vendor</span>
+                                                        <span className={styles.fieldValue}>{inv.details.vendor}</span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>Invoice Date</span>
+                                                        <span className={styles.fieldValue}>{inv.details.invoiceDate}</span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>Payment Date</span>
+                                                        <span className={styles.fieldValue}>{inv.details.paymentDate}</span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>Recovery Value</span>
+                                                        <span className={styles.fieldValue} style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                                                          {inv.details.recoveryValue}
+                                                        </span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>GST Information</span>
+                                                        <span className={styles.fieldValue}>{inv.details.gstInfo}</span>
+                                                      </div>
+                                                      <div className={styles.detailField}>
+                                                        <span className={styles.fieldLabel}>Confidence Score</span>
+                                                        <span className={styles.fieldValue} style={{ color: 'var(--color-success-text)', fontWeight: 'bold' }}>
+                                                          {inv.details.confidenceScore}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                    <div className={styles.detailExplanationBlock}>
+                                                      <div className={styles.explanationTitle}>AI Explanation</div>
+                                                      <p className={styles.explanationText}>{inv.details.aiExplanation}</p>
+                                                    </div>
+                                                    <div className={styles.detailExplanationBlock}>
+                                                      <div className={styles.explanationTitle}>Recommended Action</div>
+                                                      <p className={styles.explanationText}>{inv.details.recommendedAction}</p>
+                                                    </div>
+                                                    
+                                                    {/* Action buttons inside Detail Card */}
+                                                    <div className={styles.drillActions}>
+                                                      <button 
+                                                        className={styles.drillPrimaryBtn} 
+                                                        type="button"
+                                                        onClick={() => alert(`Downloading PDF for ${inv.invoiceNo}...`)}
+                                                      >
+                                                        📥 Download PDF
+                                                      </button>
+                                                      <button 
+                                                        className={styles.drillSecondaryBtn} 
+                                                        type="button"
+                                                        onClick={() => openAssignModal(inv.invoiceNo)}
+                                                      >
+                                                        👤 Assign Recovery Owner
+                                                      </button>
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+
+                                        {/* Action buttons inside Vendor Level */}
+                                        {!expandedInvoiceId && (
+                                          <div className={styles.drillActions}>
+                                            <button 
+                                              className={styles.drillPrimaryBtn} 
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); alert(`Downloading PDF report for vendor ${vendor.name}...`); }}
+                                            >
+                                              📥 Download PDF
+                                            </button>
+                                            <button 
+                                              className={styles.drillSecondaryBtn} 
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); openAssignModal(vendor.name); }}
+                                            >
+                                              👤 Assign Recovery Owner
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Action buttons inside Category Level */}
+                            {!expandedVendorId && (
+                              <div className={styles.drillActions}>
+                                <button 
+                                  className={styles.drillPrimaryBtn} 
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); alert(`Downloading PDF report for ${cat.name}...`); }}
+                                >
+                                  📥 Download PDF
+                                </button>
+                                <button 
+                                  className={styles.drillSecondaryBtn} 
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); openAssignModal(cat.name); }}
+                                >
+                                  👤 Assign Recovery Owner
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-
-              <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>AI Recommendations</h4>
-                <ul className={styles.recommendationsList}>
-                  <li className={styles.recommendationItem}>
-                    <strong>Consolidate vendor records weekly</strong> to flag duplicate accounts and prevent duplicate processing cycles.
-                  </li>
-                  <li className={styles.recommendationItem}>
-                    <strong>Automate AR alerts</strong> matching sales records to customer invoices to reduce ledger sync delays.
-                  </li>
-                  <li className={styles.recommendationItem}>
-                    <strong>Perform monthly GST input credit reviews</strong> to capture credits before compliance deadlines lapse.
-                  </li>
-                </ul>
-              </div>
-
-              <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>Root Cause Analysis</h4>
-                <p className={styles.reportText}>
-                  Our analysis indicates that **system sync latency** (spanning ~14 days between billing and entry) is the primary driver of invoice duplicate generation. Tax variances stem from manual invoice entry discrepancies.
-                </p>
-              </div>
-
-              <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>Financial Impact</h4>
-                <p className={styles.reportText}>
-                  By enacting automated triggers, the company can expect to recover **₹31,40,000** immediately and prevent recurring leakages of up to **₹52,00,000** annually.
-                </p>
-              </div>
-
-              <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>Priority Action Checklist</h4>
-                <div className={styles.actionsList}>
-                  <label className={styles.actionItem}>
-                    <input type="checkbox" className={styles.actionCheckbox} defaultChecked readOnly />
-                    <span>Initiate recovery claims for duplicate vendor payments</span>
-                  </label>
-                  <label className={styles.actionItem}>
-                    <input type="checkbox" className={styles.actionCheckbox} />
-                    <span>Configure automatic AR database validation synchronization</span>
-                  </label>
-                  <label className={styles.actionItem}>
-                    <input type="checkbox" className={styles.actionCheckbox} />
-                    <span>Reconcile GST input credits for Q1-Q2 variance capture</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className={styles.reportSection}>
-                <h4 className={styles.reportSectionTitle}>Executive Notes</h4>
-                <p className={styles.reportText}>
-                  Prepared for CFO review. Recommends implementing automated reconciliation integrations to resolve the root causes of leakage and secure direct cash inflows.
-                </p>
               </div>
 
               <div className={styles.exportSection}>
                 <button className={styles.exportBtn} type="button">
-                  📥 Download PDF Report (Mock)
+                  📥 Download Full PDF (Mock)
                 </button>
                 <button className={styles.exportBtn} type="button">
-                  📊 Export Presentation PowerPoint (Mock)
+                  📊 Export Presentation Deck (Mock)
                 </button>
                 <button className={styles.exportBtn} type="button">
                   🔗 Share Assessment Link
@@ -1739,6 +2383,92 @@ To perform an initial assessment, please upload the following financial document
             </div>
           </div>
         </>
+      )}
+
+      {/* Assign Recovery Owner Modal */}
+      {isAssignModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} role="dialog" aria-modal="true">
+            <h3 className={styles.modalTitle}>Assign Recovery Owner</h3>
+            <p className={styles.modalSubtitle} style={{ fontWeight: '600', color: 'var(--color-primary)' }}>
+              Context: {assignModalData.contextName}
+            </p>
+            
+            <form onSubmit={handleAssignSubmit} className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Recovery Owner</label>
+                <select 
+                  className={styles.formSelect}
+                  value={assignModalData.owner}
+                  onChange={(e) => setAssignModalData({ ...assignModalData, owner: e.target.value })}
+                >
+                  <option value="John Anderson">John Anderson</option>
+                  <option value="Sarah Williams">Sarah Williams</option>
+                  <option value="Michael Chen">Michael Chen</option>
+                  <option value="Priya Raman">Priya Raman</option>
+                  <option value="David Johnson">David Johnson</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Priority</label>
+                <select 
+                  className={styles.formSelect}
+                  value={assignModalData.priority}
+                  onChange={(e) => setAssignModalData({ ...assignModalData, priority: e.target.value })}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Target Completion</label>
+                <input 
+                  type="date" 
+                  className={styles.formInput}
+                  value={assignModalData.targetDate}
+                  onChange={(e) => setAssignModalData({ ...assignModalData, targetDate: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Comments</label>
+                <textarea 
+                  className={styles.formTextarea}
+                  rows={3}
+                  value={assignModalData.comments}
+                  onChange={(e) => setAssignModalData({ ...assignModalData, comments: e.target.value })}
+                  placeholder="Please validate duplicate payment and initiate recovery."
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button type="submit" className={styles.modalPrimaryBtn}>
+                  Assign Recovery
+                </button>
+                <button 
+                  type="button" 
+                  className={styles.modalSecondaryBtn}
+                  onClick={() => setIsAssignModalOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lightweight Success Toast */}
+      {showToast && (
+        <div className={styles.successToast} role="alert">
+          <span className={styles.toastCheck}>✓</span>
+          <div className={styles.toastContent}>
+            {toastMessage}
+          </div>
+        </div>
       )}
     </div>
   );

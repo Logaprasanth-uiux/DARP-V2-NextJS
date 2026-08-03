@@ -66,16 +66,14 @@ export default function Demo2LoginPage() {
       <main className={styles.mainContent}>
         <Container className={styles.gridContainer}>
           
-          {/* LEFT PANEL (~45%): Future Animation Placeholder */}
+          {/* LEFT PANEL (~45%): Assessment Experience Preview */}
           <section className={styles.leftPanel}>
             <div className={styles.illustrationPlaceholder}>
-              <div className={styles.placeholderIconWrapper}>
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" className={styles.placeholderIcon} aria-hidden="true">
-                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-              </div>
-              <h2 className={styles.placeholderLabel}>Assessment Experience Preview</h2>
+              <img 
+                src="/images/assessment-preview.jpg" 
+                alt="Assessment Experience Preview" 
+                className={styles.previewImage}
+              />
             </div>
           </section>
 

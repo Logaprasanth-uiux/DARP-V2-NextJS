@@ -78,12 +78,17 @@ export default function AssessmentEntryPage() {
             </Badge>
 
             <h1 className={styles.heroHeadline}>
-              Turn Hidden Financial Leakage Into Recovered Working Capital.
+              Discover Hidden Revenue Leakage in Just <span className={styles.greenHighlight}>2 Minutes</span>
+              <span className={styles.heroSecondLine}>Recover the Working Capital You're Losing.</span>
             </h1>
 
-            <p className={styles.heroSubtitle}>
-              DARP autonomously inspects accounts payable ledgers, customer receivables, and tax filings to pinpoint overpayments, unclaimed tax credits, and uncollected revenue — restoring capital straight to your balance sheet.
-            </p>
+            <div className={styles.heroTrustStrip}>
+              <span className={styles.trustItem}>256-Bit AES Encryption</span>
+              <span className={styles.trustSeparator}>•</span>
+              <span className={styles.trustItem}>SOC2 Type II Ready</span>
+              <span className={styles.trustSeparator}>•</span>
+              <span className={styles.trustItem}>Zero Data Retention Without Permission</span>
+            </div>
 
             <div className={styles.heroActionBlock}>
               <Button
@@ -97,14 +102,6 @@ export default function AssessmentEntryPage() {
               <span className={styles.heroSubnote}>
                 Free 2 minute assessment • No credit card required
               </span>
-            </div>
-
-            <div className={styles.heroTrustStrip}>
-              <span>256-Bit AES Encryption</span>
-              <span className={styles.trustSeparator}>•</span>
-              <span>SOC2 Type II Ready</span>
-              <span className={styles.trustSeparator}>•</span>
-              <span>Zero Data Retention Without Permission</span>
             </div>
           </div>
         </Container>

@@ -115,7 +115,20 @@
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.greenHighlight {
+  color: #35bc48;
+}
+
+.heroSecondLine {
+  display: block;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-4);
+  letter-spacing: -0.015em;
 }
 
 .heroSubtitle {
@@ -123,7 +136,7 @@
   line-height: 1.65;
   color: var(--color-text-secondary);
   max-width: 44rem;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 }
 
 .heroActionBlock {
@@ -145,9 +158,21 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
-  font-size: var(--font-size-caption);
-  color: var(--color-text-muted);
-  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-8);
+}
+
+.trustItem {
+  color: #35bc48;
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  display: inline-flex;
+  align-items: center;
+}
+
+.greenCheck {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  margin-right: 6px;
 }
 
 .trustSeparator {
