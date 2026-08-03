@@ -105,6 +105,12 @@ export default function Demo2WorkspacePage() {
   const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrolledMsgIdRef = useRef<string | null>(null);
   const [scrollStage, setScrollStage] = useState<ScrollStage>('none');
+  type PaymentStep = 'none' | 'upgrade_modal' | 'payment_methods' | 'payment_loading';
+  const [paymentStep, setPaymentStep] = useState<PaymentStep>('none');
+  const [reportUnlocked, setReportUnlocked] = useState(false);
+  const [activeReportId, setActiveReportId] = useState<string>('current-assessment');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [currentAssessmentTitle, setCurrentAssessmentTitle] = useState("New Assessment");
 
   const [uploadStates, setUploadStates] = useState<Record<string, DocumentUploadState>>({
     'bank-statements': {
@@ -366,6 +372,8 @@ export default function Demo2WorkspacePage() {
               role: 'assistant',
               type: 'executive_assessment'
             };
+
+            setCurrentAssessmentTitle("Revenue Recovery Assessment");
 
             // Schedule Refinement 1: AI Recommendation After Assessment (800ms after card)
             setTimeout(() => {
@@ -629,6 +637,47 @@ To perform an initial assessment, please upload the following financial document
     } else {
       setConversation((prev) => [...prev, userMsg]);
       setPromptValue("");
+
+      if (reportUnlocked) {
+        const lower = queryText.toLowerCase();
+        let responseContent = "";
+        if (lower.includes("recommendation") || lower.includes("prioritize") || lower.includes("action")) {
+          responseContent = "Based on the Executive Recovery Report, we recommend prioritizing these top items:\n\n1. **Consolidate vendor records weekly**: This will mitigate Duplicate Vendor Payments (₹4,20,000 opportunity).\n2. **Automate AR alerts**: This targets the Outstanding Customer Recoveries (₹5,80,000 opportunity) where sync latency causes leakage.\n3. **Resolve GST reconciliation variances**: This captures input tax credits (₹3,10,000 opportunity).";
+        } else if (lower.includes("recoverable") || lower.includes("why") || lower.includes("amount") || lower.includes("value")) {
+          responseContent = "The ₹31,40,000 recoverable value is derived from cross-document reconciliation of bank statements, AP ledgers, sales registers, and GST filings. Leakage was validated in duplicate payments (₹4,20,000) and outstanding recoveries (₹5,80,000).";
+        } else if (lower.includes("transaction") || lower.includes("invoice") || lower.includes("detail")) {
+          responseContent = "The report identifies 42 pricing variances and 17 duplicate payments. Under the Recovery Opportunity Breakdown, you can review the specific transactions matching Duplicate Vendor Payments (₹4,20,000) and pricing variance opportunities (₹2,40,000).";
+        } else if (lower.includes("confidence") || lower.includes("score")) {
+          responseContent = "The recovery assessment holds a 98.6% AI Confidence score. This is backed by comprehensive cross-document reconciliation and double-entry validation across 8 identified opportunity categories.";
+        } else if (lower.includes("summarize") || lower.includes("cfo") || lower.includes("leadership")) {
+          responseContent = "Here is a summary for leadership: DARP successfully reconciled ₹31,40,000 in verified recoverable value with 98.6% confidence. The leakage stems primarily from system sync latency in Accounts Receivable and duplicate vendor payments. Addressing these yields immediate cash flow recovery.";
+        } else {
+          responseContent = "The Executive Recovery Report has been compiled successfully. I am ready to answer any questions or summarize findings regarding the recovery opportunities, recommendations, or root cause analysis.";
+        }
+
+        const replyId = `ai-reply-${Math.random().toString(36).substring(2, 9)}`;
+        const loaderId = `ai-reply-loader-${Math.random().toString(36).substring(2, 9)}`;
+
+        setScrollStage('processing');
+        setConversation(prev => [...prev, {
+          id: loaderId,
+          role: 'assistant',
+          type: 'processing_indicator'
+        }]);
+
+        setTimeout(() => {
+          setConversation(prev => {
+            const filtered = prev.filter(m => m.id !== loaderId);
+            setScrollStage('ai_acknowledgement');
+            return [...filtered, {
+              id: replyId,
+              role: 'assistant',
+              type: 'text',
+              content: responseContent
+            }];
+          });
+        }, 1200);
+      }
     }
   };
 
@@ -689,16 +738,19 @@ To perform an initial assessment, please upload the following financial document
             <span className={styles.brandSubtext}>Discover • Assess • Recover • Prevent</span>
           </div>
 
-          {/* Center: Authenticated User Info */}
+          {/* Center: Dynamic Assessment Context Header */}
           <div className={styles.headerCenter}>
+            <div className={styles.workspaceHeaderTitleContainer}>
+              <span className={styles.workspaceHeaderTitle}>{currentAssessmentTitle}</span>
+            </div>
+          </div>
+
+          {/* Right: Authenticated User Profile & Back to Home Action */}
+          <div className={styles.navAction}>
             <div className={styles.userProfile}>
               <div className={styles.avatar}>JA</div>
               <span className={styles.userName}>John Anderson</span>
             </div>
-          </div>
-
-          {/* Right: Back to Home Action */}
-          <div className={styles.navAction}>
             <Button variant="outline" size="sm" onClick={handleBackToHome} className={styles.backButton}>
               ← Back to Home
             </Button>
@@ -708,10 +760,10 @@ To perform an initial assessment, please upload the following financial document
 
       {/* WORKSPACE AREA */}
       <main className={styles.workspaceArea}>
-        <Container className={styles.workspaceContainer}>
+        <Container className={`${styles.workspaceContainer} ${reportUnlocked ? styles.splitLayoutContainer : ''}`}>
           
           {/* Main workspace container that transitions layout */}
-          <div className={`${styles.workspaceMain} ${isTransitioned ? styles.transitioned : ''}`}>
+          <div className={`${styles.workspaceMain} ${isTransitioned ? styles.transitioned : ''} ${reportUnlocked ? styles.leftSplitWorkspace : ''}`}>
             
             {/* Scrollable Conversation Container */}
             {isTransitioned && (
@@ -996,7 +1048,7 @@ To perform an initial assessment, please upload the following financial document
                                 
                                 <div className={styles.blurredListOuter}>
                                   {/* Blurred structured enterprise table */}
-                                  <div className={styles.blurredOpportunityTableWrapper}>
+                                  <div className={reportUnlocked ? styles.opportunityTableWrapper : styles.blurredOpportunityTableWrapper}>
                                     <table className={styles.previewTable}>
                                       <thead>
                                         <tr>
@@ -1064,43 +1116,49 @@ To perform an initial assessment, please upload the following financial document
                                   </div>
                                   
                                   {/* Premium Lock Overlay Panel */}
-                                  <div className={styles.lockOverlayPanel}>
-                                    <div className={styles.lockIconCircle}>
-                                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                      </svg>
-                                    </div>
-                                    <h5 className={styles.lockPanelTitle}>
-                                      {isCard2 ? 'Executive Recovery Report Ready' : 'Unlock Complete Recovery Report'}
-                                    </h5>
-                                    <p className={styles.lockPanelDescription}>
-                                      {isCard2 
-                                        ? 'Unlock the complete executive recovery report to access detailed recovery intelligence and business recommendations.'
-                                        : 'Continue the assessment to explore all identified recovery opportunities, AI recommendations, and executive insights.'
-                                      }
-                                    </p>
+                                  {!reportUnlocked && (
+                                    <div className={styles.lockOverlayPanel}>
+                                      <div className={styles.lockIconCircle}>
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                        </svg>
+                                      </div>
+                                      <h5 className={styles.lockPanelTitle}>
+                                        {isCard2 ? 'Executive Recovery Report Ready' : 'Unlock Complete Recovery Report'}
+                                      </h5>
+                                      <p className={styles.lockPanelDescription}>
+                                        {isCard2 
+                                          ? 'Unlock the complete executive recovery report to access detailed recovery intelligence and business recommendations.'
+                                          : 'Continue the assessment to explore all identified recovery opportunities, AI recommendations, and executive insights.'
+                                        }
+                                      </p>
 
-                                    {/* Premium lock bullet list for Card 2 */}
-                                    {isCard2 && (
-                                      <ul className={styles.lockBulletList}>
-                                        <li className={styles.lockBulletItem}>Executive Summary</li>
-                                        <li className={styles.lockBulletItem}>Detailed Recovery Opportunities</li>
-                                        <li className={styles.lockBulletItem}>AI Recommendations</li>
-                                        <li className={styles.lockBulletItem}>Root Cause Analysis</li>
-                                        <li className={styles.lockBulletItem}>Financial Impact Assessment</li>
-                                        <li className={styles.lockBulletItem}>Executive Presentation Deck</li>
-                                      </ul>
-                                    )}
-                                    
-                                    <button className={styles.continueCTA} type="button">
-                                      {isCard2 ? '🔒 Unlock Executive Recovery Report' : '🔒 Unlock Full Recovery Report'}
-                                      <svg className={styles.arrowIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <line x1="5" y1="12" x2="19" y2="12" />
-                                        <polyline points="12 5 19 12 12 19" />
-                                      </svg>
-                                    </button>
-                                  </div>
+                                      {/* Premium lock bullet list for Card 2 */}
+                                      {isCard2 && (
+                                        <ul className={styles.lockBulletList}>
+                                          <li className={styles.lockBulletItem}>Executive Summary</li>
+                                          <li className={styles.lockBulletItem}>Detailed Recovery Opportunities</li>
+                                          <li className={styles.lockBulletItem}>AI Recommendations</li>
+                                          <li className={styles.lockBulletItem}>Root Cause Analysis</li>
+                                          <li className={styles.lockBulletItem}>Financial Impact Assessment</li>
+                                          <li className={styles.lockBulletItem}>Executive Presentation Deck</li>
+                                        </ul>
+                                      )}
+                                      
+                                      <button 
+                                        className={styles.continueCTA} 
+                                        type="button"
+                                        onClick={() => setPaymentStep('upgrade_modal')}
+                                      >
+                                        {isCard2 ? '🔒 Unlock Executive Recovery Report' : '🔒 Unlock Full Recovery Report'}
+                                        <svg className={styles.arrowIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                          <line x1="5" y1="12" x2="19" y2="12" />
+                                          <polyline points="12 5 19 12 12 19" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1292,11 +1350,396 @@ To perform an initial assessment, please upload the following financial document
                 </button>
               </div>
             </div>
-
+            {/* Sticky Assessment History FAB */}
+            {isTransitioned && (
+              <div className={styles.fabWrapper}>
+                <button 
+                  className={styles.historyFab} 
+                  onClick={() => setIsHistoryOpen(true)}
+                  type="button"
+                  aria-label="Assessment History"
+                >
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: 'scaleX(-1)' }}>
+                    <path d="M12 8v4l3 3" />
+                    <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />
+                  </svg>
+                </button>
+                <span className={styles.historyFabTooltip}>Assessment History</span>
+              </div>
+            )}
           </div>
+
+          {/* Right Side: Reusable Executive Recovery Report Panel */}
+          {reportUnlocked && activeReportId === 'current-assessment' && (
+            <div className={styles.reportPanel} aria-label="Executive Recovery Report Workspace">
+              <div className={styles.reportHeader}>
+                <h3 className={styles.reportTitle}>Executive Recovery Report</h3>
+                <p className={styles.reportSubtitle}>AI-generated from reconciled financial documents</p>
+              </div>
+
+              <div className={styles.reportMetricCard}>
+                <div className={styles.reportMetricTitle}>Total Recoverable Value</div>
+                <div className={styles.reportMetricValue}>₹31,40,000</div>
+                <p className={styles.reportText} style={{ fontSize: '11px', opacity: 0.8 }}>
+                  Cross-document verification score: 98.6% Confidence
+                </p>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>Executive Summary</h4>
+                <p className={styles.reportText}>
+                  Our AI has completed a double-entry reconciliation across uploaded AP Ledgers, bank statements, sales registers, and GST filings. We validated 8 leakage categories with a high confidence rating, highlighting immediate cash recovery avenues.
+                </p>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>Recovery Opportunity Breakdown</h4>
+                <div className={styles.opportunitiesList}>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Duplicate Vendor Payments</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹4,20,000</span>
+                      <span className={styles.opportunityConf}>98% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Outstanding Customer Recoveries</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹5,80,000</span>
+                      <span className={styles.opportunityConf}>94% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Unclaimed Tax Credits</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹3,10,000</span>
+                      <span className={styles.opportunityConf}>90% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Pricing Variance Opportunities</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹2,40,000</span>
+                      <span className={styles.opportunityConf}>88% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Contract Billing Exceptions</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹1,80,000</span>
+                      <span className={styles.opportunityConf}>92% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Early Discount Penalties</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹1,30,000</span>
+                      <span className={styles.opportunityConf}>96% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Tax Compliance Variances</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹8,50,000</span>
+                      <span className={styles.opportunityConf}>95% Confidence</span>
+                    </div>
+                  </div>
+                  <div className={styles.opportunityItem}>
+                    <span className={styles.opportunityName}>Cross-border Billing Audit</span>
+                    <div className={styles.opportunityDetails}>
+                      <span className={styles.opportunityVal}>₹4,30,000</span>
+                      <span className={styles.opportunityConf}>91% Confidence</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>AI Recommendations</h4>
+                <ul className={styles.recommendationsList}>
+                  <li className={styles.recommendationItem}>
+                    <strong>Consolidate vendor records weekly</strong> to flag duplicate accounts and prevent duplicate processing cycles.
+                  </li>
+                  <li className={styles.recommendationItem}>
+                    <strong>Automate AR alerts</strong> matching sales records to customer invoices to reduce ledger sync delays.
+                  </li>
+                  <li className={styles.recommendationItem}>
+                    <strong>Perform monthly GST input credit reviews</strong> to capture credits before compliance deadlines lapse.
+                  </li>
+                </ul>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>Root Cause Analysis</h4>
+                <p className={styles.reportText}>
+                  Our analysis indicates that **system sync latency** (spanning ~14 days between billing and entry) is the primary driver of invoice duplicate generation. Tax variances stem from manual invoice entry discrepancies.
+                </p>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>Financial Impact</h4>
+                <p className={styles.reportText}>
+                  By enacting automated triggers, the company can expect to recover **₹31,40,000** immediately and prevent recurring leakages of up to **₹52,00,000** annually.
+                </p>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>Priority Action Checklist</h4>
+                <div className={styles.actionsList}>
+                  <label className={styles.actionItem}>
+                    <input type="checkbox" className={styles.actionCheckbox} defaultChecked readOnly />
+                    <span>Initiate recovery claims for duplicate vendor payments</span>
+                  </label>
+                  <label className={styles.actionItem}>
+                    <input type="checkbox" className={styles.actionCheckbox} />
+                    <span>Configure automatic AR database validation synchronization</span>
+                  </label>
+                  <label className={styles.actionItem}>
+                    <input type="checkbox" className={styles.actionCheckbox} />
+                    <span>Reconcile GST input credits for Q1-Q2 variance capture</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className={styles.reportSection}>
+                <h4 className={styles.reportSectionTitle}>Executive Notes</h4>
+                <p className={styles.reportText}>
+                  Prepared for CFO review. Recommends implementing automated reconciliation integrations to resolve the root causes of leakage and secure direct cash inflows.
+                </p>
+              </div>
+
+              <div className={styles.exportSection}>
+                <button className={styles.exportBtn} type="button">
+                  📥 Download PDF Report (Mock)
+                </button>
+                <button className={styles.exportBtn} type="button">
+                  📊 Export Presentation PowerPoint (Mock)
+                </button>
+                <button className={styles.exportBtn} type="button">
+                  🔗 Share Assessment Link
+                </button>
+              </div>
+            </div>
+          )}
 
         </Container>
       </main>
+
+      {/* Premium Upgrade Modal */}
+      {paymentStep !== 'none' && (
+        <div className={styles.modalOverlay}>
+          {paymentStep === 'upgrade_modal' && (
+            <div className={styles.modalCard}>
+              <h3 className={styles.modalTitle}>Unlock Executive Recovery Report</h3>
+              <p className={styles.modalSubtitle}>Upgrade to access your complete AI-generated Executive Recovery Report.</p>
+              
+              <div className={styles.planCard}>
+                <div className={styles.planHeader}>
+                  <span className={styles.planName}>Enterprise Recovery Report</span>
+                  <span className={styles.planSubtitle}>One-time Assessment</span>
+                </div>
+                <div className={styles.planPrice}>₹4,999</div>
+              </div>
+
+              <div className={styles.featuresSection}>
+                <h4 className={styles.featuresTitle}>Included Features:</h4>
+                <ul className={styles.featuresList}>
+                  <li className={styles.featureItem}>Executive Summary</li>
+                  <li className={styles.featureItem}>Complete Recovery Opportunities</li>
+                  <li className={styles.featureItem}>AI Recommendations</li>
+                  <li className={styles.featureItem}>Root Cause Analysis</li>
+                  <li className={styles.featureItem}>Financial Impact Report</li>
+                  <li className={styles.featureItem}>Executive Presentation</li>
+                  <li className={styles.featureItem}>PDF Export (Mock)</li>
+                </ul>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button 
+                  className={styles.modalPrimaryBtn}
+                  onClick={() => setPaymentStep('payment_methods')}
+                >
+                  Proceed to Payment
+                </button>
+                <button 
+                  className={styles.modalSecondaryBtn}
+                  onClick={() => setPaymentStep('none')}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {paymentStep === 'payment_methods' && (
+            <div className={styles.modalCard}>
+              <h3 className={styles.modalTitle}>Mock Payment</h3>
+              
+              <div className={styles.paymentSummary}>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Assessment Name</span>
+                  <span className={styles.summaryValue}>Enterprise Recovery Report</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Price</span>
+                  <span className={styles.summaryValue}>₹4,999</span>
+                </div>
+              </div>
+
+              <h4 className={styles.methodsTitle}>Select Payment Method:</h4>
+              <div className={styles.paymentMethods}>
+                <div className={`${styles.paymentMethod} ${styles.activeMethod}`}>
+                  <input type="radio" id="card" name="payment_method" defaultChecked />
+                  <label htmlFor="card">Credit / Debit Card</label>
+                </div>
+                <div className={styles.paymentMethod}>
+                  <input type="radio" id="upi" name="payment_method" />
+                  <label htmlFor="upi">UPI</label>
+                </div>
+                <div className={styles.paymentMethod}>
+                  <input type="radio" id="netbanking" name="payment_method" />
+                  <label htmlFor="netbanking">Net Banking</label>
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button 
+                  className={styles.modalPrimaryBtn}
+                  onClick={() => {
+                    setPaymentStep('payment_loading');
+                    setTimeout(() => {
+                      setPaymentStep('none');
+                      setReportUnlocked(true);
+                    }, 2000);
+                  }}
+                >
+                  Complete Payment
+                </button>
+                <button 
+                  className={styles.modalSecondaryBtn}
+                  onClick={() => setPaymentStep('upgrade_modal')}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          )}
+
+          {paymentStep === 'payment_loading' && (
+            <div className={`${styles.modalCard} ${styles.loadingModal}`}>
+              <div className={styles.successCheckCircle}>
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h3 className={styles.successTitle}>✅ Payment Successful</h3>
+              <p className={styles.successSubtitle}>Preparing your Executive Recovery Report...</p>
+              <div className={styles.premiumProgressLine}>
+                <div className={styles.premiumProgressActive} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Assessment History Slide-over Drawer */}
+      {isHistoryOpen && (
+        <>
+          {/* Backdrop */}
+          <div className={styles.drawerBackdrop} onClick={() => setIsHistoryOpen(false)} />
+          
+          {/* Drawer Panel */}
+          <div className={styles.drawerPanel} aria-label="Assessment History Drawer">
+            <div className={styles.drawerHeader}>
+              <h3 className={styles.drawerTitle}>🕘 Assessment History</h3>
+              <button 
+                className={styles.drawerCloseBtn} 
+                onClick={() => setIsHistoryOpen(false)}
+                type="button"
+                aria-label="Close drawer"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className={styles.drawerContent}>
+              <div className={styles.historyList}>
+                {/* Item 1 */}
+                <div 
+                  className={`${styles.historyCard} ${styles.activeHistoryCard}`} 
+                  onClick={() => {
+                    setCurrentAssessmentTitle("Revenue Recovery Assessment");
+                    setIsHistoryOpen(false);
+                  }}
+                >
+                  <div className={styles.historyCardHeader}>
+                    <span className={styles.historyCardName}>Revenue Recovery Assessment</span>
+                    <span className={`${styles.historyBadge} ${styles.badgeActive}`}>Active</span>
+                  </div>
+                  <div className={styles.historyCardMeta}>
+                    <span className={styles.historyCardDate}>Aug 3, 2026</span>
+                    <span className={styles.historyCardAmount}>₹31,40,000</span>
+                  </div>
+                </div>
+
+                {/* Item 2 */}
+                <div 
+                  className={styles.historyCard} 
+                  onClick={() => {
+                    setCurrentAssessmentTitle("GST Compliance Assessment");
+                    setIsHistoryOpen(false);
+                  }}
+                >
+                  <div className={styles.historyCardHeader}>
+                    <span className={styles.historyCardName}>GST Validation Assessment</span>
+                    <span className={`${styles.historyBadge} ${styles.badgeCompleted}`}>Completed</span>
+                  </div>
+                  <div className={styles.historyCardMeta}>
+                    <span className={styles.historyCardDate}>Jul 15, 2026</span>
+                    <span className={styles.historyCardAmount}>₹12,50,000</span>
+                  </div>
+                </div>
+
+                {/* Item 3 */}
+                <div 
+                  className={styles.historyCard} 
+                  onClick={() => {
+                    setCurrentAssessmentTitle("Customer Recovery Assessment");
+                    setIsHistoryOpen(false);
+                  }}
+                >
+                  <div className={styles.historyCardHeader}>
+                    <span className={styles.historyCardName}>Customer Recovery Review</span>
+                    <span className={`${styles.historyBadge} ${styles.badgeCompleted}`}>Completed</span>
+                  </div>
+                  <div className={styles.historyCardMeta}>
+                    <span className={styles.historyCardDate}>Jun 28, 2026</span>
+                    <span className={styles.historyCardAmount}>₹8,20,000</span>
+                  </div>
+                </div>
+
+                {/* Item 4 */}
+                <div 
+                  className={styles.historyCard} 
+                  onClick={() => {
+                    setCurrentAssessmentTitle("Vendor Audit Assessment");
+                    setIsHistoryOpen(false);
+                  }}
+                >
+                  <div className={styles.historyCardHeader}>
+                    <span className={styles.historyCardName}>Vendor Audit Report</span>
+                    <span className={`${styles.historyBadge} ${styles.badgeCompleted}`}>Completed</span>
+                  </div>
+                  <div className={styles.historyCardMeta}>
+                    <span className={styles.historyCardDate}>May 12, 2026</span>
+                    <span className={styles.historyCardAmount}>₹15,40,000</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
