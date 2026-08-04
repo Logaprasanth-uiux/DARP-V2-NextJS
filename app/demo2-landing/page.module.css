@@ -1,0 +1,210 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background);
+}
+
+/* ==========================================================================
+   TOP NAVBAR (Enterprise Header)
+   ========================================================================== */
+.topHeader {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3) 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topHeaderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-0-5);
+}
+
+.brandLogoSvg {
+  height: 1.625rem;
+  width: auto;
+  display: block;
+}
+
+.brandSubtext {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.navAction {
+  display: flex;
+  align-items: center;
+}
+
+/* ==========================================================================
+   MAIN CONTENT
+   ========================================================================== */
+.mainContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) 0;
+}
+
+.contentContainer {
+  max-width: 680px;
+  width: 100%;
+}
+
+.placeholderCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-10) var(--space-8);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.badgeRow {
+  display: flex;
+  justify-content: center;
+}
+
+.demoBadge {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  background-color: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
+}
+
+.placeholderTitle {
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: var(--line-height-tight);
+}
+
+.placeholderSubtitle {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  max-width: 480px;
+  margin: 0;
+}
+
+.statusBox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.statusPulse {
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-warning);
+  border-radius: var(--radius-full);
+  display: block;
+  animation: pulseAnimation 2s infinite ease-in-out;
+}
+
+.statusText {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning-text);
+}
+
+.actionBlock {
+  margin-top: var(--space-2);
+}
+
+/* ==========================================================================
+   MINIMAL FOOTER
+   ========================================================================== */
+.footer {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-6) 0;
+}
+
+.footerContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.footerLink {
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.footerLink:hover {
+  color: var(--color-text-primary);
+}
+
+@keyframes pulseAnimation {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 640px) {
+  .topHeaderContainer {
+    flex-direction: column;
+    gap: var(--space-3);
+    text-align: center;
+  }
+  .placeholderCard {
+    padding: var(--space-8) var(--space-5);
+  }
+  .footerContainer {
+    flex-direction: column;
+    gap: var(--space-3);
+    text-align: center;
+    align-items: center;
+  }
+}

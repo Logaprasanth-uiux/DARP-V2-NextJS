@@ -572,11 +572,130 @@ function AnimatedCounter({ targetValue, startValue, start }: { targetValue: numb
   return <span>₹{formatIndianCurrency(displayVal)}</span>;
 }
 
+function StreamingText({ content, onComplete }: { content: string; onComplete?: () => void }) {
+  const [displayedText, setDisplayedText] = useState('');
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    // Respect prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayedText(content);
+      if (onCompleteRef.current) onCompleteRef.current();
+      return;
+    }
+
+    let currentIndex = 0;
+    const charsPerSecond = 32; // Speed increased to ~32 characters per second (30-35 cps range)
+    const delay = 1000 / charsPerSecond;
+
+    if (!content) return;
+
+    const timer = setInterval(() => {
+      currentIndex += 1;
+      setDisplayedText(content.substring(0, currentIndex));
+      
+      if (currentIndex >= content.length) {
+        clearInterval(timer);
+        if (onCompleteRef.current) onCompleteRef.current();
+      }
+    }, delay);
+
+    return () => clearInterval(timer);
+  }, [content]);
+
+  return (
+    <>
+      {displayedText.split('\n\n').map((para, i) => (
+        <p key={i} className={styles.aiTextParagraph}>{para}</p>
+      ))}
+    </>
+  );
+}
+
+function AnimatedAiBubble({ 
+  id,
+  content, 
+  completedMessageIds,
+  onComplete 
+}: { 
+  id: string;
+  content: string; 
+  completedMessageIds: Set<string>;
+  onComplete?: () => void; 
+}) {
+  const isAlreadyCompleted = completedMessageIds.has(id);
+  const [phase, setPhase] = useState<'hidden' | 'streaming' | 'complete'>(
+    isAlreadyCompleted ? 'complete' : 'hidden'
+  );
+
+  useEffect(() => {
+    if (isAlreadyCompleted) {
+      setPhase('complete');
+      return;
+    }
+
+    // Respect prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setPhase('complete');
+      completedMessageIds.add(id);
+      return;
+    }
+
+    // Thinking delay: Wait 300 ms (250-400 ms) before bubble appears
+    const showTimer = setTimeout(() => {
+      setPhase('streaming');
+    }, 300);
+
+    return () => clearTimeout(showTimer);
+  }, [id, isAlreadyCompleted, completedMessageIds]);
+
+  if (phase === 'hidden') {
+    return null; // Return null so no empty container is visible during thinking delay
+  }
+
+  if (phase === 'streaming') {
+    return (
+      <div className={`${styles.aiBubble} ${styles.aiBubbleFadeIn}`}>
+        <StreamingText 
+          content={content} 
+          onComplete={() => {
+            completedMessageIds.add(id);
+            setPhase('complete');
+            if (onComplete) onComplete();
+          }} 
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.aiBubble}>
+      {content.split('\n\n').map((para, i) => (
+        <p key={i} className={styles.aiTextParagraph}>{para}</p>
+      ))}
+    </div>
+  );
+}
+
 type ScrollStage = 'none' | 'ai_acknowledgement' | 'processing' | 'executive_assessment';
 
 export default function Demo2WorkspacePage() {
   const router = useRouter();
+  const [completedMessageIds, setCompletedMessageIds] = useState<Set<string>>(new Set());
+  const markMessageCompleted = (id: string) => {
+    setCompletedMessageIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  };
   const [isTransitioned, setIsTransitioned] = useState(false);
+  const reconcile1ProcessingTriggeredRef = useRef(false);
+  const reconcile2ProcessingTriggeredRef = useRef(false);
   const [promptValue, setPromptValue] = useState("");
   const [conversation, setConversation] = useState<MessageBlock[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -879,12 +998,6 @@ export default function Demo2WorkspacePage() {
       setReconcile1Started(true);
 
       const aiMsgId = `ai-batch-complete-${Math.random().toString(36).substring(2, 9)}`;
-      const processingMsgId = `ai-processing-${Math.random().toString(36).substring(2, 9)}`;
-      const completedTextMsgId = `ai-completed-text-1-${Math.random().toString(36).substring(2, 9)}`;
-      const assessmentMsgId = `ai-assessment-card-1-${Math.random().toString(36).substring(2, 9)}`;
-      const recommendTextMsgId = `ai-recommend-text-${Math.random().toString(36).substring(2, 9)}`;
-      const enterpriseAlertMsgId = `ai-enterprise-alert-${Math.random().toString(36).substring(2, 9)}`;
-      const recommendDocsMsgId = `ai-recommend-docs-${Math.random().toString(36).substring(2, 9)}`;
 
       const aiMsg: MessageBlock = {
         id: aiMsgId,
@@ -893,17 +1006,56 @@ export default function Demo2WorkspacePage() {
         content: `Excellent. I now have sufficient information to perform an initial recovery assessment.`
       };
 
-      const processingMsg: MessageBlock = {
-        id: processingMsgId,
+      setScrollStage('ai_acknowledgement');
+      setConversation(prevHistory => [...prevHistory, aiMsg]);
+    }
+  }, [uploadStates, isTransitioned, reconcile1Started]);
+
+  // Trigger second reconciliation when all recommended documents are validated
+  useEffect(() => {
+    const recommendedDocs = ['gst-returns', 'sales-register', 'customer-ledger'];
+    const allRecommendedValidated = recommendedDocs.every(id => uploadStates[id].status === 'validated');
+    
+    if (allRecommendedValidated && isTransitioned && !reconcile2Started) {
+      setReconcile2Started(true);
+
+      const aiMsgId2 = `ai-second-complete-${Math.random().toString(36).substring(2, 9)}`;
+
+      const aiMsg: MessageBlock = {
+        id: aiMsgId2,
         role: 'assistant',
-        type: 'processing_indicator'
+        type: 'text',
+        content: `Excellent. I have received the additional supporting documents and will now perform a deeper reconciliation across your financial records.`
       };
 
       setScrollStage('ai_acknowledgement');
       setConversation(prevHistory => [...prevHistory, aiMsg]);
+    }
+  }, [uploadStates, isTransitioned, reconcile2Started]);
 
-      // Schedule secondary processing message
+  // Listen for AI message completions to trigger subsequent workflow stages sequentially
+  useEffect(() => {
+    // 1. Initial Assessment Trigger: wait for aiMsgId to complete streaming
+    const matchingKey = Array.from(completedMessageIds).find(id => id.startsWith('ai-batch-complete-'));
+    if (matchingKey && !reconcile1ProcessingTriggeredRef.current) {
+      reconcile1ProcessingTriggeredRef.current = true;
+      
+      // Wait a very short moment (around 150-250 ms) after streaming completes
       setTimeout(() => {
+        const suffix = matchingKey.split('-').slice(-1)[0];
+        const processingMsgId = `ai-processing-${suffix}`;
+        const completedTextMsgId = `ai-completed-text-1-${suffix}`;
+        const assessmentMsgId = `ai-assessment-card-1-${suffix}`;
+        const recommendTextMsgId = `ai-recommend-text-${suffix}`;
+        const enterpriseAlertMsgId = `ai-enterprise-alert-${suffix}`;
+        const recommendDocsMsgId = `ai-recommend-docs-${suffix}`;
+
+        const processingMsg: MessageBlock = {
+          id: processingMsgId,
+          role: 'assistant',
+          type: 'processing_indicator'
+        };
+
         setScrollStage('processing');
         setConversation(h => {
           const hasProcessing = h.some(msg => msg.id === processingMsgId);
@@ -914,10 +1066,7 @@ export default function Demo2WorkspacePage() {
         // Schedule transitioning to Executive Assessment Card after 3.5 seconds
         setTimeout(() => {
           setConversation(h => {
-            // Replace the processing indicator with a finished text block, and append the assessment card
             const withoutProcessing = h.filter(msg => msg.id !== processingMsgId);
-            
-            // If already appended, skip
             const hasAssessment = h.some(msg => msg.id === assessmentMsgId);
             if (hasAssessment) return h;
 
@@ -952,7 +1101,7 @@ export default function Demo2WorkspacePage() {
                 return [...prev, recommendTextMsg];
               });
 
-              // Schedule Refinement 2: Standalone Enterprise Alert Callout (600ms after text, i.e. 1400ms after card)
+              // Schedule Refinement 2: Standalone Enterprise Alert Callout (600ms after text)
               setTimeout(() => {
                 setConversation(prev => {
                   const hasEnterpriseAlert = prev.some(msg => msg.id === enterpriseAlertMsgId);
@@ -967,7 +1116,7 @@ export default function Demo2WorkspacePage() {
                   return [...prev, enterpriseAlertMsg];
                 });
 
-                // Schedule Refinement 3: Additional Supporting Documents request block (600ms after alert, i.e. 2000ms after card)
+                // Schedule Refinement 3: Additional Supporting Documents request block (600ms after alert)
                 setTimeout(() => {
                   setConversation(prev => {
                     const hasRecommendDocs = prev.some(msg => msg.id === recommendDocsMsgId);
@@ -997,41 +1146,27 @@ export default function Demo2WorkspacePage() {
           });
         }, 3500);
 
-      }, 600);
+      }, 200); // Delay before starting next step: 200ms (150-250ms)
     }
-  }, [uploadStates, isTransitioned, reconcile1Started]);
 
-  // Trigger second reconciliation when all recommended documents are validated
-  useEffect(() => {
-    const recommendedDocs = ['gst-returns', 'sales-register', 'customer-ledger'];
-    const allRecommendedValidated = recommendedDocs.every(id => uploadStates[id].status === 'validated');
-    
-    if (allRecommendedValidated && isTransitioned && !reconcile2Started) {
-      setReconcile2Started(true);
+    // 2. Second Assessment Trigger: wait for aiMsgId2 to complete streaming
+    const matchingKey2 = Array.from(completedMessageIds).find(id => id.startsWith('ai-second-complete-'));
+    if (matchingKey2 && !reconcile2ProcessingTriggeredRef.current) {
+      reconcile2ProcessingTriggeredRef.current = true;
 
-      const aiMsgId2 = `ai-second-complete-${Math.random().toString(36).substring(2, 9)}`;
-      const processingMsgId2 = `ai-processing-2-${Math.random().toString(36).substring(2, 9)}`;
-      const completedTextMsgId2 = `ai-completed-text-2-${Math.random().toString(36).substring(2, 9)}`;
-      const assessmentMsgId2 = `ai-assessment-card-2-${Math.random().toString(36).substring(2, 9)}`;
-
-      const aiMsg: MessageBlock = {
-        id: aiMsgId2,
-        role: 'assistant',
-        type: 'text',
-        content: `Excellent. I have received the additional supporting documents and will now perform a deeper reconciliation across your financial records.`
-      };
-
-      const processingMsg: MessageBlock = {
-        id: processingMsgId2,
-        role: 'assistant',
-        type: 'processing_indicator'
-      };
-
-      setScrollStage('ai_acknowledgement');
-      setConversation(prevHistory => [...prevHistory, aiMsg]);
-
-      // Schedule secondary processing message
+      // Wait a very short moment (around 150-250 ms) after streaming completes
       setTimeout(() => {
+        const suffix2 = matchingKey2.split('-').slice(-1)[0];
+        const processingMsgId2 = `ai-processing-2-${suffix2}`;
+        const completedTextMsgId2 = `ai-completed-text-2-${suffix2}`;
+        const assessmentMsgId2 = `ai-assessment-card-2-${suffix2}`;
+
+        const processingMsg: MessageBlock = {
+          id: processingMsgId2,
+          role: 'assistant',
+          type: 'processing_indicator'
+        };
+
         setScrollStage('processing');
         setConversation(h => {
           const hasProcessing = h.some(msg => msg.id === processingMsgId2);
@@ -1043,7 +1178,6 @@ export default function Demo2WorkspacePage() {
         setTimeout(() => {
           setConversation(h => {
             const withoutProcessing = h.filter(msg => msg.id !== processingMsgId2);
-            
             const hasAssessment2 = h.some(msg => msg.id === assessmentMsgId2);
             if (hasAssessment2) return h;
 
@@ -1066,9 +1200,9 @@ export default function Demo2WorkspacePage() {
           });
         }, 3500);
 
-      }, 600);
+      }, 200); // Delay before starting next step: 200ms (150-250ms)
     }
-  }, [uploadStates, isTransitioned, reconcile2Started]);
+  }, [completedMessageIds]);
 
 
 
@@ -1173,28 +1307,31 @@ export default function Demo2WorkspacePage() {
     if (!isTransitioned) {
       setIsTransitioned(true);
       setPromptValue("");
+      setConversation([userMsg]);
 
-      const aiMsg: MessageBlock = {
-        id: `ai-text-${Date.now()}`,
-        role: 'assistant',
-        type: 'text',
-        content: `Thank you for sharing your recovery challenge.
+      setTimeout(() => {
+        const aiMsg: MessageBlock = {
+          id: `ai-text-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `Thank you for sharing your recovery challenge.
 
 To perform an initial assessment, please upload the following financial documents.`,
-      };
+        };
 
-      const docReqMsg: MessageBlock = {
-        id: `ai-doc-req-${Date.now()}`,
-        role: 'assistant',
-        type: 'document_request',
-        documents: [
-          { id: 'bank-statements', name: 'Bank Statements', description: 'Last 6 months' },
-          { id: 'ar-report', name: 'Accounts Receivable Report', description: 'Customer receivables' },
-          { id: 'ap-ledger', name: 'Accounts Payable Ledger', description: 'Vendor payables' },
-        ]
-      };
+        const docReqMsg: MessageBlock = {
+          id: `ai-doc-req-${Date.now()}`,
+          role: 'assistant',
+          type: 'document_request',
+          documents: [
+            { id: 'bank-statements', name: 'Bank Statements', description: 'Last 6 months' },
+            { id: 'ar-report', name: 'Accounts Receivable Report', description: 'Customer receivables' },
+            { id: 'ap-ledger', name: 'Accounts Payable Ledger', description: 'Vendor payables' },
+          ]
+        };
 
-      setConversation([userMsg, aiMsg, docReqMsg]);
+        setConversation(prev => [...prev, aiMsg, docReqMsg]);
+      }, 800);
     } else {
       setConversation((prev) => [...prev, userMsg]);
       setPromptValue("");
@@ -1330,7 +1467,7 @@ To perform an initial assessment, please upload the following financial document
             {isTransitioned && (
               <div className={styles.conversationContainer} ref={chatScrollRef} aria-live="polite">
                 <div className={styles.conversationContentWidth}>
-                  {conversation.map((msg) => {
+                   {conversation.map((msg, index) => {
                     const isUser = msg.role === 'user';
                     
                     if (isUser) {
@@ -1352,6 +1489,16 @@ To perform an initial assessment, please upload the following financial document
                         u => u.status === 'uploading' || u.status === 'validating'
                       );
 
+                      const isPrecedingTextPending = (() => {
+                        for (let i = index - 1; i >= 0; i--) {
+                          const prevMsg = conversation[i];
+                          if (prevMsg.type === 'text') {
+                            return !completedMessageIds.has(prevMsg.id);
+                          }
+                        }
+                        return false;
+                      })();
+
                       if (msg.type === 'text') {
                         return (
                           <div 
@@ -1368,16 +1515,18 @@ To perform an initial assessment, please upload the following financial document
                                 <line x1="16" y1="16" x2="16" y2="16.01" />
                               </svg>
                             </div>
-                            <div className={styles.aiBubble}>
-                              {msg.content?.split('\n\n').map((para, i) => (
-                                <p key={i} className={styles.aiTextParagraph}>{para}</p>
-                              ))}
-                            </div>
+                            <AnimatedAiBubble 
+                              id={msg.id}
+                              content={msg.content ?? ''} 
+                              completedMessageIds={completedMessageIds}
+                              onComplete={() => markMessageCompleted(msg.id)}
+                            />
                           </div>
                         );
                       } else if (msg.type === 'document_request') {
+                        if (isPrecedingTextPending) return null;
                         return (
-                          <div key={msg.id} className={styles.aiMessageRowCentered}>
+                          <div key={msg.id} className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
                             <div className={styles.documentRequestCard}>
                               <div className={styles.docRequestHeader}>
                                 <h3 className={styles.docRequestTitle}>Documents Required for Initial Assessment</h3>
@@ -1524,12 +1673,13 @@ To perform an initial assessment, please upload the following financial document
                           </div>
                         );
                       } else if (msg.type === 'executive_assessment') {
+                        if (isPrecedingTextPending) return null;
                         const isCard2 = msg.isUpdated === true;
                         return (
                           <div 
                             key={msg.id} 
                             ref={el => scrollToAssessmentTop(el, msg.id)} 
-                            className={styles.aiMessageRowCentered}
+                            className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}
                           >
                             <div className={styles.assessmentMainCard}>
                               {/* Header */}
@@ -1726,8 +1876,9 @@ To perform an initial assessment, please upload the following financial document
                           </div>
                         );
                       } else if (msg.type === 'enterprise_alert') {
+                        if (isPrecedingTextPending) return null;
                         return (
-                          <div key={msg.id} className={styles.aiMessageRowCentered}>
+                          <div key={msg.id} className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
                             <div className={styles.recommendAlertBox}>
                               <div className={styles.recommendAlertHeader}>
                                 <svg className={styles.warningIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1748,8 +1899,9 @@ To perform an initial assessment, please upload the following financial document
                           </div>
                         );
                       } else if (msg.type === 'recommended_documents') {
+                        if (isPrecedingTextPending) return null;
                         return (
-                          <div key={msg.id} className={styles.aiMessageRowCentered}>
+                          <div key={msg.id} className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
                             <div className={styles.documentRequestCard}>
                               <div className={styles.docRequestHeader}>
                                 <h3 className={styles.docRequestTitle}>Additional Documents Recommended</h3>

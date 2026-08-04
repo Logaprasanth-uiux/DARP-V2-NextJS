@@ -2,49 +2,22 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Container } from '@/components/ui';
+import { Button, Container } from '@/components/ui';
 import styles from './page.module.css';
 
-interface DemoItem {
-  id: string;
-  title: string;
-  description: string;
-  badge: string;
-  route: string;
-  variant: 'info' | 'neutral' | 'success' | 'warning' | 'danger';
-}
-
-const demoConfigurations: DemoItem[] = [
-  {
-    id: 'demo-1',
-    title: 'Landing Page – Demo 1',
-    description: 'Current Revenue Recovery Assessment landing experience.',
-    badge: 'Demo 1',
-    route: '/demo1-landing',
-    variant: 'info',
-  },
-  {
-    id: 'demo-2',
-    title: 'Landing Page – Demo 2',
-    description: 'Alternative Landing Page experience for internal review.',
-    badge: 'Demo 2',
-    route: '/demo2-landing',
-    variant: 'neutral',
-  },
-];
-
-export default function DemoLauncherPage() {
+export default function Demo2LandingPlaceholderPage() {
   const router = useRouter();
 
-  const handleLaunchDemo = (route: string) => {
-    router.push(route);
+  const handleBackToLauncher = () => {
+    router.push('/');
   };
 
   return (
-    <div className={styles.launcherWrapper}>
-      <header className={styles.launcherHeader}>
-        <Container className={styles.headerContainer}>
-          <div className={styles.brandBlock}>
+    <div className={styles.wrapper}>
+      {/* TOP HEADER */}
+      <header className={styles.topHeader}>
+        <Container className={styles.topHeaderContainer}>
+          <div className={styles.brandBlock} onClick={handleBackToLauncher} style={{ cursor: 'pointer' }}>
             <svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 815.71 212.04" className={styles.brandLogoSvg} aria-label="DARP Logo">
               <defs>
                 <style>
@@ -69,62 +42,54 @@ export default function DemoLauncherPage() {
             </svg>
             <span className={styles.brandSubtext}>Discover • Assess • Recover • Prevent</span>
           </div>
-          <div className={styles.utilityTag}>
-            <span>Internal Dev Utility</span>
+
+          <div className={styles.navAction}>
+            <Button variant="outline" size="sm" onClick={handleBackToLauncher}>
+              ← Back to Launcher
+            </Button>
           </div>
         </Container>
       </header>
 
-      <main className={styles.launcherMain}>
-        <Container className={styles.launcherContainer}>
-          <div className={styles.launcherHero}>
-            <span className={styles.internalBadge}>Developer Sandbox</span>
-            <h1 className={styles.launcherTitle}>Internal Demo Launcher</h1>
-            <p className={styles.launcherSubtitle}>
-              Select a demo experience for internal review. Switch between variants of the DARP landing environments during design audits and stakeholder syncs.
+      {/* MAIN CONTAINER */}
+      <main className={styles.mainContent}>
+        <Container className={styles.contentContainer}>
+          <div className={styles.placeholderCard}>
+            <div className={styles.badgeRow}>
+              <span className={styles.demoBadge}>Landing Page – Demo 2</span>
+            </div>
+            
+            <h1 className={styles.placeholderTitle}>Alternative Landing Page Experience</h1>
+            <p className={styles.placeholderSubtitle}>
+              This alternative landing experience is currently being refined and will be deployed in the next update.
             </p>
-          </div>
 
-          <div className={styles.demoGrid}>
-            {demoConfigurations.map((demo) => (
-              <div 
-                key={demo.id} 
-                className={styles.demoCard}
-                onClick={() => handleLaunchDemo(demo.route)}
-              >
-                <div className={styles.cardHeader}>
-                  <span className={`${styles.demoBadgeTag} ${styles[demo.variant]}`}>
-                    {demo.badge}
-                  </span>
-                  <h3 className={styles.cardTitle}>{demo.title}</h3>
-                </div>
-                <p className={styles.cardDescription}>{demo.description}</p>
-                <div className={styles.cardFooter}>
-                  <button 
-                    type="button" 
-                    className={styles.launchBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLaunchDemo(demo.route);
-                    }}
-                  >
-                    Launch Demo
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.arrowIcon}>
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+            <div className={styles.statusBox}>
+              <span className={styles.statusPulse}></span>
+              <span className={styles.statusText}>Coming in the next refinement</span>
+            </div>
+
+            <div className={styles.actionBlock}>
+              <Button variant="primary" size="md" onClick={handleBackToLauncher}>
+                Back to Demo Launcher
+              </Button>
+            </div>
           </div>
         </Container>
       </main>
 
-      <footer className={styles.launcherFooter}>
+      {/* FOOTER */}
+      <footer className={styles.footer}>
         <Container className={styles.footerContainer}>
-          <span>DARP Enterprise v2 — Internal Testing Environment</span>
-          <span>Confidential • Internal Use Only</span>
+          <div className={styles.footerLeft}>
+            <span>DARP Enterprise v2</span>
+            <span>(v2.0.0)</span>
+          </div>
+          <div className={styles.footerRight}>
+            <span className={styles.footerLink} onClick={handleBackToLauncher}>Launcher</span>
+            <span>•</span>
+            <span>Support</span>
+          </div>
         </Container>
       </footer>
     </div>
