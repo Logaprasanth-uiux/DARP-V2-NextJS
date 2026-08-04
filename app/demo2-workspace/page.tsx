@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   Button,
@@ -614,6 +615,17 @@ export default function Demo2WorkspacePage() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const [mounted, setMounted] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<{
+    text: string;
+    subtext: string;
+    rect: DOMRect | null;
+  } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [uploadStates, setUploadStates] = useState<Record<string, DocumentUploadState>>({
     'bank-statements': {
       id: 'bank-statements',
@@ -688,6 +700,26 @@ export default function Demo2WorkspacePage() {
       comments: `Please validate duplicate payment and initiate recovery for ${contextName}.`
     });
     setIsAssignModalOpen(true);
+  };
+
+  const handleStartRecoveryClick = (e: React.MouseEvent, type: 'category' | 'vendor', name: string) => {
+    e.stopPropagation();
+    setActiveTooltip(null);
+    setToastMessage("Recovery communication initiated successfully.");
+    setShowToast(true);
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActiveTooltip({
+      text: "Initiate recovery communication.",
+      subtext: "Sends a pre-filled follow-up email to the vendor or responsible contact requesting verification and recovery of the identified payment discrepancy.",
+      rect,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setActiveTooltip(null);
   };
 
   const handleAssignSubmit = (e: React.FormEvent) => {
@@ -1947,8 +1979,30 @@ To perform an initial assessment, please upload the following financial document
                             <span className={styles.opportunityName}>{cat.name}</span>
                           </div>
                           <div className={styles.opportunityDetails}>
-                            <span className={styles.opportunityVal}>{cat.recoverableValue}</span>
-                            <span className={styles.opportunityConf}>{cat.confidence} Confidence</span>
+                            <div className={styles.opportunityDetailsTopRow}>
+                              <button
+                                type="button"
+                                className={styles.startRecoveryBtn}
+                                onClick={(e) => handleStartRecoveryClick(e, 'category', cat.name)}
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                              >
+                                <svg 
+                                  viewBox="0 0 24 24" 
+                                  width="12" 
+                                  height="12" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2.5" 
+                                  className={styles.buttonIcon} 
+                                  aria-hidden="true"
+                                >
+                                  <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                </svg>
+                                Start Recovery
+                              </button>
+                              <span className={styles.opportunityVal}>{cat.recoverableValue}</span>
+                            </div>
                           </div>
                         </div>
 
@@ -1985,6 +2039,27 @@ To perform an initial assessment, please upload the following financial document
                                         <span className={styles.vendorNameText}>{vendor.name}</span>
                                       </div>
                                       <div className={styles.vendorRightZone}>
+                                        <button
+                                          type="button"
+                                          className={styles.startRecoveryBtn}
+                                          onClick={(e) => handleStartRecoveryClick(e, 'vendor', vendor.name)}
+                                          onMouseEnter={handleMouseEnter}
+                                          onMouseLeave={handleMouseLeave}
+                                        >
+                                          <svg 
+                                            viewBox="0 0 24 24" 
+                                            width="12" 
+                                            height="12" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            strokeWidth="2.5" 
+                                            className={styles.buttonIcon} 
+                                            aria-hidden="true"
+                                          >
+                                            <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                          </svg>
+                                          Start Recovery
+                                        </button>
                                         <span className={styles.vendorValText}>{vendor.potentialRecovery}</span>
                                         <span className={styles.vendorMetaText}>{vendor.invoiceCount} invoices</span>
                                       </div>
@@ -2020,7 +2095,6 @@ To perform an initial assessment, please upload the following financial document
                                                   </div>
                                                   <div className={styles.invoiceRightZone}>
                                                     <span className={styles.invoiceValText}>{inv.potentialRecovery}</span>
-                                                    <span className={styles.invoiceConfText}>{inv.confidence}</span>
                                                   </div>
                                                 </div>
 
@@ -2059,12 +2133,6 @@ To perform an initial assessment, please upload the following financial document
                                                         <span className={styles.fieldLabel}>GST Information</span>
                                                         <span className={styles.fieldValue}>{inv.details.gstInfo}</span>
                                                       </div>
-                                                      <div className={styles.detailField}>
-                                                        <span className={styles.fieldLabel}>Confidence Score</span>
-                                                        <span className={styles.fieldValue} style={{ color: 'var(--color-success-text)', fontWeight: 'bold' }}>
-                                                          {inv.details.confidenceScore}
-                                                        </span>
-                                                      </div>
                                                     </div>
                                                     <div className={styles.detailExplanationBlock}>
                                                       <div className={styles.explanationTitle}>AI Explanation</div>
@@ -2073,6 +2141,29 @@ To perform an initial assessment, please upload the following financial document
                                                     <div className={styles.detailExplanationBlock}>
                                                       <div className={styles.explanationTitle}>Recommended Action</div>
                                                       <p className={styles.explanationText}>{inv.details.recommendedAction}</p>
+                                                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
+                                                        <button
+                                                          type="button"
+                                                          className={styles.startRecoveryBtn}
+                                                          onClick={(e) => handleStartRecoveryClick(e, 'vendor', inv.details.vendor)}
+                                                          onMouseEnter={handleMouseEnter}
+                                                          onMouseLeave={handleMouseLeave}
+                                                        >
+                                                          <svg 
+                                                            viewBox="0 0 24 24" 
+                                                            width="12" 
+                                                            height="12" 
+                                                            fill="none" 
+                                                            stroke="currentColor" 
+                                                            strokeWidth="2.5" 
+                                                            className={styles.buttonIcon} 
+                                                            aria-hidden="true"
+                                                          >
+                                                            <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                                          </svg>
+                                                          Start Recovery
+                                                        </button>
+                                                      </div>
                                                     </div>
                                                     
                                                     {/* Action buttons inside Detail Card */}
@@ -2469,6 +2560,26 @@ To perform an initial assessment, please upload the following financial document
             {toastMessage}
           </div>
         </div>
+      )}
+
+      {/* Floating portal tooltip to prevent clipping */}
+      {mounted && activeTooltip && createPortal(
+        <div 
+          className={styles.portalTooltip}
+          style={{
+            position: 'fixed',
+            left: `${(activeTooltip.rect?.left ?? 0) + (activeTooltip.rect?.width ?? 0) / 2}px`,
+            top: `${(activeTooltip.rect?.top ?? 0) - 8}px`,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 99999,
+            pointerEvents: 'none',
+          }}
+        >
+          <strong>{activeTooltip.text}</strong>
+          <p className={styles.tooltipSubtext}>{activeTooltip.subtext}</p>
+          <div className={styles.portalTooltipArrow} />
+        </div>,
+        document.body
       )}
     </div>
   );
