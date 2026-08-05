@@ -24,6 +24,10 @@ export default function DemoSelectionPage() {
     router.push('/demo2-login');
   };
 
+  const handleLaunchDemo3 = () => {
+    router.push('/demo2-login?demo=3');
+  };
+
   const handleBackToHome = () => {
     router.push('/');
   };
@@ -113,6 +117,28 @@ export default function DemoSelectionPage() {
                   </p>
                   <div className={styles.cardFooterArea}>
                     <Button variant="primary" size="md" className={styles.launchButton} onClick={(e) => { e.stopPropagation(); handleLaunchDemo2(); }}>
+                      Launch Demo →
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* DEMO 3 CARD */}
+            <div onClick={handleLaunchDemo3} className={styles.cardWrapper}>
+              <Card elevated className={styles.demoCard}>
+                <CardContent className={styles.cardInner}>
+                  <div className={styles.cardHeaderArea}>
+                    <div className={styles.badgeRow}>
+                      <Badge variant="success" size="sm" className={styles.demoBadge}>Demo 3</Badge>
+                    </div>
+                    <h3 className={styles.demoTitle}>Executive Workspace</h3>
+                  </div>
+                  <p className={styles.demoDescription}>
+                    Dedicated Executive Recovery Report Workspace with a full-page report experience and integrated AI Assistant.
+                  </p>
+                  <div className={styles.cardFooterArea}>
+                    <Button variant="primary" size="md" className={styles.launchButton} onClick={(e) => { e.stopPropagation(); handleLaunchDemo3(); }}>
                       Launch Demo →
                     </Button>
                   </div>

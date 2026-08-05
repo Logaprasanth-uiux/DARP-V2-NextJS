@@ -20,7 +20,14 @@ export default function Demo2LoginPage() {
 
   const handleLoginSubmit = (e: React.MouseEvent | React.FormEvent) => {
     e.preventDefault();
-    router.push('/demo2-workspace');
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const isDemo3 = searchParams ? searchParams.get('demo') === '3' : false;
+    
+    if (isDemo3) {
+      router.push('/demo3-workspace');
+    } else {
+      router.push('/demo2-workspace');
+    }
   };
 
   return (
