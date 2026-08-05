@@ -703,10 +703,26 @@ export default function Demo2WorkspacePage() {
   const [reconcile1Started, setReconcile1Started] = useState(false);
   const [reconcile2Started, setReconcile2Started] = useState(false);
   const [scrolledCards, setScrolledCards] = useState<Record<string, boolean>>({});
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+  const [startedRecoveries, setStartedRecoveries] = useState<Set<string>>(new Set());
+  const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
+  const [timelineContext, setTimelineContext] = useState<{
+    type: 'category' | 'vendor' | 'invoice';
+    name: string;
+    key: string;
+  } | null>(null);
+  const [timelineEventsByContext, setTimelineEventsByContext] = useState<Record<string, {
+    date: string;
+    title: string;
+    description?: string;
+  }[]>>({});
+  const [selectedPlan, setSelectedPlan] = useState<'individual' | 'teams' | null>('teams');
+  const [isFeatureGatingModalOpen, setIsFeatureGatingModalOpen] = useState(false);
+  const [featureGatingContext, setFeatureGatingContext] = useState<string>('');
   const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrolledMsgIdRef = useRef<string | null>(null);
   const [scrollStage, setScrollStage] = useState<ScrollStage>('none');
-  type PaymentStep = 'none' | 'upgrade_modal' | 'payment_methods' | 'payment_loading';
+  type PaymentStep = 'none' | 'upgrade_modal' | 'payment_methods' | 'payment_loading' | 'choose_plan';
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('none');
   const [reportUnlocked, setReportUnlocked] = useState(false);
   const [activeReportId, setActiveReportId] = useState<string>('current-assessment');
@@ -818,13 +834,81 @@ export default function Demo2WorkspacePage() {
       targetDate: '2026-08-15',
       comments: `Please validate duplicate payment and initiate recovery for ${contextName}.`
     });
+
+    if (selectedPlan === 'individual') {
+      setFeatureGatingContext(contextName);
+      setIsFeatureGatingModalOpen(true);
+    } else {
+      setIsAssignModalOpen(true);
+    }
+  };
+
+
+
+  const handleUpgradeToTeams = () => {
+    setSelectedPlan('teams');
+    setIsFeatureGatingModalOpen(false);
+    setToastMessage("Teams Plan activated successfully.");
+    setShowToast(true);
     setIsAssignModalOpen(true);
   };
 
-  const handleStartRecoveryClick = (e: React.MouseEvent, type: 'category' | 'vendor', name: string) => {
+  const handleStartRecoveryClick = (e: React.MouseEvent, type: 'category' | 'vendor' | 'invoice', key: string) => {
     e.stopPropagation();
     setActiveTooltip(null);
+    setStartedRecoveries(prev => {
+      const next = new Set(prev);
+      next.add(`${type}-${key}`);
+      return next;
+    });
     setToastMessage("Recovery communication initiated successfully.");
+    setShowToast(true);
+  };
+
+  const getDefaultTimeline = (type: 'category' | 'vendor' | 'invoice', name: string) => {
+    let email = 'finance@vendor.com';
+    if (type === 'vendor') {
+      email = `finance@${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'vendor'}.com`;
+    } else if (type === 'invoice') {
+      email = `accounts@${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'vendor'}.com`;
+    } else {
+      email = `reconciliation@${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'partner'}.com`;
+    }
+
+    return [
+      { date: 'Just now', title: 'Recovery Started', description: `Recovery workflow initiated for ${name}.` },
+      { 
+        date: 'Just now', 
+        title: 'Recovery communication sent', 
+        description: `Recipient: ${email}\nDelivery Status: Delivered` 
+      },
+      { date: 'Scheduled', title: 'Next Follow-up', description: 'Scheduled after 3 business days' }
+    ];
+  };
+
+  const handleOpenTimeline = (e: React.MouseEvent, type: 'category' | 'vendor' | 'invoice', key: string) => {
+    e.stopPropagation();
+    setTimelineContext({ type, name: key, key: `${type}-${key}` });
+    setIsTimelineModalOpen(true);
+  };
+
+  const handleSendReminder = () => {
+    if (!timelineContext) return;
+    const currentKey = timelineContext.key;
+    const currentEvents = timelineEventsByContext[currentKey] || getDefaultTimeline(timelineContext.type, timelineContext.name);
+
+    const newEvent = {
+      date: 'Just now',
+      title: 'Reminder communication sent',
+      description: 'Follow-up reminder email delivered.'
+    };
+
+    setTimelineEventsByContext(prev => ({
+      ...prev,
+      [currentKey]: [...currentEvents, newEvent]
+    }));
+
+    setToastMessage("Reminder sent successfully.");
     setShowToast(true);
   };
 
@@ -1141,7 +1225,7 @@ export default function Demo2WorkspacePage() {
 
             }, 800);
 
-            setScrollStage('executive_assessment');
+            setScrollStage('ai_acknowledgement');
             return [...withoutProcessing, completedTextMsg, assessmentMsg];
           });
         }, 3500);
@@ -1195,14 +1279,55 @@ export default function Demo2WorkspacePage() {
               isUpdated: true
             };
 
-            setScrollStage('executive_assessment');
+            setScrollStage('ai_acknowledgement');
             return [...withoutProcessing, completedTextMsg, assessmentMsg];
           });
         }, 3500);
 
       }, 200); // Delay before starting next step: 200ms (150-250ms)
     }
-  }, [completedMessageIds]);
+
+    // 3. Initial Assessment Card Render Trigger: wait for completedTextMsgId to complete streaming
+    const matchingCompletedText = Array.from(completedMessageIds).find(id => id.startsWith('ai-completed-text-1-'));
+    if (matchingCompletedText && scrollStage !== 'executive_assessment' && !scrolledCards[matchingCompletedText.replace('ai-completed-text-1-', 'ai-assessment-card-1-')]) {
+      setScrollStage('executive_assessment');
+    }
+
+    // 4. Second Assessment Card Render Trigger: wait for completedTextMsgId2 to complete streaming
+    const matchingCompletedText2 = Array.from(completedMessageIds).find(id => id.startsWith('ai-completed-text-2-'));
+    if (matchingCompletedText2 && scrollStage !== 'executive_assessment' && !scrolledCards[matchingCompletedText2.replace('ai-completed-text-2-', 'ai-assessment-card-2-')]) {
+      setScrollStage('executive_assessment');
+    }
+  }, [completedMessageIds, scrollStage, scrolledCards]);
+
+  // Scroll listener to auto-hide/show the scroll indicator below the Lock Overlay Panel
+  useEffect(() => {
+    const container = chatScrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const alertEl = container.querySelector(`.${styles.recommendAlertBox}`);
+      if (!alertEl) {
+        setShowScrollIndicator(true);
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const alertRect = alertEl.getBoundingClientRect();
+
+      // Hide only when the top of the next section enters the container's viewport
+      if (alertRect.top < containerRect.bottom) {
+        setShowScrollIndicator(false);
+      } else {
+        setShowScrollIndicator(true);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [conversation, reportUnlocked]);
 
 
 
@@ -1868,6 +1993,16 @@ To perform an initial assessment, please upload the following financial document
                                           <polyline points="12 5 19 12 12 19" />
                                         </svg>
                                       </button>
+
+                                      {/* Scroll indicator below the button */}
+                                      <div className={`${styles.scrollIndicator} ${showScrollIndicator ? styles.scrollIndicatorVisible : styles.scrollIndicatorHidden}`}>
+                                        <span className={styles.scrollIndicatorText}>Additional recovery insights below</span>
+                                        <div className={styles.bounceChevron}>
+                                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="M6 9l6 6 6-6" />
+                                          </svg>
+                                        </div>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
@@ -2132,27 +2267,46 @@ To perform an initial assessment, please upload the following financial document
                           </div>
                           <div className={styles.opportunityDetails}>
                             <div className={styles.opportunityDetailsTopRow}>
-                              <button
-                                type="button"
-                                className={styles.startRecoveryBtn}
-                                onClick={(e) => handleStartRecoveryClick(e, 'category', cat.name)}
-                                onMouseEnter={handleMouseEnter}
-                                onMouseLeave={handleMouseLeave}
-                              >
-                                <svg 
-                                  viewBox="0 0 24 24" 
-                                  width="12" 
-                                  height="12" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  strokeWidth="2.5" 
-                                  className={styles.buttonIcon} 
-                                  aria-hidden="true"
+                              {startedRecoveries.has(`category-${cat.name}`) ? (
+                                <div className={styles.recoveryStatusContainer}>
+                                  <span className={styles.recoveryStartedBadge}>
+                                    ✓ Recovery Started
+                                  </span>
+                                  <button 
+                                    className={styles.viewTimelineBtn}
+                                    type="button"
+                                    onClick={(e) => handleOpenTimeline(e, 'category', cat.name)}
+                                  >
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.buttonIcon}>
+                                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                      <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    View
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className={styles.startRecoveryBtn}
+                                  onClick={(e) => handleStartRecoveryClick(e, 'category', cat.name)}
+                                  onMouseEnter={handleMouseEnter}
+                                  onMouseLeave={handleMouseLeave}
                                 >
-                                  <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                                </svg>
-                                Start Recovery
-                              </button>
+                                  <svg 
+                                    viewBox="0 0 24 24" 
+                                    width="12" 
+                                    height="12" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5" 
+                                    className={styles.buttonIcon} 
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                  </svg>
+                                  Start Recovery
+                                </button>
+                              )}
                               <span className={styles.opportunityVal}>{cat.recoverableValue}</span>
                             </div>
                           </div>
@@ -2191,27 +2345,46 @@ To perform an initial assessment, please upload the following financial document
                                         <span className={styles.vendorNameText}>{vendor.name}</span>
                                       </div>
                                       <div className={styles.vendorRightZone}>
-                                        <button
-                                          type="button"
-                                          className={styles.startRecoveryBtn}
-                                          onClick={(e) => handleStartRecoveryClick(e, 'vendor', vendor.name)}
-                                          onMouseEnter={handleMouseEnter}
-                                          onMouseLeave={handleMouseLeave}
-                                        >
-                                          <svg 
-                                            viewBox="0 0 24 24" 
-                                            width="12" 
-                                            height="12" 
-                                            fill="none" 
-                                            stroke="currentColor" 
-                                            strokeWidth="2.5" 
-                                            className={styles.buttonIcon} 
-                                            aria-hidden="true"
+                                        {startedRecoveries.has(`vendor-${vendor.name}`) ? (
+                                          <div className={styles.recoveryStatusContainer}>
+                                            <span className={styles.recoveryStartedBadge}>
+                                              ✓ Recovery Started
+                                            </span>
+                                            <button 
+                                              className={styles.viewTimelineBtn}
+                                              type="button"
+                                              onClick={(e) => handleOpenTimeline(e, 'vendor', vendor.name)}
+                                            >
+                                              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.buttonIcon}>
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                              </svg>
+                                              View
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            className={styles.startRecoveryBtn}
+                                            onClick={(e) => handleStartRecoveryClick(e, 'vendor', vendor.name)}
+                                            onMouseEnter={handleMouseEnter}
+                                            onMouseLeave={handleMouseLeave}
                                           >
-                                            <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                                          </svg>
-                                          Start Recovery
-                                        </button>
+                                            <svg 
+                                              viewBox="0 0 24 24" 
+                                              width="12" 
+                                              height="12" 
+                                              fill="none" 
+                                              stroke="currentColor" 
+                                              strokeWidth="2.5" 
+                                              className={styles.buttonIcon} 
+                                              aria-hidden="true"
+                                            >
+                                              <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                            </svg>
+                                            Start Recovery
+                                          </button>
+                                        )}
                                         <span className={styles.vendorValText}>{vendor.potentialRecovery}</span>
                                         <span className={styles.vendorMetaText}>{vendor.invoiceCount} invoices</span>
                                       </div>
@@ -2294,27 +2467,46 @@ To perform an initial assessment, please upload the following financial document
                                                       <div className={styles.explanationTitle}>Recommended Action</div>
                                                       <p className={styles.explanationText}>{inv.details.recommendedAction}</p>
                                                       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
-                                                        <button
-                                                          type="button"
-                                                          className={styles.startRecoveryBtn}
-                                                          onClick={(e) => handleStartRecoveryClick(e, 'vendor', inv.details.vendor)}
-                                                          onMouseEnter={handleMouseEnter}
-                                                          onMouseLeave={handleMouseLeave}
-                                                        >
-                                                          <svg 
-                                                            viewBox="0 0 24 24" 
-                                                            width="12" 
-                                                            height="12" 
-                                                            fill="none" 
-                                                            stroke="currentColor" 
-                                                            strokeWidth="2.5" 
-                                                            className={styles.buttonIcon} 
-                                                            aria-hidden="true"
+                                                        {startedRecoveries.has(`invoice-${inv.id}`) ? (
+                                                          <div className={styles.recoveryStatusContainer}>
+                                                            <span className={styles.recoveryStartedBadge}>
+                                                              ✓ Recovery Started
+                                                            </span>
+                                                            <button 
+                                                              className={styles.viewTimelineBtn}
+                                                              type="button"
+                                                              onClick={(e) => handleOpenTimeline(e, 'invoice', inv.invoiceNo)}
+                                                            >
+                                                              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.buttonIcon}>
+                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                                <circle cx="12" cy="12" r="3" />
+                                                              </svg>
+                                                              View
+                                                            </button>
+                                                          </div>
+                                                        ) : (
+                                                          <button
+                                                            type="button"
+                                                            className={styles.startRecoveryBtn}
+                                                            onClick={(e) => handleStartRecoveryClick(e, 'invoice', inv.id)}
+                                                            onMouseEnter={handleMouseEnter}
+                                                            onMouseLeave={handleMouseLeave}
                                                           >
-                                                            <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                                                          </svg>
-                                                          Start Recovery
-                                                        </button>
+                                                            <svg 
+                                                              viewBox="0 0 24 24" 
+                                                              width="12" 
+                                                              height="12" 
+                                                              fill="none" 
+                                                              stroke="currentColor" 
+                                                              strokeWidth="2.5" 
+                                                              className={styles.buttonIcon} 
+                                                              aria-hidden="true"
+                                                            >
+                                                              <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                                            </svg>
+                                                            Start Recovery
+                                                          </button>
+                                                        )}
                                                       </div>
                                                     </div>
                                                     
@@ -2416,39 +2608,73 @@ To perform an initial assessment, please upload the following financial document
       {paymentStep !== 'none' && (
         <div className={styles.modalOverlay}>
           {paymentStep === 'upgrade_modal' && (
-            <div className={styles.modalCard}>
+            <div className={styles.planSelectionContainer}>
               <h3 className={styles.modalTitle}>Unlock Executive Recovery Report</h3>
-              <p className={styles.modalSubtitle}>Upgrade to access your complete AI-generated Executive Recovery Report.</p>
+              <p className={styles.modalSubtitle}>
+                Choose a plan to unlock your AI-generated report and start recovering value.
+              </p>
               
-              <div className={styles.planCard}>
-                <div className={styles.planHeader}>
-                  <span className={styles.planName}>Enterprise Recovery Report</span>
-                  <span className={styles.planSubtitle}>One-time Assessment</span>
+              <div className={styles.planCardsGrid}>
+                {/* Individual Plan */}
+                <div 
+                  className={`${styles.planCardSelectable} ${selectedPlan === 'individual' ? styles.planCardActive : ''}`}
+                  onClick={() => setSelectedPlan('individual')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className={styles.planCardHeaderRow}>
+                    <h4 className={styles.planCardTitle}>Individual Plan</h4>
+                  </div>
+                  <div className={styles.planCardPriceRow}>
+                    <span className={styles.planCardPrice}>₹4,999</span>
+                    <span className={styles.planCardPeriod}>/ assessment</span>
+                  </div>
+                  <div className={styles.planCardDivider} />
+                  <p className={styles.planCardDesc}>For independent compliance officers and sole analysts.</p>
+                  
+                  <ul className={styles.planCardFeatures}>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> Single user access</li>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> Full Executive Recovery Report</li>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> AI recommendations</li>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> PDF Export & Downloads</li>
+                  </ul>
                 </div>
-                <div className={styles.planPrice}>₹4,999</div>
+
+                {/* Teams Plan */}
+                <div 
+                  className={`${styles.planCardSelectable} ${selectedPlan === 'teams' ? styles.planCardActive : ''}`}
+                  onClick={() => setSelectedPlan('teams')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className={styles.planCardHeaderRow}>
+                    <h4 className={styles.planCardTitle}>Teams Plan</h4>
+                    <span className={styles.teamsRecommendedBadge}>Recommended</span>
+                  </div>
+                  <div className={styles.planCardPriceRow}>
+                    <span className={styles.planCardPrice}>₹9,999</span>
+                    <span className={styles.planCardPeriod}>/ assessment</span>
+                  </div>
+                  <div className={styles.planCardDivider} />
+                  <p className={styles.planCardDesc}>For finance departments and collaborative auditing teams.</p>
+                  
+                  <ul className={styles.planCardFeatures}>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> Everything in Individual Plan</li>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> Assign Recovery Owners</li>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> Team collaboration</li>
+                    <li className={styles.planCardFeature}><span className={styles.featureCheck}>✓</span> Shared recovery tracking</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className={styles.featuresSection}>
-                <h4 className={styles.featuresTitle}>Included Features:</h4>
-                <ul className={styles.featuresList}>
-                  <li className={styles.featureItem}>Executive Summary</li>
-                  <li className={styles.featureItem}>Complete Recovery Opportunities</li>
-                  <li className={styles.featureItem}>AI Recommendations</li>
-                  <li className={styles.featureItem}>Root Cause Analysis</li>
-                  <li className={styles.featureItem}>Financial Impact Report</li>
-                  <li className={styles.featureItem}>Executive Presentation</li>
-                  <li className={styles.featureItem}>PDF Export (Mock)</li>
-                </ul>
-              </div>
-
-              <div className={styles.modalActions}>
+              <div className={styles.modalActions} style={{ width: '100%', marginTop: 'var(--space-4)' }}>
                 <button 
+                  type="button"
                   className={styles.modalPrimaryBtn}
                   onClick={() => setPaymentStep('payment_methods')}
                 >
-                  Proceed to Payment
+                  Proceed to Payment ({selectedPlan === 'individual' ? '₹4,999' : '₹9,999'})
                 </button>
                 <button 
+                  type="button"
                   className={styles.modalSecondaryBtn}
                   onClick={() => setPaymentStep('none')}
                 >
@@ -2464,12 +2690,12 @@ To perform an initial assessment, please upload the following financial document
               
               <div className={styles.paymentSummary}>
                 <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Assessment Name</span>
-                  <span className={styles.summaryValue}>Enterprise Recovery Report</span>
+                  <span className={styles.summaryLabel}>Plan Selected</span>
+                  <span className={styles.summaryValue} style={{ textTransform: 'capitalize' }}>{selectedPlan} Plan</span>
                 </div>
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryLabel}>Price</span>
-                  <span className={styles.summaryValue}>₹4,999</span>
+                  <span className={styles.summaryValue}>{selectedPlan === 'individual' ? '₹4,999' : '₹9,999'}</span>
                 </div>
               </div>
 
@@ -2497,6 +2723,8 @@ To perform an initial assessment, please upload the following financial document
                     setTimeout(() => {
                       setPaymentStep('none');
                       setReportUnlocked(true);
+                      setToastMessage(`✓ ${selectedPlan === 'individual' ? 'Individual' : 'Teams'} Plan activated successfully.`);
+                      setShowToast(true);
                     }, 2000);
                   }}
                 >
@@ -2526,6 +2754,7 @@ To perform an initial assessment, please upload the following financial document
               </div>
             </div>
           )}
+
         </div>
       )}
 
@@ -2700,6 +2929,126 @@ To perform an initial assessment, please upload the following financial document
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Recovery Communication Timeline Modal */}
+      {isTimelineModalOpen && timelineContext && (
+        <div className={styles.modalOverlay} onClick={() => setIsTimelineModalOpen(false)}>
+          <div className={styles.modalCard} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+              <h3 className={styles.modalTitle} style={{ textAlign: 'left' }}>Recovery Communication Timeline</h3>
+              <button 
+                type="button"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}
+                onClick={() => setIsTimelineModalOpen(false)}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className={styles.timelineContextMeta}>
+              <span className={styles.contextLabel}>{timelineContext.type} recovery status</span>
+              <span className={styles.contextName}>{timelineContext.name}</span>
+            </div>
+            
+            <div className={styles.timelineList}>
+              {(timelineEventsByContext[timelineContext.key] || getDefaultTimeline(timelineContext.type, timelineContext.name)).map((evt, idx) => (
+                <div key={idx} className={styles.timelineItem}>
+                  <div className={styles.timelineDotContainer}>
+                    <div className={`${styles.timelineDot} ${evt.date === 'Scheduled' ? styles.timelineDotScheduled : styles.timelineDotActive}`} />
+                    {idx < (timelineEventsByContext[timelineContext.key] || getDefaultTimeline(timelineContext.type, timelineContext.name)).length - 1 && (
+                      <div className={styles.timelineLine} />
+                    )}
+                  </div>
+                  <div className={styles.timelineContent}>
+                    <div className={styles.timelineHeaderRow}>
+                      <h4 className={styles.timelineEventTitle}>{evt.title}</h4>
+                      <span className={styles.timelineEventDate}>{evt.date}</span>
+                    </div>
+                    {evt.description && (
+                      <p className={styles.timelineEventDesc}>
+                        {evt.description.split('\n').map((line, lIdx) => (
+                          <span key={lIdx} style={{ display: 'block' }}>{line}</span>
+                        ))}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className={styles.modalActions}>
+              <button 
+                type="button"
+                className={styles.modalPrimaryBtn} 
+                onClick={handleSendReminder}
+              >
+                Send Reminder
+              </button>
+              <button 
+                type="button"
+                className={styles.modalSecondaryBtn} 
+                onClick={() => setIsTimelineModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feature Gating Modal for Individual Plan */}
+      {isFeatureGatingModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsFeatureGatingModalOpen(false)}>
+          <div className={styles.modalCard} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+              <h3 className={styles.modalTitle} style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                🔒 Feature Restricted
+              </h3>
+              <button 
+                type="button"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}
+                onClick={() => setIsFeatureGatingModalOpen(false)}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <p className={styles.modalSubtitle} style={{ fontWeight: '600', color: 'var(--color-warning-text)', textAlign: 'left', marginBottom: 'var(--space-1)' }}>
+              Assign Recovery Owner is available with Teams Plan
+            </p>
+
+            <p className={styles.modalSubtitle} style={{ fontSize: 'var(--font-size-caption)', textAlign: 'left', lineHeight: 'var(--line-height-normal)' }}>
+              Collaborate with your finance team by assigning recovery opportunities, tracking ownership, and managing recovery progress together.
+            </p>
+            <p className={styles.modalSubtitle} style={{ fontSize: 'var(--font-size-caption)', textAlign: 'left', lineHeight: 'var(--line-height-normal)', fontWeight: 'bold' }}>
+              Upgrade to Teams Plan to unlock this feature.
+            </p>
+
+            <div className={styles.modalActions}>
+              <button 
+                type="button" 
+                className={styles.modalPrimaryBtn}
+                onClick={handleUpgradeToTeams}
+              >
+                Upgrade to Teams Plan
+              </button>
+              <button 
+                type="button" 
+                className={styles.modalSecondaryBtn}
+                onClick={() => setIsFeatureGatingModalOpen(false)}
+              >
+                Continue with Individual Plan
+              </button>
+            </div>
           </div>
         </div>
       )}
