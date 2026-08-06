@@ -8,12 +8,16 @@ import {
   Container,
   Icon,
   Link,
+  Modal,
 } from '@/components/ui';
 import styles from './page.module.css';
+import { classNames } from '@/lib/utils';
 import HeroLottieAnimations from '@/components/HeroLottieAnimations';
 
 export default function AssessmentEntryPage() {
   const router = useRouter();
+  const [modalType, setModalType] = useState<'about' | 'security' | 'support' | null>(null);
+
   const handleStartAnalysis = () => {
     router.push('/demo-selection');
   };
@@ -50,9 +54,27 @@ export default function AssessmentEntryPage() {
           </div>
 
           <nav className={styles.navLinks}>
-            <Link href="#about" underline="hover">About</Link>
-            <Link href="#security" underline="hover">Security & Privacy</Link>
-            <Link href="#support" underline="hover">Contact Support</Link>
+            <Link 
+              className={classNames(styles.navLink, modalType === 'about' && styles.navLinkActive)} 
+              onClick={(e) => { e.preventDefault(); setModalType('about'); }}
+              underline="none"
+            >
+              About
+            </Link>
+            <Link 
+              className={classNames(styles.navLink, modalType === 'security' && styles.navLinkActive)} 
+              onClick={(e) => { e.preventDefault(); setModalType('security'); }}
+              underline="none"
+            >
+              Security & Privacy
+            </Link>
+            <Link 
+              className={classNames(styles.navLink, modalType === 'support' && styles.navLinkActive)} 
+              onClick={(e) => { e.preventDefault(); setModalType('support'); }}
+              underline="none"
+            >
+              Contact Support
+            </Link>
           </nav>
 
           <div className={styles.navAction}>
@@ -79,8 +101,8 @@ export default function AssessmentEntryPage() {
             </Badge>
 
             <h1 className={styles.heroHeadline}>
-              Discover Hidden Revenue Leakage in Just <span className={styles.greenHighlight}>2 Minutes</span>
-              <span className={styles.heroSecondLine}>Recover the Working Capital You're Losing.</span>
+              Ready to Recover Your Trapped Cash? in Just <span className={styles.greenHighlight}>2 Minutes</span>
+              <span className={styles.heroSecondLine}>Recover Money That's Already Yours.</span>
             </h1>
 
             <div className={styles.heroTrustStrip}>
@@ -330,10 +352,10 @@ export default function AssessmentEntryPage() {
         <Container>
           <div className={styles.finalCtaCard}>
             <h2 className={styles.finalCtaTitle}>
-              Ready to Recover Your Trapped Cash?
+              Start Your Free Recovery Assessment
             </h2>
             <p className={styles.finalCtaSubtitle}>
-              Start your free financial recovery assessment now. It takes less than 2 minutes to configure your focus areas.
+              See how much recoverable cash may already exist in your financial records. Your AI-powered assessment takes less than 2 minutes to begin.
             </p>
             <Button
               variant="primary"
@@ -358,14 +380,21 @@ export default function AssessmentEntryPage() {
             <span>(v2.0.0)</span>
           </div>
           <div className={styles.footerRight}>
-            <Link href="#privacy" underline="hover">Privacy</Link>
+            <Link onClick={(e) => { e.preventDefault(); setModalType('security'); }} style={{ cursor: 'pointer' }}>Privacy</Link>
             <span>•</span>
             <Link href="#terms" underline="hover">Terms</Link>
             <span>•</span>
-            <Link href="#support" underline="hover">Support</Link>
+            <Link onClick={(e) => { e.preventDefault(); setModalType('support'); }} style={{ cursor: 'pointer' }}>Support</Link>
           </div>
         </Container>
       </footer>
+
+      {/* NAVIGATION MODALS */}
+      <Modal
+        isOpen={modalType !== null}
+        onClose={() => setModalType(null)}
+        type={modalType || 'about'}
+      />
     </div>
   );
 }

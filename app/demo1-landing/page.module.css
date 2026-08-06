@@ -44,8 +44,31 @@
 .navLinks {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-2);
   font-size: var(--font-size-body);
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1-5) var(--space-3);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  text-decoration: none !important;
+  font-weight: var(--font-weight-medium);
+  transition: background-color 200ms ease-out, color 200ms ease-out;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.navLink:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.navLinkActive {
+  background-color: var(--color-secondary-active);
+  color: var(--color-text-primary);
 }
 
 .navAction {
