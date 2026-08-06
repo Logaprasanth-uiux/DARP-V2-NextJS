@@ -162,6 +162,411 @@ const mockRecoveryCategories: RecoveryCategory[] = [
         ]
       }
     ]
+  },
+  {
+    id: 'missed-discounts',
+    name: 'Missed Cash Discounts',
+    recoverableValue: '₹6,50,000',
+    confidence: '92%',
+    vendors: [
+      {
+        id: 'disc-acme',
+        name: 'Acme Corp',
+        potentialRecovery: '₹3,80,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'disc-20981',
+            invoiceNo: 'DISC-20981',
+            potentialRecovery: '₹2,00,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'DISC-20981',
+              poNo: 'PO-77381',
+              vendor: 'Acme Corp',
+              invoiceDate: '05-Jan-2026',
+              paymentDate: '02-Feb-2026',
+              recoveryValue: '₹2,00,000',
+              gstInfo: 'GSTIN-27ACMEE1111C1Z1',
+              confidenceScore: '94%',
+              aiExplanation: 'Early payment term discount (2/10 Net 30) of 2% was missed on invoice value ₹1,00,00,000 because payment was settled on day 28.',
+              recommendedAction: 'Apply early payment automation schedule to Acme Corp account in ERP settings.'
+            }
+          },
+          {
+            id: 'disc-20982',
+            invoiceNo: 'DISC-20982',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 1,
+            confidence: '91%',
+            details: {
+              invoiceNo: 'DISC-20982',
+              poNo: 'PO-77385',
+              vendor: 'Acme Corp',
+              invoiceDate: '10-Jan-2026',
+              paymentDate: '09-Feb-2026',
+              recoveryValue: '₹1,80,000',
+              gstInfo: 'GSTIN-27ACMEE1111C1Z1',
+              confidenceScore: '91%',
+              aiExplanation: 'Dynamic discount (3/15 Net 45) of 3% missed on invoice value ₹60,00,000 due to late internal manager sign-off cycles.',
+              recommendedAction: 'Streamline manager approval queue notifications for discount-eligible invoices.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'disc-global',
+        name: 'Global Logistics',
+        potentialRecovery: '₹2,70,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'disc-11482',
+            invoiceNo: 'DISC-11482',
+            potentialRecovery: '₹2,70,000',
+            matchedBankEntries: 1,
+            confidence: '92%',
+            details: {
+              invoiceNo: 'DISC-11482',
+              poNo: 'PO-88201',
+              vendor: 'Global Logistics',
+              invoiceDate: '15-Jan-2026',
+              paymentDate: '14-Feb-2026',
+              recoveryValue: '₹2,70,000',
+              gstInfo: 'GSTIN-27GLOBA2222L2Z2',
+              confidenceScore: '92%',
+              aiExplanation: 'Volume-based prompt payment incentive (1.5%) missed on shipping totals of ₹1,80,00,000 due to verification delay in bill of lading files.',
+              recommendedAction: 'Integrate automated bill of lading matching to accelerate logistics invoice verification.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'duplicate-expenses',
+    name: 'Duplicate Expense Claims',
+    recoverableValue: '₹2,80,000',
+    confidence: '89%',
+    vendors: [
+      {
+        id: 'exp-travel',
+        name: 'Travel Agency Services',
+        potentialRecovery: '₹1,80,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'exp-88902',
+            invoiceNo: 'EXP-88902',
+            potentialRecovery: '₹1,00,000',
+            matchedBankEntries: 2,
+            confidence: '90%',
+            details: {
+              invoiceNo: 'EXP-88902',
+              poNo: 'N/A',
+              vendor: 'Travel Agency Services',
+              invoiceDate: '02-Jan-2026',
+              paymentDate: '18-Jan-2026',
+              recoveryValue: '₹1,00,000',
+              gstInfo: 'GSTIN-27TRAVE3333A1Z3',
+              confidenceScore: '90%',
+              aiExplanation: 'Corporate flight booking charged to corporate credit card was also submitted via personal out-of-pocket expense claim ledger.',
+              recommendedAction: 'Reconcile corporate travel bookings with monthly card statements before expense approvals.'
+            }
+          },
+          {
+            id: 'exp-88903',
+            invoiceNo: 'EXP-88903',
+            potentialRecovery: '₹80,000',
+            matchedBankEntries: 2,
+            confidence: '88%',
+            details: {
+              invoiceNo: 'EXP-88903',
+              poNo: 'N/A',
+              vendor: 'Travel Agency Services',
+              invoiceDate: '04-Jan-2026',
+              paymentDate: '20-Jan-2026',
+              recoveryValue: '₹80,000',
+              gstInfo: 'GSTIN-27TRAVE3333A1Z3',
+              confidenceScore: '88%',
+              aiExplanation: 'Identical hotel package booking charged twice across separate departmental cost centers for the same executive travel.',
+              recommendedAction: 'Flag cross-department expense submissions with duplicate merchant reference codes.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'exp-catering',
+        name: 'Corporate Catering Inc',
+        potentialRecovery: '₹1,00,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'exp-77641',
+            invoiceNo: 'EXP-77641',
+            potentialRecovery: '₹1,00,000',
+            matchedBankEntries: 2,
+            confidence: '89%',
+            details: {
+              invoiceNo: 'EXP-77641',
+              poNo: 'N/A',
+              vendor: 'Corporate Catering Inc',
+              invoiceDate: '10-Jan-2026',
+              paymentDate: '25-Jan-2026',
+              recoveryValue: '₹1,00,000',
+              gstInfo: 'GSTIN-27CATER4444I4Z4',
+              confidenceScore: '89%',
+              aiExplanation: 'Duplicate invoice submitted by the vendor for the same corporate dinner event. Both duplicate invoice payments were successfully cleared.',
+              recommendedAction: 'Request refund for duplicate payment from Corporate Catering billing team.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'tax-recovery',
+    name: 'Tax Recovery Opportunities',
+    recoverableValue: '₹8,90,000',
+    confidence: '95%',
+    vendors: [
+      {
+        id: 'tax-cloud',
+        name: 'Cloud Systems India',
+        potentialRecovery: '₹5,00,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'tax-70011',
+            invoiceNo: 'TAX-70011',
+            potentialRecovery: '₹3,00,000',
+            matchedBankEntries: 1,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'TAX-70011',
+              poNo: 'PO-66291',
+              vendor: 'Cloud Systems India',
+              invoiceDate: '12-Jan-2026',
+              paymentDate: '05-Feb-2026',
+              recoveryValue: '₹3,00,000',
+              gstInfo: 'GSTIN-27CLOUD5555S5Z5',
+              confidenceScore: '96%',
+              aiExplanation: 'Unclaimed GST Input Tax Credit (ITC). The vendor filed the invoice under an incorrect corporate GSTIN, preventing automated portal matching.',
+              recommendedAction: 'Request GSTIN rectification from vendor to unlock ITC in the GSTR-2B statement.'
+            }
+          },
+          {
+            id: 'tax-70012',
+            invoiceNo: 'TAX-70012',
+            potentialRecovery: '₹2,00,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'TAX-70012',
+              poNo: 'PO-66294',
+              vendor: 'Cloud Systems India',
+              invoiceDate: '14-Jan-2026',
+              paymentDate: '08-Feb-2026',
+              recoveryValue: '₹2,00,000',
+              gstInfo: 'GSTIN-27CLOUD5555S5Z5',
+              confidenceScore: '94%',
+              aiExplanation: 'Import tax IGST calculation error. IGST settled twice at customs and also paid to vendor without verified Bill of Entry adjustments.',
+              recommendedAction: 'File customs reconciliation claim with bill of entry logs.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'tax-apex',
+        name: 'Apex Software Group',
+        potentialRecovery: '₹3,90,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'tax-60982',
+            invoiceNo: 'TAX-60982',
+            potentialRecovery: '₹3,90,000',
+            matchedBankEntries: 1,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'TAX-60982',
+              poNo: 'PO-33491',
+              vendor: 'Apex Software Group',
+              invoiceDate: '20-Jan-2026',
+              paymentDate: '18-Feb-2026',
+              recoveryValue: '₹3,90,000',
+              gstInfo: 'GSTIN-27APEXX6666A6Z6',
+              confidenceScore: '95%',
+              aiExplanation: 'Double taxation on annual software renewals. Tax Deducted at Source (TDS) was settled directly, but also included in the final vendor payment clearance.',
+              recommendedAction: 'Deduct overpaid TDS value from subsequent monthly vendor ledger balance.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'incorrect-pricing',
+    name: 'Incorrect Vendor Pricing',
+    recoverableValue: '₹4,60,000',
+    confidence: '91%',
+    vendors: [
+      {
+        id: 'prc-parts',
+        name: 'Standard Parts Corp',
+        potentialRecovery: '₹2,90,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'prc-40911',
+            invoiceNo: 'PRC-40911',
+            potentialRecovery: '₹1,50,000',
+            matchedBankEntries: 1,
+            confidence: '92%',
+            details: {
+              invoiceNo: 'PRC-40911',
+              poNo: 'PO-22910',
+              vendor: 'Standard Parts Corp',
+              invoiceDate: '18-Jan-2026',
+              paymentDate: '12-Feb-2026',
+              recoveryValue: '₹1,50,000',
+              gstInfo: 'GSTIN-27STAND7777P7Z7',
+              confidenceScore: '92%',
+              aiExplanation: 'Invoiced unit prices for machine components exceeded the fixed price schedule agreed in the active Master Services Agreement (MSA) by 15%.',
+              recommendedAction: 'Issue pricing dispute claim referencing MSA Schedule B price index list.'
+            }
+          },
+          {
+            id: 'prc-40912',
+            invoiceNo: 'PRC-40912',
+            potentialRecovery: '₹1,40,000',
+            matchedBankEntries: 1,
+            confidence: '90%',
+            details: {
+              invoiceNo: 'PRC-40912',
+              poNo: 'PO-22912',
+              vendor: 'Standard Parts Corp',
+              invoiceDate: '22-Jan-2026',
+              paymentDate: '15-Feb-2026',
+              recoveryValue: '₹1,40,000',
+              gstInfo: 'GSTIN-27STAND7777P7Z7',
+              confidenceScore: '90%',
+              aiExplanation: 'Pricing discrepancy on tooling equipment procurement. Agreed volume discount tier of 10% was not applied to final billing ledger entry.',
+              recommendedAction: 'Reconcile total quarterly order volume and request vendor credit matching discount tier.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'prc-intellect',
+        name: 'Intellect Consulting',
+        potentialRecovery: '₹1,70,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'prc-30291',
+            invoiceNo: 'PRC-30291',
+            potentialRecovery: '₹1,70,000',
+            matchedBankEntries: 1,
+            confidence: '91%',
+            details: {
+              invoiceNo: 'PRC-30291',
+              poNo: 'PO-44820',
+              vendor: 'Intellect Consulting',
+              invoiceDate: '25-Jan-2026',
+              paymentDate: '22-Feb-2026',
+              recoveryValue: '₹1,70,000',
+              gstInfo: 'GSTIN-27INTEL8888C8Z8',
+              confidenceScore: '91%',
+              aiExplanation: 'Consultant hourly rates billed on the final invoice exceeded the resource tier pricing specified in the project Statement of Work (SOW) by ₹2,500/hour.',
+              recommendedAction: 'Submit billing rate dispute to consulting delivery manager and request adjusted invoice.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'unclaimed-credits',
+    name: 'Unclaimed Credit Notes',
+    recoverableValue: '₹4,40,000',
+    confidence: '94%',
+    vendors: [
+      {
+        id: 'cr-zenith',
+        name: 'Zenith Office Supplies',
+        potentialRecovery: '₹2,60,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'crn-50911',
+            invoiceNo: 'CRN-50911',
+            potentialRecovery: '₹1,40,000',
+            matchedBankEntries: 1,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'CRN-50911',
+              poNo: 'PO-99102',
+              vendor: 'Zenith Office Supplies',
+              invoiceDate: '15-Jan-2026',
+              paymentDate: '10-Feb-2026',
+              recoveryValue: '₹1,40,000',
+              gstInfo: 'GSTIN-27ZENIT9999O9Z9',
+              confidenceScore: '95%',
+              aiExplanation: 'Credit note issued by vendor for returned hardware supplies was never applied to outstanding Accounts Payable ledgers.',
+              recommendedAction: 'Apply outstanding credit balance to settle next invoice run for Zenith Office Supplies.'
+            }
+          },
+          {
+            id: 'crn-50912',
+            invoiceNo: 'CRN-50912',
+            potentialRecovery: '₹1,20,000',
+            matchedBankEntries: 1,
+            confidence: '93%',
+            details: {
+              invoiceNo: 'CRN-50912',
+              poNo: 'PO-99105',
+              vendor: 'Zenith Office Supplies',
+              invoiceDate: '18-Jan-2026',
+              paymentDate: '14-Feb-2026',
+              recoveryValue: '₹1,20,000',
+              gstInfo: 'GSTIN-27ZENIT9999O9Z9',
+              confidenceScore: '93%',
+              aiExplanation: 'Volume rebate credit memo issued for office furniture procurement remained unused. Accounts reflect active debit balance.',
+              recommendedAction: 'Contact Zenith credit desk to reconcile and clear outstanding balance credit.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'cr-matrix',
+        name: 'Matrix Packing Ltd',
+        potentialRecovery: '₹1,80,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'crn-40822',
+            invoiceNo: 'CRN-40822',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'CRN-40822',
+              poNo: 'PO-55410',
+              vendor: 'Matrix Packing Ltd',
+              invoiceDate: '26-Jan-2026',
+              paymentDate: '20-Feb-2026',
+              recoveryValue: '₹1,80,000',
+              gstInfo: 'GSTIN-27MATRI1111P1Z1',
+              confidenceScore: '94%',
+              aiExplanation: 'Damage allowance credit note issued for packaging shipment remained unapplied in the AP sub-ledger files.',
+              recommendedAction: 'Claim damage allowance deduction on outstanding Matrix Packing vendor ledger.'
+            }
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -249,7 +654,15 @@ function ReportWorkspaceContent() {
     {
       id: 'msg-init',
       role: 'assistant',
-      content: 'Welcome to the Executive Recovery Report Workspace AI Assistant! I can help you summarize this report, explain duplicate vendor payments, find the highest value opportunities, or review affected vendors. How can I help you today?'
+      content: `I am your DARP AI Assistant. I can help you analyze this recovery report:
+
+• Summarize key findings
+• Explain duplicate payments
+• Review affected vendors
+• Prioritize recovery opportunities
+• Answer report-specific questions
+
+What would you like to know?`
     }
   ]);
   const [isAiStreaming, setIsAiStreaming] = useState(false);
@@ -461,7 +874,7 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
       </header>
 
       {/* MAIN LAYOUT */}
-      <main className={styles.main}>
+      <main className={`${styles.main} ${isAiDrawerOpen ? styles.mainWithDrawer : ''}`}>
         <Container className={styles.workspaceContainer}>
           <div className={styles.reportPanel} aria-label="Executive Recovery Report Workspace">
             <div className={styles.reportHeader}>
@@ -699,12 +1112,23 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
                                                       <span className={styles.fieldValue}>{inv.details.gstInfo}</span>
                                                     </div>
                                                   </div>
-                                                  <div className={styles.detailExplanationBlock}>
-                                                    <div className={styles.explanationTitle}>AI Explanation</div>
+                                                  <div className={styles.aiExplanationBlock}>
+                                                    <div className={styles.explanationTitle}>
+                                                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.titleIcon} aria-hidden="true">
+                                                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z" />
+                                                      </svg>
+                                                      <span>AI Explanation</span>
+                                                    </div>
                                                     <p className={styles.explanationText}>{inv.details.aiExplanation}</p>
                                                   </div>
-                                                  <div className={styles.detailExplanationBlock}>
-                                                    <div className={styles.explanationTitle}>Recommended Action</div>
+                                                  <div className={styles.recommendedActionBlock}>
+                                                    <div className={styles.explanationTitle}>
+                                                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.titleIcon} aria-hidden="true">
+                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                                        <polyline points="22 4 12 14.01 9 11.01" />
+                                                      </svg>
+                                                      <span>Recommended Action</span>
+                                                    </div>
                                                     <p className={styles.explanationText}>{inv.details.recommendedAction}</p>
                                                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
                                                       {startedRecoveries.has(`invoice-${inv.id}`) ? (
@@ -841,121 +1265,136 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
       </main>
 
       {/* FLOATING ACTION BUTTON */}
-      <button 
-        className={styles.floatingAiBtn}
-        onClick={() => setIsAiDrawerOpen(prev => !prev)}
-        aria-label="Open AI Assistant Drawer"
-        title="DARP AI Copilot"
-      >
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      </button>
+      {!isAiDrawerOpen && (
+        <button 
+          className={styles.floatingAiBtn}
+          onClick={() => setIsAiDrawerOpen(true)}
+          aria-label="Open AI Assistant Drawer"
+          title="DARP AI Copilot"
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z" />
+          </svg>
+        </button>
+      )}
 
       {/* SLIDE OUT DRAWER */}
-      <div className={`${styles.drawerOverlay} ${isAiDrawerOpen ? styles.drawerOpen : ''}`} onClick={() => setIsAiDrawerOpen(false)}>
-        <div className={styles.drawerContent} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.drawerHeader}>
+      <div className={`${styles.drawerContent} ${isAiDrawerOpen ? styles.drawerOpen : ''}`} onClick={(e) => e.stopPropagation()}>
+        {/* 1. Header */}
+        <div className={styles.drawerHeader}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-0-5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               <span className={styles.drawerSparkleIcon}>✦</span>
               <h3 className={styles.drawerTitle}>DARP AI Assistant</h3>
             </div>
-            <button 
-              className={styles.closeDrawerBtn}
-              onClick={() => setIsAiDrawerOpen(false)}
-              aria-label="Close Drawer"
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+            <span className={styles.drawerSubtitle}>Executive Recovery Report</span>
+            <span className={styles.drawerContext}>Context-aware analysis</span>
           </div>
-
-          <div className={styles.drawerBody}>
-            {/* Suggested Prompts Grid */}
-            <div className={styles.suggestedPromptsSection}>
-              <h4 className={styles.suggestedHeader}>Suggested Questions</h4>
-              <div className={styles.suggestedGrid}>
-                <button 
-                  className={styles.suggestedBtn}
-                  onClick={() => handleSendMessage("Summarize the executive report.")}
-                  disabled={isAiStreaming}
-                >
-                  Summarize the executive report.
-                </button>
-                <button 
-                  className={styles.suggestedBtn}
-                  onClick={() => handleSendMessage("Explain duplicate vendor payments.")}
-                  disabled={isAiStreaming}
-                >
-                  Explain duplicate vendor payments.
-                </button>
-                <button 
-                  className={styles.suggestedBtn}
-                  onClick={() => handleSendMessage("Show the highest recovery opportunity.")}
-                  disabled={isAiStreaming}
-                >
-                  Show the highest recovery opportunity.
-                </button>
-                <button 
-                  className={styles.suggestedBtn}
-                  onClick={() => handleSendMessage("Explain the affected vendors.")}
-                  disabled={isAiStreaming}
-                >
-                  Explain the affected vendors.
-                </button>
-              </div>
-            </div>
-
-            {/* Chat Conversation Logs */}
-            <div className={styles.chatArea}>
-              {chatMessages.map((msg) => (
-                <div key={msg.id} className={`${styles.chatBubble} ${msg.role === 'user' ? styles.userBubble : styles.aiBubble}`}>
-                  {msg.content}
-                </div>
-              ))}
-              {isAiStreaming && (
-                <div className={`${styles.chatBubble} ${styles.aiBubble} ${styles.streamingBubble}`}>
-                  {streamingText ? (
-                    <StreamingText text={streamingText} onComplete={handleStreamComplete} />
-                  ) : (
-                    <span className={styles.thinkingDots}>Thinking<span>.</span><span>.</span><span>.</span></span>
-                  )}
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-          </div>
-
-          {/* Drawer Chat Input */}
-          <form 
-            className={styles.drawerInputArea}
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage(chatInput);
-            }}
+          <button 
+            className={styles.closeDrawerBtn}
+            onClick={() => setIsAiDrawerOpen(false)}
+            aria-label="Close Drawer"
           >
-            <input 
-              type="text"
-              className={styles.chatInput}
-              placeholder="Ask anything about the report..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              disabled={isAiStreaming}
-            />
-            <button 
-              type="submit"
-              className={styles.sendChatBtn}
-              disabled={isAiStreaming || !chatInput.trim()}
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </button>
-          </form>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
+
+        {/* 2. Suggested Actions */}
+        <div className={styles.suggestedPromptsSection}>
+          <h4 className={styles.suggestedHeader}>Suggested Actions</h4>
+          <div className={styles.suggestedChipsContainer}>
+            <button 
+              className={styles.suggestedChip}
+              onClick={() => handleSendMessage("Summarize the executive report.")}
+              disabled={isAiStreaming}
+              type="button"
+            >
+              Summarize Report
+            </button>
+            <button 
+              className={styles.suggestedChip}
+              onClick={() => handleSendMessage("Show the highest recovery opportunity.")}
+              disabled={isAiStreaming}
+              type="button"
+            >
+              Top Recovery Opportunity
+            </button>
+            <button 
+              className={styles.suggestedChip}
+              onClick={() => handleSendMessage("Explain duplicate vendor payments.")}
+              disabled={isAiStreaming}
+              type="button"
+            >
+              Duplicate Payments
+            </button>
+            <button 
+              className={styles.suggestedChip}
+              onClick={() => handleSendMessage("Explain the affected vendors.")}
+              disabled={isAiStreaming}
+              type="button"
+            >
+              Affected Vendors
+            </button>
+            <button 
+              className={styles.suggestedChip}
+              onClick={() => handleSendMessage("Explain confidence score.")}
+              disabled={isAiStreaming}
+              type="button"
+            >
+              Explain Confidence Score
+            </button>
+          </div>
+        </div>
+
+        {/* 3. Conversation Area */}
+        <div className={styles.chatArea}>
+          {chatMessages.map((msg) => (
+            <div key={msg.id} className={`${styles.chatBubble} ${msg.role === 'user' ? styles.userBubble : styles.aiBubble}`}>
+              {msg.content}
+            </div>
+          ))}
+          {isAiStreaming && (
+            <div className={`${styles.chatBubble} ${styles.aiBubble} ${styles.streamingBubble}`}>
+              {streamingText ? (
+                <StreamingText text={streamingText} onComplete={handleStreamComplete} />
+              ) : (
+                <span className={styles.thinkingDots}>Thinking<span>.</span><span>.</span><span>.</span></span>
+              )}
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* 4. Composer */}
+        <form 
+          className={styles.drawerInputArea}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage(chatInput);
+          }}
+        >
+          <input 
+            type="text"
+            className={styles.chatInput}
+            placeholder="Ask about this recovery report..."
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            disabled={isAiStreaming}
+          />
+          <button 
+            type="submit"
+            className={styles.sendChatBtn}
+            disabled={isAiStreaming || !chatInput.trim()}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </form>
       </div>
 
       {/* Recovery Communication Timeline Modal */}
