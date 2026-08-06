@@ -8,8 +8,8 @@ import {
   Container,
   Icon,
   Link,
-  Modal,
 } from '@/components/ui';
+import { Modal } from '@/components/ui/Modal/Modal';
 import styles from './page.module.css';
 import { classNames } from '@/lib/utils';
 import HeroLottieAnimations from '@/components/HeroLottieAnimations';

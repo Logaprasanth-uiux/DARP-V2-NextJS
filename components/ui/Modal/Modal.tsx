@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '../Button/Button';
 import { classNames } from '@/lib/utils';
