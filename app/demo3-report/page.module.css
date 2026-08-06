@@ -92,16 +92,23 @@
 .main {
   flex: 1;
   padding: var(--space-8) 0 var(--space-16) 0;
-  transition: padding-left 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: padding-left 250ms cubic-bezier(0.16, 1, 0.3, 1), padding-right 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mainWithDrawer {
   padding-left: 400px;
 }
 
+.mainWithRightDrawer {
+  padding-right: 440px;
+}
+
 @media (max-width: 1024px) {
   .mainWithDrawer {
     padding-left: 0;
+  }
+  .mainWithRightDrawer {
+    padding-right: 0;
   }
 }
 
@@ -933,189 +940,455 @@
 /* ==========================================================================
    MODAL OVERLAYS & INNER SHADOWS
    ========================================================================== */
-.modalOverlay {
+/* ==========================================================================
+   TIMELINE RIGHT WORKSPACE DRAWER
+   ========================================================================== */
+.timelineDrawer {
   position: fixed;
-  top: 0;
-  left: 0;
   right: 0;
-  bottom: 0;
-  background-color: rgba(15, 23, 42, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
-}
-
-.modalCard {
+  top: 57px;
+  width: 440px;
+  height: calc(100vh - 57px);
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 480px;
-  padding: var(--space-6);
-  box-shadow: var(--shadow-xl);
+  border-left: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  z-index: 45;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  transform: translateX(100%);
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  overscroll-behavior: contain;
 }
 
-.modalTitle {
-  font-size: var(--font-size-h3);
+.timelineDrawerOpen {
+  transform: translateX(0);
+}
+
+.drawerHeader {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawerTitleBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.drawerTitle {
+  font-size: var(--font-size-card-title);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0;
 }
 
-.modalSubtitle {
-  font-size: var(--font-size-body);
+.drawerSubtitle {
+  font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
-  line-height: var(--line-height-normal);
-  margin: 0;
+  margin: var(--space-1) 0 0 0;
 }
 
-.modalActions {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: flex-end;
-}
-
-.modalPrimaryBtn {
-  background: linear-gradient(135deg, var(--color-primary) 0%, rgba(15, 23, 42, 0.9) 100%);
+.drawerCloseIconBtn {
+  background: none;
   border: none;
-  color: white;
-  padding: var(--space-2-5) var(--space-5);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-fast) ease-in-out;
-}
-
-.modalPrimaryBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.modalSecondaryBtn {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  padding: var(--space-2-5) var(--space-5);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
+  padding: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
   transition: all var(--transition-fast) ease-in-out;
 }
 
-.modalSecondaryBtn:hover {
+.drawerCloseIconBtn:hover {
   background-color: var(--color-secondary);
   color: var(--color-text-primary);
 }
 
-/* Timeline logs details */
-.timelineContextMeta {
-  background-color: var(--color-secondary-bg);
+.drawerTimelineBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overscroll-behavior: contain;
+}
+
+.summaryCard {
+  background-color: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-0-5);
-  text-align: left;
+  gap: var(--space-2-5);
+  margin-bottom: var(--space-2);
 }
 
-.contextLabel {
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.summaryLabel {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.summaryVal {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.summaryAmount {
+  font-size: var(--font-size-card-title);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.statusBadge {
   font-size: 10px;
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-muted);
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-full);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.contextName {
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+.statusCompleted {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
 }
 
-.timelineList {
+.statusInProgress {
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
+  border: 1px solid var(--color-info-border);
+}
+
+.statusScheduled {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.statusWaitingForVendor {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
+}
+
+.statusEscalated {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
+}
+
+.drawerTimelineList {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: var(--space-2) 0;
-}
-
-.timelineItem {
-  display: flex;
   gap: var(--space-4);
   text-align: left;
 }
 
-.timelineDotContainer {
+.drawerTimelineItem {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.timelineLineColumn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
+  width: 20px;
+  flex-shrink: 0;
 }
 
 .timelineDot {
-  width: 10px;
-  height: 10px;
+  width: 20px;
+  height: 20px;
   border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 2;
-  margin-top: var(--space-1-5);
+  flex-shrink: 0;
 }
 
-.timelineDotActive {
+.dotCompleted {
   background-color: var(--color-success);
-  box-shadow: 0 0 0 3px var(--color-success-bg);
+  color: white;
 }
 
-.timelineDotScheduled {
-  background-color: var(--color-text-muted);
-  border: 2px solid var(--color-border);
+.dotEscalated {
+  background-color: var(--color-danger);
+  color: white;
 }
 
-.timelineLine {
+.dotWaiting {
+  background-color: var(--color-warning);
+  color: white;
+}
+
+.dotInProgress {
+  background-color: var(--color-info);
+  color: white;
+}
+
+.timelineLineSegment {
   width: 2px;
-  flex: 1;
+  flex-grow: 1;
   background-color: var(--color-border);
   margin-top: var(--space-1);
   margin-bottom: var(--space-1);
 }
 
-.timelineContent {
+.drawerTimelineContent {
   flex: 1;
-  padding-bottom: var(--space-5);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
 }
 
-.timelineHeaderRow {
+.timelineItemHeader {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: var(--space-0-5);
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
-.timelineEventTitle {
-  font-size: var(--font-size-body);
+.timelineItemTitle {
+  font-size: var(--font-size-caption);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0;
+  line-height: var(--line-height-tight);
 }
 
-.timelineEventDate {
+.timelineItemDate {
   font-size: 10px;
   color: var(--color-text-muted);
-  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
 }
 
-.timelineEventDesc {
+.timelineItemDesc {
   font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
   line-height: var(--line-height-normal);
   margin: 0;
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-1);
+}
+
+.actorBadge {
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.actorAi {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+}
+
+.actorVendor {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
+}
+
+.actorOwner {
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
+  border: 1px solid var(--color-info-border);
+}
+
+.typeLabel {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background-color: var(--color-secondary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.timelineGroupSeparator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 var(--space-1) 0;
+}
+
+.separatorText {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.separatorLine {
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.nextActionCard {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin: var(--space-6) 0 0 0;
+  text-align: left;
+}
+
+.nextActionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2-5);
+}
+
+.nextActionIcon {
+  color: var(--color-primary);
+}
+
+.nextActionText {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.milestoneCard {
+  background-color: var(--color-surface-subtle);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin: 0 0 var(--space-5) 0;
+  text-align: left;
+}
+
+.milestoneHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2-5);
+}
+
+.milestoneIcon {
+  color: var(--color-neutral-500);
+}
+
+.milestoneText {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.drawerActions {
+  padding: var(--space-5) var(--space-4) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.footerLineSeparator {
+  height: 1px;
+  background-color: var(--color-border);
+  margin-bottom: var(--space-4);
+  width: 100%;
+}
+
+.footerButtonsRow {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.footerButtonsRow > button {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.drawerPrimaryBtn {
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.drawerPrimaryBtn:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.drawerSecondaryBtn {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.drawerSecondaryBtn:hover {
+  background-color: var(--color-secondary);
 }
 
 /* Success Check components */

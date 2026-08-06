@@ -621,18 +621,24 @@ function ReportWorkspaceContent() {
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
   const [startedRecoveries, setStartedRecoveries] = useState<Set<string>>(new Set());
   
-  // Interactive Timeline Modal State
+interface TimelineEvent {
+  date: string;
+  title: string;
+  description?: string;
+  actor: 'AI System' | 'Finance Team' | 'Recovery Owner' | 'Vendor';
+  status: 'Completed' | 'In Progress' | 'Scheduled' | 'Waiting for Vendor' | 'Escalated';
+  type: 'AI Analysis' | 'Email' | 'Reminder' | 'Vendor Reply' | 'Internal Review' | 'Evidence' | 'Approval' | 'Escalation' | 'Payment';
+  group: 'Today' | 'Yesterday' | 'Earlier This Week' | 'Previous Weeks';
+}
+
+  // Interactive Timeline Drawer State
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
   const [timelineContext, setTimelineContext] = useState<{
     type: 'category' | 'vendor' | 'invoice';
     name: string;
     key: string;
   } | null>(null);
-  const [timelineEventsByContext, setTimelineEventsByContext] = useState<Record<string, {
-    date: string;
-    title: string;
-    description?: string;
-  }[]>>({});
+  const [timelineEventsByContext, setTimelineEventsByContext] = useState<Record<string, TimelineEvent[]>>({});
 
   // Feature Gating Modal State
   const [isFeatureGatingModalOpen, setIsFeatureGatingModalOpen] = useState(false);
@@ -754,34 +760,188 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
     setIsTimelineModalOpen(true);
   };
 
-  const getDefaultTimeline = (type: string, name: string) => {
-    return [
-      {
-        date: 'Just now',
-        title: 'Recovery Workflow Initiated',
-        description: `Recovery tracker created for ${type} level target: ${name}.`
-      },
-      {
-        date: 'Scheduled',
-        title: 'Communication Queue Scheduled',
-        description: 'Auto-generation of double payment statement reports scheduled.'
+  const getTimelineSummaryInfo = (type: 'category' | 'vendor' | 'invoice', name: string) => {
+    let vendorName = '';
+    let status = 'In Progress';
+    let amount = '';
+    let stage = 'Validation';
+    let lastUpdated = '1 hour ago';
+
+    if (type === 'category') {
+      const cat = mockRecoveryCategories.find(c => c.name === name || c.id === name);
+      vendorName = 'All Affected Vendors';
+      status = name === 'Duplicate Vendor Payments' ? 'In Progress' : 'Awaiting Review';
+      amount = cat ? cat.recoverableValue : '₹0';
+      stage = 'Initial AI Audit';
+      lastUpdated = '2 hours ago';
+    } else if (type === 'vendor') {
+      let foundVendor = null;
+      for (const cat of mockRecoveryCategories) {
+        const v = cat.vendors.find(v => v.name === name || v.id === name);
+        if (v) {
+          foundVendor = v;
+          break;
+        }
       }
+      vendorName = name;
+      amount = foundVendor ? foundVendor.potentialRecovery : '₹0';
+      
+      if (name.includes('ABC')) {
+        status = 'Completed';
+        stage = 'Recovery Completed';
+        lastUpdated = 'Just now';
+      } else if (name.includes('Global')) {
+        status = 'Escalated';
+        stage = 'Escalation Tier 2';
+        lastUpdated = '10 mins ago';
+      } else if (name.includes('Acme')) {
+        status = 'Waiting for Vendor';
+        stage = 'Vendor Document Audit';
+        lastUpdated = '1 day ago';
+      } else if (name.includes('Cloud')) {
+        status = 'In Progress';
+        stage = 'GSTIN Rectification';
+        lastUpdated = '2 hours ago';
+      } else {
+        status = 'Scheduled';
+        stage = 'Auto-Queue Reconcile';
+        lastUpdated = 'Scheduled';
+      }
+    } else if (type === 'invoice') {
+      let foundInv = null;
+      let foundVen = null;
+      for (const cat of mockRecoveryCategories) {
+        for (const v of cat.vendors) {
+          const inv = v.invoices.find(i => i.invoiceNo === name || i.id === name);
+          if (inv) {
+            foundInv = inv;
+            foundVen = v;
+            break;
+          }
+        }
+      }
+      vendorName = foundVen ? foundVen.name : 'Unknown Vendor';
+      amount = foundInv ? foundInv.potentialRecovery : '₹0';
+      
+      if (name.includes('20341')) {
+        status = 'Completed';
+        stage = 'Settlement Received';
+        lastUpdated = 'Just now';
+      } else if (name.includes('11482')) {
+        status = 'Escalated';
+        stage = 'Internal Audit Panel';
+        lastUpdated = '15 mins ago';
+      } else {
+        status = 'In Progress';
+        stage = 'Document review';
+        lastUpdated = '3 hours ago';
+      }
+    }
+
+    return { vendorName, status, amount, stage, lastUpdated };
+  };
+
+  const getTimelineMilestoneInfo = (name: string) => {
+    if (name.includes('ABC')) {
+      return { title: 'Credit Note Awaited', description: 'Reconciliation verification expected within 24 hours of CN clearance.' };
+    } else if (name.includes('Global')) {
+      return { title: 'Escalation Board Review', description: 'Internal legal team panel scheduled for next business week.' };
+    } else if (name.includes('Acme')) {
+      return { title: 'Awaiting Vendor Confirmation', description: 'Acme Corp is validating early term release times.' };
+    } else if (name.includes('XYZ')) {
+      return { title: 'Finance Review Pending', description: 'Reviewing cross-ledger wire settlements.' };
+    }
+    return { title: 'Payment Commitment Expected', description: 'Awaiting initial validation acknowledgment.' };
+  };
+
+  const getMockTimelineEvents = (type: string, name: string): TimelineEvent[] => {
+    if (name === 'ABC Pvt Ltd') {
+      return [
+        { date: '12-Jan 10:00 AM', title: 'AI Audit Scanned', description: 'AI system identified potential duplicate payment matches on transaction reference TXN-998822.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '12-Jan 10:30 AM', title: 'Opportunity Flagged', description: 'Opportunity listed under Duplicate Vendor Payments with 99% confidence.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '15-Jan 02:00 PM', title: 'Recovery Workflow Initiated', description: 'Recovery case created and assigned to Finance Operations Lead.', actor: 'Recovery Owner', status: 'Completed', type: 'Approval', group: 'Previous Weeks' },
+        { date: '15-Jan 02:15 PM', title: 'Audit Evidence Compiled', description: 'Matched dual wire transactions settled on consecutive days without supporting PO lines.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Previous Weeks' },
+        { date: '16-Jan 09:30 AM', title: 'Claim Notification Dispatched', description: 'Official reversal claim statement emailed to ABC accounts payable group.', actor: 'Recovery Owner', status: 'Completed', type: 'Email', group: 'Previous Weeks' },
+        { date: '18-Jan 11:00 AM', title: 'Correspondence Acknowledged', description: 'Vendor billing desk confirmed receipt of claim ticket #ABC-8891.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Earlier This Week' },
+        { date: '19-Jan 04:00 PM', title: 'Supporting Details Requested', description: 'Vendor requested bank reconciliation outputs confirming dual wire clearances.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Earlier This Week' },
+        { date: '20-Jan 10:15 AM', title: 'Bank Statements Provided', description: 'Finance team sent bank wire outputs showing dual debit logs.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Yesterday' },
+        { date: '22-Jan 02:30 PM', title: 'Duplicate Match Confirmed', description: 'ABC finance coordinator validated the duplicate payment discrepancy.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Yesterday' },
+        { date: '25-Jan 11:15 AM', title: 'Credit Note Issued', description: 'Credit note CN-ABC-9011 dispatched to settle duplicate balance ledger.', actor: 'Vendor', status: 'Completed', type: 'Payment', group: 'Today' },
+        { date: '28-Jan 05:00 PM', title: 'Recovery Completed', description: 'Credit balance reconciled and applied to open accounts. Ticket closed.', actor: 'Finance Team', status: 'Completed', type: 'Approval', group: 'Today' }
+      ];
+    }
+    
+    if (name === 'XYZ Solutions') {
+      return [
+        { date: '10-Jan 09:00 AM', title: 'AI Audit Scanned', description: 'AI system identified dual wire transfers reference TXN-33410/TXN-33411 matching identical amounts.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '10-Jan 09:15 AM', title: 'Flagged for Review', description: 'Discrepancy logged for XYZ Solutions hardware contract ledger.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '12-Jan 11:00 AM', title: 'Case Opened & Assigned', description: 'Assigned to senior auditor for contract reconciliation.', actor: 'Recovery Owner', status: 'Completed', type: 'Approval', group: 'Previous Weeks' },
+        { date: '12-Jan 11:30 AM', title: 'Evidence Package Generated', description: 'Compiled bank transfer receipts and invoice details.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Previous Weeks' },
+        { date: '14-Jan 10:00 AM', title: 'Vendor Dispatched', description: 'Sent official duplicate payment claim to accounts receivable desk.', actor: 'Recovery Owner', status: 'Completed', type: 'Email', group: 'Earlier This Week' },
+        { date: '15-Jan 01:00 PM', title: 'Receipt Acknowledged', description: 'XYZ Solutions customer desk logged incoming ticket #XYZ-8812.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Earlier This Week' },
+        { date: '18-Jan 03:00 PM', title: 'Ledger Audit Initiated', description: 'Vendor stated case has been routed to internal accounts panel for verification.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Yesterday' },
+        { date: '25-Jan 09:00 AM', title: 'Automated Status Ping', description: 'DARP AI sent automated review check to vendor billing coordinator.', actor: 'AI System', status: 'In Progress', type: 'Reminder', group: 'Today' },
+        { date: '28-Jan 10:00 AM', title: 'Review in Progress', description: 'Vendor finance representative is currently reviewing ledger adjustments.', actor: 'Vendor', status: 'In Progress', type: 'Internal Review', group: 'Today' }
+      ];
+    }
+    
+    if (name === 'Acme Corp') {
+      return [
+        { date: '15-Jan 09:00 AM', title: 'AI Term Discount Check', description: 'Early settlement term 2/10 Net 30 identified on invoice DISC-20981.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '15-Jan 09:30 AM', title: 'Missed Savings Calculated', description: 'Potential recovery of ₹2,00,000 logged under Missed Cash Discounts.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '18-Jan 10:00 AM', title: 'Workflow Initiated', description: 'Opportunity claimed by procurement management team.', actor: 'Recovery Owner', status: 'Completed', type: 'Approval', group: 'Previous Weeks' },
+        { date: '19-Jan 11:00 AM', title: 'MSA Clauses Verified', description: 'Verified Master Agreement clause outlining prompt payment incentives.', actor: 'Recovery Owner', status: 'Completed', type: 'Evidence', group: 'Previous Weeks' },
+        { date: '21-Jan 09:30 AM', title: 'Adjustment Dispatched', description: 'Discount reversal claim sent to Acme billing team.', actor: 'Finance Team', status: 'Completed', type: 'Email', group: 'Earlier This Week' },
+        { date: '22-Jan 10:15 AM', title: 'Email Acknowledged', description: 'Acme automated system confirmed delivery of correspondence.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Earlier This Week' },
+        { date: '26-Jan 03:00 PM', title: 'Additional Details Requested', description: 'Acme billing desk requested manager sign-off logs to justify date mismatch.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Yesterday' },
+        { date: '27-Jan 04:00 PM', title: 'Logs Transmitted', description: 'Uploaded manager approval queue screenshots showing release delays.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Yesterday' },
+        { date: '28-Jan 09:00 AM', title: 'Review Under Review', description: 'Acme team is verifying validation timestamps. Awaiting response.', actor: 'Vendor', status: 'Waiting for Vendor', type: 'Internal Review', group: 'Today' }
+      ];
+    }
+    
+    if (name === 'Global Logistics') {
+      return [
+        { date: '18-Jan 10:00 AM', title: 'AI Term Discount Check', description: 'Shipping invoices identified with unutilized prompt payment discount terms (1.5%).', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '18-Jan 10:30 AM', title: 'Missed Opportunity Logged', description: 'Potential recovery of ₹2,70,000 logged under Missed Cash Discounts.', actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+        { date: '20-Jan 11:00 AM', title: 'Case Initiated', description: 'Assigned to logistics operations auditor.', actor: 'Recovery Owner', status: 'Completed', type: 'Approval', group: 'Previous Weeks' },
+        { date: '21-Jan 02:00 PM', title: 'Bill of Lading Matched', description: 'Reconciled shipping receipts with ledger entries.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Previous Weeks' },
+        { date: '22-Jan 10:00 AM', title: 'First Demand Dispatched', description: 'Sent early discount reversal claim.', actor: 'Recovery Owner', status: 'Completed', type: 'Email', group: 'Earlier This Week' },
+        { date: '29-Jan 10:00 AM', title: 'No Response Alert', description: '7 days passed without acknowledgment. Automated alert triggered.', actor: 'AI System', status: 'Completed', type: 'Reminder', group: 'Yesterday' },
+        { date: '29-Jan 11:00 AM', title: 'Internal Escalation', description: 'Flagged case to Procurement Manager.', actor: 'Recovery Owner', status: 'Completed', type: 'Escalation', group: 'Yesterday' },
+        { date: '30-Jan 09:00 AM', title: 'Second Reminder Dispatched', description: 'Direct outreach to Logistics Director.', actor: 'Recovery Owner', status: 'Completed', type: 'Reminder', group: 'Today' },
+        { date: '02-Feb 10:00 AM', title: 'Escalated Status Applied', description: 'Opportunity marked as Escalated due to non-response from vendor team.', actor: 'AI System', status: 'Escalated', type: 'Escalation', group: 'Today' }
+      ];
+    }
+
+    return [
+      { date: '20-Jan 09:00 AM', title: 'AI Audit Scanned', description: `AI system scanned ledger accounts relating to ${name} transaction patterns.`, actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+      { date: '20-Jan 09:30 AM', title: 'Opportunity Flagged', description: `Potential recovery opportunity listed under ${type} category.`, actor: 'AI System', status: 'Completed', type: 'AI Analysis', group: 'Previous Weeks' },
+      { date: '22-Jan 10:00 AM', title: 'Recovery Workflow Initiated', description: 'Case assigned to corporate audit team.', actor: 'Recovery Owner', status: 'Completed', type: 'Approval', group: 'Previous Weeks' },
+      { date: '23-Jan 02:00 PM', title: 'Evidence Package Generated', description: 'Compiled system ledger records and matching document outputs.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Earlier This Week' },
+      { date: '24-Jan 11:00 AM', title: 'Vendor Claim Dispatched', description: 'Sent audit findings packet to vendor finance team.', actor: 'Recovery Owner', status: 'Completed', type: 'Email', group: 'Earlier This Week' },
+      { date: '25-Jan 09:00 AM', title: 'Delivery Confirmed', description: 'Vendor helpdesk confirmed receipt of claim statement.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Yesterday' },
+      { date: '27-Jan 03:00 PM', title: 'Supporting Logs Requested', description: 'Vendor requested supplementary transaction reference entries.', actor: 'Vendor', status: 'Completed', type: 'Vendor Reply', group: 'Yesterday' },
+      { date: '28-Jan 10:15 AM', title: 'Logs Transmitted', description: 'Shared additional ledger files with vendor accounts payable team.', actor: 'Finance Team', status: 'Completed', type: 'Evidence', group: 'Today' },
+      { date: '29-Jan 02:00 PM', title: 'Review Under Review', description: 'Vendor billing team is reviewing details. Follow-up reminder scheduled.', actor: 'Vendor', status: 'In Progress', type: 'Internal Review', group: 'Today' }
     ];
   };
 
   const handleSendReminder = () => {
     if (!timelineContext) return;
     const key = timelineContext.key;
-    const currentEvents = timelineEventsByContext[key] || getDefaultTimeline(timelineContext.type, timelineContext.name);
+    const currentEvents = timelineEventsByContext[key] || getMockTimelineEvents(timelineContext.type, timelineContext.name);
     
-    const newEvent = {
+    const newEvent: TimelineEvent = {
       date: 'Just now',
       title: 'Reminder Communication Sent',
-      description: 'Urgent compliance alert email pushed directly to vendor finance accounts desk.'
+      description: 'Urgent compliance alert email pushed directly to vendor finance accounts desk.',
+      actor: 'Recovery Owner',
+      status: 'In Progress',
+      type: 'Reminder',
+      group: 'Today'
     };
     
-    // Insert after "Workflow Initiated" but before "Scheduled" followups
-    const updated = [currentEvents[0], newEvent, ...currentEvents.slice(1)];
+    const updated = [...currentEvents, newEvent];
     
     setTimelineEventsByContext(prev => ({
       ...prev,
@@ -874,7 +1034,7 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
       </header>
 
       {/* MAIN LAYOUT */}
-      <main className={`${styles.main} ${isAiDrawerOpen ? styles.mainWithDrawer : ''}`}>
+      <main className={`${styles.main} ${isAiDrawerOpen ? styles.mainWithDrawer : ''} ${isTimelineModalOpen ? styles.mainWithRightDrawer : ''}`}>
         <Container className={styles.workspaceContainer}>
           <div className={styles.reportPanel} aria-label="Executive Recovery Report Workspace">
             <div className={styles.reportHeader}>
@@ -1397,16 +1557,20 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
         </form>
       </div>
 
-      {/* Recovery Communication Timeline Modal */}
-      {isTimelineModalOpen && timelineContext && (
-        <div className={styles.modalOverlay} onClick={() => setIsTimelineModalOpen(false)}>
-          <div className={styles.modalCard} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-              <h3 className={styles.modalTitle} style={{ textAlign: 'left' }}>Recovery Communication Timeline</h3>
+      {/* Recovery Communication Timeline Right Drawer */}
+      <div className={`${styles.timelineDrawer} ${isTimelineModalOpen && timelineContext ? styles.timelineDrawerOpen : ''}`} aria-label="Recovery Communication Timeline Drawer">
+        {timelineContext && (
+          <>
+            <div className={styles.drawerHeader}>
+              <div className={styles.drawerTitleBlock}>
+                <h3 className={styles.drawerTitle}>Recovery Communication Timeline</h3>
+                <p className={styles.drawerSubtitle}>Vendor communication and recovery activity</p>
+              </div>
               <button 
                 type="button"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}
+                className={styles.drawerCloseIconBtn}
                 onClick={() => setIsTimelineModalOpen(false)}
+                aria-label="Close drawer"
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -1415,56 +1579,180 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
               </button>
             </div>
             
-            <div className={styles.timelineContextMeta}>
-              <span className={styles.contextLabel}>{timelineContext.type} recovery status</span>
-              <span className={styles.contextName}>{timelineContext.name}</span>
-            </div>
-            
-            <div className={styles.timelineList}>
-              {(timelineEventsByContext[timelineContext.key] || getDefaultTimeline(timelineContext.type, timelineContext.name)).map((evt, idx) => (
-                <div key={idx} className={styles.timelineItem}>
-                  <div className={styles.timelineDotContainer}>
-                    <div className={`${styles.timelineDot} ${evt.date === 'Scheduled' ? styles.timelineDotScheduled : styles.timelineDotActive}`} />
-                    {idx < (timelineEventsByContext[timelineContext.key] || getDefaultTimeline(timelineContext.type, timelineContext.name)).length - 1 && (
-                      <div className={styles.timelineLine} />
-                    )}
-                  </div>
-                  <div className={styles.timelineContent}>
-                    <div className={styles.timelineHeaderRow}>
-                      <h4 className={styles.timelineEventTitle}>{evt.title}</h4>
-                      <span className={styles.timelineEventDate}>{evt.date}</span>
+            <div className={styles.drawerTimelineBody}>
+              {/* Vendor Summary Card */}
+              {(() => {
+                const summary = getTimelineSummaryInfo(timelineContext.type, timelineContext.name);
+                return (
+                  <div className={styles.summaryCard}>
+                    <div className={styles.summaryRow}>
+                      <span className={styles.summaryLabel}>Vendor Name</span>
+                      <span className={styles.summaryVal}>{summary.vendorName}</span>
                     </div>
-                    {evt.description && (
-                      <p className={styles.timelineEventDesc}>
-                        {evt.description.split('\n').map((line, lIdx) => (
-                          <span key={lIdx} style={{ display: 'block' }}>{line}</span>
-                        ))}
-                      </p>
-                    )}
+                    <div className={styles.summaryRow}>
+                      <span className={styles.summaryLabel}>Recovery Status</span>
+                      <span className={`${styles.statusBadge} ${
+                        summary.status === 'Completed' ? styles.statusCompleted :
+                        summary.status === 'Escalated' ? styles.statusEscalated :
+                        summary.status === 'Waiting for Vendor' ? styles.statusWaitingForVendor :
+                        summary.status === 'Scheduled' ? styles.statusScheduled :
+                        styles.statusInProgress
+                      }`}>{summary.status}</span>
+                    </div>
+                    <div className={styles.summaryRow}>
+                      <span className={styles.summaryLabel}>Recovery Amount</span>
+                      <span className={styles.summaryAmount}>{summary.amount}</span>
+                    </div>
+                    <div className={styles.summaryRow}>
+                      <span className={styles.summaryLabel}>Current Stage</span>
+                      <span className={styles.summaryVal}>{summary.stage}</span>
+                    </div>
+                    <div className={styles.summaryRow}>
+                      <span className={styles.summaryLabel}>Last Updated</span>
+                      <span className={styles.summaryVal} style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontSize: '11px' }}>{summary.lastUpdated}</span>
+                    </div>
                   </div>
+                );
+              })()}
+
+              {/* Rich Communication Timeline List */}
+              <div className={styles.drawerTimelineList}>
+                {(() => {
+                  let lastGroup = '';
+                  const events = timelineEventsByContext[timelineContext.key] || getMockTimelineEvents(timelineContext.type, timelineContext.name);
+                  return events.map((evt, idx, arr) => {
+                    const showSeparator = evt.group !== lastGroup;
+                    lastGroup = evt.group || '';
+                    
+                    return (
+                      <React.Fragment key={idx}>
+                        {showSeparator && evt.group && (
+                          <div className={styles.timelineGroupSeparator}>
+                            <span className={styles.separatorText}>{evt.group}</span>
+                            <div className={styles.separatorLine} />
+                          </div>
+                        )}
+                        <div className={styles.drawerTimelineItem}>
+                          <div className={styles.timelineLineColumn}>
+                            <div className={`${styles.timelineDot} ${
+                              evt.status === 'Completed' ? styles.dotCompleted :
+                              evt.status === 'Escalated' ? styles.dotEscalated :
+                              evt.status === 'Waiting for Vendor' ? styles.dotWaiting :
+                              styles.dotInProgress
+                            }`}>
+                              {/* Icon based on Actor */}
+                              {evt.actor === 'AI System' ? (
+                                <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor">
+                                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z" />
+                                </svg>
+                              ) : evt.actor === 'Vendor' ? (
+                                <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="4">
+                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                  <circle cx="9" cy="7" r="4" />
+                                </svg>
+                              ) : (
+                                <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="4">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                  <circle cx="12" cy="7" r="4" />
+                                </svg>
+                              )}
+                            </div>
+                            {idx < arr.length - 1 && (
+                              <div className={styles.timelineLineSegment} />
+                            )}
+                          </div>
+                          <div className={styles.drawerTimelineContent}>
+                            <div className={styles.timelineItemHeader}>
+                              <h4 className={styles.timelineItemTitle}>{evt.title}</h4>
+                              <span className={styles.timelineItemDate}>{evt.date}</span>
+                            </div>
+                            {evt.description && (
+                              <p className={styles.timelineItemDesc}>
+                                {evt.description.split('\n').map((line, lIdx) => (
+                                  <span key={lIdx} style={{ display: 'block' }}>{line}</span>
+                                ))}
+                              </p>
+                            )}
+                            <div className={styles.metaRow}>
+                            <span className={`${styles.actorBadge} ${
+                                evt.actor === 'AI System' ? styles.actorAi :
+                                evt.actor === 'Vendor' ? styles.actorVendor :
+                                styles.actorOwner
+                              }`}>{evt.actor}</span>
+                              <span className={styles.typeLabel}>{evt.type}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  });
+                })()}
+              </div>
+              
+              {/* Recommended Next Action */}
+              <div className={styles.nextActionCard}>
+                <div className={styles.nextActionHeader}>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.nextActionIcon} aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 16v-4M12 8h.01" />
+                  </svg>
+                  <span>Recommended Next Action</span>
                 </div>
-              ))}
+                <p className={styles.nextActionText}>
+                  {timelineContext.name.includes('ABC') 
+                    ? 'Confirm credit note CN-ABC-9011 posting in ERP systems. Safe to adjust matching outstanding balances.'
+                    : timelineContext.name.includes('Global')
+                    ? 'Initiate phone follow-up with vendor transport coordinators to resolve dynamic prompt-discount timings.'
+                    : timelineContext.name.includes('Acme')
+                    ? 'Send signature verification and transaction timestamps file to Acme account support panel.'
+                    : 'Monitor transaction ledger updates and prepare communication pack matching audit evidence.'}
+                </p>
+              </div>
             </div>
-            
-            <div className={styles.modalActions}>
-              <button 
-                type="button"
-                className={styles.modalPrimaryBtn} 
-                onClick={handleSendReminder}
-              >
-                Send Reminder
-              </button>
-              <button 
-                type="button"
-                className={styles.modalSecondaryBtn} 
-                onClick={() => setIsTimelineModalOpen(false)}
-              >
-                Close
-              </button>
+
+            {/* Sticky Footer */}
+            <div className={styles.drawerActions}>
+              {/* Upcoming Milestone Card */}
+              {(() => {
+                const milestone = getTimelineMilestoneInfo(timelineContext.name);
+                return (
+                  <div className={styles.milestoneCard}>
+                    <div className={styles.milestoneHeader}>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.milestoneIcon} aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <span>Upcoming Milestone</span>
+                    </div>
+                    <p className={styles.milestoneText}>
+                      <strong>{milestone.title}</strong> — {milestone.description}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              <div className={styles.footerLineSeparator} />
+
+              <div className={styles.footerButtonsRow}>
+                <button 
+                  type="button"
+                  className={styles.drawerPrimaryBtn} 
+                  onClick={handleSendReminder}
+                >
+                  ✉ Send Reminder
+                </button>
+                <button 
+                  type="button"
+                  className={styles.drawerSecondaryBtn} 
+                  onClick={() => alert(`Downloading audit evidence files for ${timelineContext.name}...`)}
+                >
+                  📥 Download Evidence
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {/* Feature Gating Modal for Individual Plan */}
       {isFeatureGatingModalOpen && (
