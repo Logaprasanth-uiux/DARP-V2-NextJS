@@ -170,6 +170,35 @@
   line-height: var(--line-height-normal);
 }
 
+.privacyContent {
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+}
+
+.legalSection {
+  margin-bottom: var(--space-4);
+}
+
+.legalSection:last-child {
+  margin-bottom: 0;
+}
+
+.legalSectionTitle {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-top: 0;
+  margin-bottom: var(--space-1-5);
+}
+
+.legalSectionText {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
 /* Security modal bottom status check */
 .securityFooter {
   display: flex;

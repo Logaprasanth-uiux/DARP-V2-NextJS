@@ -16,7 +16,7 @@ import HeroLottieAnimations from '@/components/HeroLottieAnimations';
 
 export default function AssessmentEntryPage() {
   const router = useRouter();
-  const [modalType, setModalType] = useState<'about' | 'security' | 'support' | null>(null);
+  const [modalType, setModalType] = useState<'about' | 'security' | 'support' | 'privacyTerms' | null>(null);
 
   const handleStartAnalysis = () => {
     router.push('/demo-selection');
@@ -138,7 +138,7 @@ export default function AssessmentEntryPage() {
             <h2 style={{ fontSize: 'var(--font-size-page-title)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginTop: '0.5rem' }}>
               How DARP Restores Your Capital
             </h2>
-            <span style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-text-secondary)' }}>
+            <span className={styles.sectionBrief}>
               From initial ledger inspection to continuous protection, experience a guided AI recovery lifecycle.
             </span>
           </div>
@@ -156,9 +156,9 @@ export default function AssessmentEntryPage() {
                     </svg>
                   </Icon>
                 </div>
-                <h3 className={styles.journeyCardTitle}>Uncover Leakage</h3>
+                <h3 className={styles.journeyCardTitle}>Quantify Impact</h3>
                 <p className={styles.journeyCardDesc}>
-                  Scan vendor payables and sales registers to detect duplicate payments, unapplied credit notes, and pricing variances.
+                  Quickly see where money may be waiting to be recovered.
                 </p>
               </div>
             </div>
@@ -174,9 +174,9 @@ export default function AssessmentEntryPage() {
                     </svg>
                   </Icon>
                 </div>
-                <h3 className={styles.journeyCardTitle}>Quantify Impact</h3>
+                <h3 className={styles.journeyCardTitle}>Uncover Leakage</h3>
                 <p className={styles.journeyCardDesc}>
-                  Evaluate GSTR-2B mismatches, unclaimed Input Tax Credits (ITC), and bank statement reconciliation gaps.
+                  Find hidden losses across your financial records.
                 </p>
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function AssessmentEntryPage() {
                 </div>
                 <h3 className={styles.journeyCardTitle}>Claw Back Cash</h3>
                 <p className={styles.journeyCardDesc}>
-                  Generate structured vendor claim packages, tax adjustment filings, and actionable recovery steps.
+                  Turn identified opportunities into recovered cash.
                 </p>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function AssessmentEntryPage() {
             <div className={styles.journeyCard}>
               <div className={styles.journeyCardTop}>
                 <div className={styles.journeyBadgeRow}>
-                  <Badge variant="neutral" size="sm">FUTURE VISION</Badge>
+                  <Badge variant="neutral" size="sm">04 • PREVENT</Badge>
                   <Icon size="sm" label="Shield">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -212,7 +212,7 @@ export default function AssessmentEntryPage() {
                 </div>
                 <h3 className={styles.journeyCardTitle}>Prevent Leakage</h3>
                 <p className={styles.journeyCardDesc}>
-                  Future automated guardrails to detect and block financial errors at the source before disbursements occur.
+                  Stop the same cash losses from happening again.
                 </p>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function AssessmentEntryPage() {
             <h2 style={{ fontSize: 'var(--font-size-page-title)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginTop: '0.5rem' }}>
               Designed for Modern Finance Leaders
             </h2>
-            <span style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-text-secondary)' }}>
+            <span className={styles.sectionBrief}>
               Empowering CFOs, Controllers, and Audit Teams with automated financial intelligence.
             </span>
           </div>
@@ -300,44 +300,44 @@ export default function AssessmentEntryPage() {
 
             <div className={styles.assuranceGrid}>
               <div className={styles.assuranceItem}>
-                <div className={styles.assuranceItemHeader}>
+                <div className={styles.assuranceIconBox}>
                   <Icon size="sm" label="Lock">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0110 0v4" />
                     </svg>
                   </Icon>
-                  <span className={styles.assuranceItemTitle}>256-Bit TLS 1.3</span>
                 </div>
+                <h3 className={styles.assuranceItemTitle}>256-Bit TLS 1.3</h3>
                 <p className={styles.assuranceItemDesc}>
                   Uploads are encrypted end-to-end using standard enterprise TLS.
                 </p>
               </div>
 
               <div className={styles.assuranceItem}>
-                <div className={styles.assuranceItemHeader}>
+                <div className={styles.assuranceIconBox}>
                   <Icon size="sm" label="Globe">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="2" y1="12" x2="22" y2="12" />
                     </svg>
                   </Icon>
-                  <span className={styles.assuranceItemTitle}>Zero Data Sales</span>
                 </div>
+                <h3 className={styles.assuranceItemTitle}>Zero Data Sales</h3>
                 <p className={styles.assuranceItemDesc}>
                   Ledgers are never shared, sold, or used to train public AI models.
                 </p>
               </div>
 
               <div className={styles.assuranceItem}>
-                <div className={styles.assuranceItemHeader}>
+                <div className={styles.assuranceIconBox}>
                   <Icon size="sm" label="Flash">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
                   </Icon>
-                  <span className={styles.assuranceItemTitle}>Stateless Processing</span>
                 </div>
+                <h3 className={styles.assuranceItemTitle}>Stateless Processing</h3>
                 <p className={styles.assuranceItemDesc}>
                   Files are processed ephemerally with automatic client-side purging.
                 </p>
@@ -380,11 +380,21 @@ export default function AssessmentEntryPage() {
             <span>(v2.0.0)</span>
           </div>
           <div className={styles.footerRight}>
-            <Link onClick={(e) => { e.preventDefault(); setModalType('security'); }} style={{ cursor: 'pointer' }}>Privacy</Link>
-            <span>•</span>
-            <Link href="#terms" underline="hover">Terms</Link>
-            <span>•</span>
-            <Link onClick={(e) => { e.preventDefault(); setModalType('support'); }} style={{ cursor: 'pointer' }}>Support</Link>
+            <Link 
+              className={styles.footerLink} 
+              onClick={(e) => { e.preventDefault(); setModalType('privacyTerms'); }}
+              underline="none"
+            >
+              Privacy & Terms
+            </Link>
+            <span className={styles.footerDivider}>|</span>
+            <Link 
+              className={styles.footerLink} 
+              onClick={(e) => { e.preventDefault(); setModalType('support'); }}
+              underline="none"
+            >
+              Support
+            </Link>
           </div>
         </Container>
       </footer>
@@ -618,7 +628,7 @@ function WhyDarpSection() {
             <h2 className={styles.whyTitle} style={{ fontSize: 'var(--font-size-page-title)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-neutral-0)' }}>
               Why DARP Stands Apart
             </h2>
-            <span style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-neutral-400)', maxWidth: '44rem', textAlign: 'center' }}>
+            <span className={styles.sectionBriefDark}>
               DARP is built on principles that transform uncertain financial recovery into measurable business outcomes.
             </span>
           </div>

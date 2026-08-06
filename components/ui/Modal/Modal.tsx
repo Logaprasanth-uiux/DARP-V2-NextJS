@@ -8,7 +8,7 @@ import styles from './Modal.module.css';
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'about' | 'security' | 'support';
+  type: 'about' | 'security' | 'support' | 'privacyTerms';
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, type }) => {
@@ -118,6 +118,16 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, type }) => {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="6" x2="6" y2="18"></line>
       <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  );
+
+  const documentIcon = (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10 9 9 9 8 9"></polyline>
     </svg>
   );
 
@@ -359,6 +369,57 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, type }) => {
           </>
         );
       
+      case 'privacyTerms':
+        return (
+          <>
+            <div className={styles.header}>
+              <div className={styles.titleContainer}>
+                <div className={classNames(styles.iconCircle, styles.iconCircleBlue)}>
+                  {documentIcon}
+                </div>
+                <h3 className={styles.titleText}>Privacy & Terms</h3>
+              </div>
+              <button onClick={onClose} className={styles.closeButton} aria-label="Close modal">
+                {closeIcon}
+              </button>
+            </div>
+            <div className={classNames(styles.content, styles.privacyContent)}>
+              <div className={styles.legalSection}>
+                <h4 className={styles.legalSectionTitle}>Privacy & Data Handling</h4>
+                <p className={styles.legalSectionText}>
+                  DARP processes financial information only for the purpose of providing the requested financial recovery assessment and related platform functionality. Uploaded information should be handled securely and only within the scope required to deliver the experience.
+                </p>
+              </div>
+
+              <div className={styles.legalSection}>
+                <h4 className={styles.legalSectionTitle}>Terms of Use</h4>
+                <p className={styles.legalSectionText}>
+                  DARP insights and recovery estimates are intended to support business decision-making and should be reviewed before financial, accounting, tax, or operational actions are taken. Use of the platform constitutes acceptance of the applicable service terms and usage conditions.
+                </p>
+              </div>
+
+              <div className={styles.legalSection}>
+                <h4 className={styles.legalSectionTitle}>Data Security</h4>
+                <p className={styles.legalSectionText}>
+                  DARP is designed around secure processing, controlled data access, encryption, and responsible handling of uploaded financial information.
+                </p>
+              </div>
+
+              <div className={styles.legalSection}>
+                <h4 className={styles.legalSectionTitle}>Important Notice</h4>
+                <p className={styles.legalSectionText}>
+                  Assessment results, identified opportunities, and estimated recovery values may vary depending on the completeness and accuracy of the information provided.
+                </p>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <Button variant="primary" size="md" onClick={onClose}>
+                Close
+              </Button>
+            </div>
+          </>
+        );
+
       default:
         return null;
     }

@@ -214,12 +214,26 @@
 
 .sectionHeaderCenter {
   text-align: center;
-  max-width: 42rem;
+  max-width: 48rem;
   margin: 0 auto var(--space-10) auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
+}
+
+.sectionBrief {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.sectionBriefDark {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-neutral-400);
+  max-width: 48rem;
+  text-align: center;
 }
 
 .journeyGrid {
@@ -292,10 +306,10 @@
   background-color: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  padding: var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3-5);
+  gap: 0;
 }
 
 .valueIconBox {
@@ -308,12 +322,14 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-primary);
+  margin-bottom: var(--space-5);
 }
 
 .valueCardTitle {
   font-size: var(--font-size-card-title);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  margin-bottom: var(--space-2-5);
 }
 
 .valueCardDesc {
@@ -358,25 +374,28 @@
 .assuranceGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-6);
+  gap: var(--space-10);
 }
 
 .assuranceItem {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 0;
 }
 
-.assuranceItemHeader {
+.assuranceIconBox {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: flex-start;
+  color: var(--color-primary);
+  margin-bottom: var(--space-4);
 }
 
 .assuranceItemTitle {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
 }
 
 .assuranceItemDesc {
@@ -418,10 +437,10 @@
 }
 
 .finalCtaSubtitle {
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-normal);
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--color-text-secondary);
-  max-width: 36rem;
+  max-width: 42rem;
 }
 
 .finalCtaButton {
@@ -458,6 +477,29 @@
   align-items: center;
   gap: var(--space-2);
   color: var(--color-text-muted);
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.footerDivider {
+  color: var(--color-border);
+  user-select: none;
+}
+
+.footerLink {
+  color: var(--color-text-secondary) !important;
+  font-weight: var(--font-weight-medium);
+  text-decoration: none !important;
+  transition: color var(--transition-normal);
+  cursor: pointer;
+}
+
+.footerLink:hover {
+  color: var(--color-text-primary) !important;
 }
 
 /* ==========================================================================
