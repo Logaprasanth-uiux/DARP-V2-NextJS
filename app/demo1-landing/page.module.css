@@ -437,14 +437,180 @@
   color: var(--color-text-muted);
 }
 
-.footerRight {
+/* ==========================================================================
+   WHY DARP STANDS APART SECTION (Premium dark-themed)
+   ========================================================================== */
+.whySection {
+  position: relative;
+  height: 250vh; /* Scroll track distance for pinning animation */
+  background-color: var(--color-neutral-950);
+}
+
+.whySectionSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  background-color: var(--color-neutral-950);
+  border-bottom: 1px solid var(--color-neutral-800);
+  color: var(--color-neutral-100);
+  overflow: hidden;
+  width: 100%;
+}
+
+.whyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1fr;
+  gap: var(--space-8);
+  align-items: center;
+  margin-top: var(--space-4);
+  width: 100%;
+}
+
+.whyCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.whyCard {
+  background-color: var(--color-neutral-900);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-normal), transform var(--transition-normal), opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.whyCard:hover {
+  border-color: var(--color-neutral-700);
+  transform: translateY(-2px);
+}
+
+.whyCardTitle {
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-0);
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.01em;
+}
+
+.whyCardDesc {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-normal);
+  color: var(--color-neutral-400);
+}
+
+.whyCenterContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.whyRadialGlow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(53, 188, 72, 0.15) 0%, rgba(53, 188, 72, 0) 70%);
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  animation: breathingGlow 8s ease-in-out infinite;
+}
+
+@keyframes breathingGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+.whyCenterQuestion {
+  position: absolute;
+  z-index: 2;
+  font-size: 5rem;
+  font-weight: var(--font-weight-bold);
+  color: rgba(53, 188, 72, 0.35);
+  filter: blur(1.5px);
+  user-select: none;
+  pointer-events: none;
+  animation: pulseQuestion 8s ease-in-out infinite;
+}
+
+@keyframes pulseQuestion {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.85;
+  }
+}
+
+.whyNode {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  background-color: var(--color-neutral-900);
+  border: 1.5px solid var(--color-neutral-800);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: 1.25rem;
+  color: var(--color-neutral-300);
+  z-index: 3;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.whyNodeActive {
+  border-color: #35bc48;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(53, 188, 72, 0.3);
+}
+
+.whySvgVisualizer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.whyBadge {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--color-neutral-300) !important;
+  border-color: var(--color-neutral-800) !important;
+}
+
+.whyHeaderCenter {
+  margin-bottom: var(--space-6) !important;
+}
+
+.whyTitle {
+  margin-top: var(--space-1-5) !important;
+  margin-bottom: var(--space-2) !important;
 }
 
 /* Responsive Styles */
 @media (max-width: 1024px) {
+  .whyGrid {
+    gap: var(--space-6);
+  }
   .journeyGrid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -458,6 +624,26 @@
 }
 
 @media (max-width: 640px) {
+  .whySection {
+    height: auto !important;
+  }
+  .whySectionSticky {
+    position: relative !important;
+    height: auto !important;
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
+  }
+  .whyGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    justify-items: center;
+  }
+  .whyCol {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    width: 100%;
+  }
   .topHeaderContainer {
     flex-direction: column;
     gap: var(--space-3);

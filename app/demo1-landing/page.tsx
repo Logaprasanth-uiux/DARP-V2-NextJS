@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Badge,
@@ -197,6 +198,9 @@ export default function AssessmentEntryPage() {
         </Container>
       </section>
 
+      {/* WHY DARP STANDS APART (Premium dark-themed section) */}
+      <WhyDarpSection />
+
       {/* 3. VALUE DELIVERED */}
       <section className={styles.valueSection}>
         <Container>
@@ -363,5 +367,276 @@ export default function AssessmentEntryPage() {
         </Container>
       </footer>
     </div>
+  );
+}
+
+function WhyDarpSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [activeState, setActiveState] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  
+  const activeStateRef = useRef(activeState);
+  const lastTransitionTimeRef = useRef(0);
+
+  // Stateful delays for nodes and cards
+  const [activeD, setActiveD] = useState(false);
+  const [activeCard1, setActiveCard1] = useState(false);
+  const [activeA, setActiveA] = useState(false);
+  const [activeCard2, setActiveCard2] = useState(false);
+  const [activeP, setActiveP] = useState(false);
+  const [activeCard3, setActiveCard3] = useState(false);
+  const [activeR, setActiveR] = useState(false);
+  const [activeCard4, setActiveCard4] = useState(false);
+
+  // Keep ref updated and lock completion state once State 5 is reached
+  useEffect(() => {
+    activeStateRef.current = activeState;
+    if (activeState === 5 && !isCompleted) {
+      setIsCompleted(true);
+    }
+  }, [activeState, isCompleted]);
+
+  // Check prefers-reduced-motion
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    if (mediaQuery.matches) {
+      setIsCompleted(true);
+      setActiveState(5);
+    }
+    const listener = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+      if (e.matches) {
+        setIsCompleted(true);
+        setActiveState(5);
+      }
+    };
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  // Intercept scroll/wheel and swipe gestures to progress state-based storytelling
+  useEffect(() => {
+    if (isCompleted || prefersReducedMotion) return;
+
+    const element = sectionRef.current;
+    if (!element) return;
+
+    let touchStart = 0;
+
+    const handleWheel = (e: WheelEvent) => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const isSticky = rect.top <= 5 && rect.bottom >= viewportHeight - 5;
+      
+      if (!isSticky) return;
+
+      // If in State 5 and scrolling down, let normal page scroll happen
+      if (activeStateRef.current >= 5 && e.deltaY > 0) return;
+
+      // Prevent default page scroll for animation states
+      e.preventDefault();
+
+      const now = Date.now();
+      if (now - lastTransitionTimeRef.current < 1000) return; // strict 1s transition cooldown
+
+      if (e.deltaY > 0) {
+        lastTransitionTimeRef.current = now;
+        setActiveState((prev) => Math.min(5, prev + 1));
+      } else if (e.deltaY < 0) {
+        lastTransitionTimeRef.current = now;
+        setActiveState((prev) => Math.max(0, prev - 1));
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStart = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const isSticky = rect.top <= 5 && rect.bottom >= viewportHeight - 5;
+      
+      if (!isSticky) return;
+
+      const touchEnd = e.touches[0].clientY;
+      const deltaY = touchStart - touchEnd;
+
+      if (Math.abs(deltaY) > 30) {
+        // If in State 5 and swiping up (scrolling down), let normal page scroll happen
+        if (activeStateRef.current >= 5 && deltaY > 0) return;
+
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastTransitionTimeRef.current < 1000) return;
+
+        if (deltaY > 0) {
+          lastTransitionTimeRef.current = now;
+          setActiveState((prev) => Math.min(5, prev + 1));
+        } else if (deltaY < 0) {
+          lastTransitionTimeRef.current = now;
+          setActiveState((prev) => Math.max(0, prev - 1));
+        }
+        touchStart = touchEnd;
+      }
+    };
+
+    element.addEventListener('wheel', handleWheel, { passive: false });
+    element.addEventListener('touchstart', handleTouchStart, { passive: true });
+    element.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      element.removeEventListener('wheel', handleWheel);
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isCompleted, prefersReducedMotion]);
+
+  // Reset state machine if the user scrolls back above the section
+  useEffect(() => {
+    if (isCompleted || prefersReducedMotion) return;
+
+    const element = sectionRef.current;
+    if (!element) return;
+
+    const handleScrollReset = () => {
+      const rect = element.getBoundingClientRect();
+      if (rect.top > 5) {
+        setActiveState(0);
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollReset, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollReset);
+  }, [isCompleted, prefersReducedMotion]);
+
+  // Determine drawing segment percentage
+  const getDrawProgress = () => {
+    if (activeState === 0) return 0;
+    if (activeState === 1) return 0.25;
+    if (activeState === 2) return 0.50;
+    if (activeState === 3) return 0.75;
+    return 1.00;
+  };
+  const drawProgress = (prefersReducedMotion || isCompleted) ? 1 : getDrawProgress();
+
+  // Sync letter and card reveals to state machine transitions with 120ms delays
+  useEffect(() => {
+    if (prefersReducedMotion || isCompleted) {
+      setActiveD(true); setActiveCard1(true);
+      setActiveA(true); setActiveCard2(true);
+      setActiveP(true); setActiveCard3(true);
+      setActiveR(true); setActiveCard4(true);
+      return;
+    }
+
+    if (activeState === 0) {
+      setActiveD(false); setActiveCard1(false);
+      setActiveA(false); setActiveCard2(false);
+      setActiveP(false); setActiveCard3(false);
+      setActiveR(false); setActiveCard4(false);
+    } else if (activeState === 1) {
+      setActiveD(true);
+      const t = setTimeout(() => setActiveCard1(true), 120);
+      setActiveA(false); setActiveCard2(false);
+      setActiveP(false); setActiveCard3(false);
+      setActiveR(false); setActiveCard4(false);
+      return () => clearTimeout(t);
+    } else if (activeState === 2) {
+      setActiveD(true); setActiveCard1(true);
+      setActiveA(true);
+      const t = setTimeout(() => setActiveCard2(true), 120);
+      setActiveP(false); setActiveCard3(false);
+      setActiveR(false); setActiveCard4(false);
+      return () => clearTimeout(t);
+    } else if (activeState === 3) {
+      setActiveD(true); setActiveCard1(true);
+      setActiveA(true); setActiveCard2(true);
+      setActiveP(true);
+      const t = setTimeout(() => setActiveCard3(true), 120);
+      setActiveR(false); setActiveCard4(false);
+      return () => clearTimeout(t);
+    } else if (activeState >= 4) {
+      setActiveD(true); setActiveCard1(true);
+      setActiveA(true); setActiveCard2(true);
+      setActiveP(true); setActiveCard3(true);
+      setActiveR(true);
+      const t = setTimeout(() => setActiveCard4(true), 120);
+      return () => clearTimeout(t);
+    }
+  }, [activeState, prefersReducedMotion, isCompleted]);
+
+  return (
+    <section 
+      ref={sectionRef} 
+      className={styles.whySection}
+      style={{ height: isCompleted ? 'auto' : prefersReducedMotion ? 'auto' : '200vh' }}
+    >
+      <div 
+        className={styles.whySectionSticky}
+        style={{
+          position: isCompleted ? 'relative' : 'sticky',
+          height: isCompleted ? 'auto' : '100vh',
+          paddingTop: isCompleted ? 'var(--space-16)' : '0',
+          paddingBottom: isCompleted ? 'var(--space-16)' : '0'
+        }}
+      >
+        <Container>
+          <div className={`${styles.sectionHeaderCenter} ${styles.whyHeaderCenter}`}>
+            <Badge variant="neutral" className={styles.whyBadge}>WHY DARP</Badge>
+            <h2 className={styles.whyTitle} style={{ fontSize: 'var(--font-size-page-title)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-neutral-0)' }}>
+              Why DARP Stands Apart
+            </h2>
+            <span style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-neutral-400)', maxWidth: '44rem', textAlign: 'center' }}>
+              DARP is built on principles that transform uncertain financial recovery into measurable business outcomes.
+            </span>
+          </div>
+
+          <div className={styles.whyGrid}>
+            <div className={styles.whyCol}>
+              <div className={styles.whyCard} style={{ opacity: activeCard1 ? 1 : 0, transform: activeCard1 ? 'translateY(0)' : 'translateY(16px)', transition: 'opacity 0.6s ease-out, transform 0.6s ease-out' }}>
+                <h3 className={styles.whyCardTitle}>Evidence, not a benchmark</h3>
+                <p className={styles.whyCardDesc}>Findings come from the customer's own ledger, not an industry average.</p>
+              </div>
+              <div className={styles.whyCard} style={{ opacity: activeCard4 ? 1 : 0, transform: activeCard4 ? 'translateY(0)' : 'translateY(16px)', transition: 'opacity 0.6s ease-out, transform 0.6s ease-out' }}>
+                <h3 className={styles.whyCardTitle}>Funded by money already written off</h3>
+                <p className={styles.whyCardDesc}>The engagement pays for itself out of cash the business had given up on.</p>
+              </div>
+            </div>
+
+            <div className={styles.whyCenterContainer}>
+              <div className={styles.whyRadialGlow} />
+              <div className={styles.whyCenterQuestion}>?</div>
+              <svg viewBox="0 0 360 360" className={styles.whySvgVisualizer}>
+                <circle cx="180" cy="180" r="145" stroke={(activeState > 0 || isCompleted) ? "rgba(255, 255, 255, 0.04)" : "none"} strokeWidth="2.5" fill="none" />
+                <circle 
+                  cx="180" cy="180" r="145" stroke="#35bc48" strokeWidth="2.5" fill="none" 
+                  strokeDasharray="911" strokeDashoffset={911 * (1 - drawProgress)} 
+                  transform="rotate(-90 180 180)" strokeLinecap="round"
+                  style={{ transition: prefersReducedMotion ? 'none' : 'stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                />
+              </svg>
+              <div className={`${styles.whyNode} ${activeD ? styles.whyNodeActive : ''}`} style={{ top: '9px', left: '154px', opacity: activeD ? 1 : 0, transform: activeD ? 'scale(1)' : 'scale(0.8) translateY(-10px)' }}>D</div>
+              <div className={`${styles.whyNode} ${activeA ? styles.whyNodeActive : ''}`} style={{ top: '154px', right: '9px', opacity: activeA ? 1 : 0, transform: activeA ? 'scale(1)' : 'scale(0.8) translateX(10px)' }}>A</div>
+              <div className={`${styles.whyNode} ${activeP ? styles.whyNodeActive : ''}`} style={{ bottom: '9px', left: '154px', opacity: activeP ? 1 : 0, transform: activeP ? 'scale(1)' : 'scale(0.8) translateY(10px)' }}>P</div>
+              <div className={`${styles.whyNode} ${activeR ? styles.whyNodeActive : ''}`} style={{ top: '154px', left: '9px', opacity: activeR ? 1 : 0, transform: activeR ? 'scale(1)' : 'scale(0.8) translateX(-10px)' }}>R</div>
+            </div>
+
+            <div className={styles.whyCol}>
+              <div className={styles.whyCard} style={{ opacity: activeCard2 ? 1 : 0, transform: activeCard2 ? 'translateY(0)' : 'translateY(16px)', transition: 'opacity 0.6s ease-out, transform 0.6s ease-out' }}>
+                <h3 className={styles.whyCardTitle}>A number before a commitment</h3>
+                <p className={styles.whyCardDesc}>The value is quantified and agreed before anyone signs for the platform.</p>
+              </div>
+              <div className={styles.whyCard} style={{ opacity: activeCard3 ? 1 : 0, transform: activeCard3 ? 'translateY(0)' : 'translateY(16px)', transition: 'opacity 0.6s ease-out, transform 0.6s ease-out' }}>
+                <h3 className={styles.whyCardTitle}>One rule set, two directions</h3>
+                <p className={styles.whyCardDesc}>What found the money backwards runs forwards at entry. No second build.</p>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </div>
+    </section>
   );
 }
