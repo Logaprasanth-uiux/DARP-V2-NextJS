@@ -33,6 +33,10 @@ interface MessageBlock {
   gstPrevValue?: number;
   gstOpportunityCount?: number;
   gstInputType?: 'gstin' | 'otp';
+  gstValueText?: string;
+  isValidated?: boolean;
+  isOtpVerified?: boolean;
+  validatedValue?: string;
 }
 
 interface DocumentUploadState {
