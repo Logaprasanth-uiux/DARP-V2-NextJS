@@ -105,7 +105,9 @@ export default function Demo2LandingPage() {
             </Badge>
 
             <h1 className={styles.heroHeadline}>
-              Ready to Recover Your Trapped Cash? in Just <span className={styles.greenHighlight}>2 Minutes</span>
+              Recover Your Trapped Cash?
+              <br />
+              Discover in <span className={styles.greenHighlight}>2 minutes</span>
               <span className={styles.heroSecondLine}>Recover Money That's Already Yours.</span>
             </h1>
 
@@ -180,7 +182,7 @@ export default function Demo2LandingPage() {
                 </div>
                 <h3 className={styles.journeyCardTitle}>Uncover Leakage</h3>
                 <p className={styles.journeyCardDesc}>
-                  Find hidden losses across your financial records.
+                  By drilling down from a high-level overview to detailed financial records.
                 </p>
               </div>
             </div>

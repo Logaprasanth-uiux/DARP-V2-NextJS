@@ -542,7 +542,7 @@ function AnimatedCounter({ targetValue, startValue, start }: { targetValue: numb
     if (!start || animatedRef.current) return;
     animatedRef.current = true;
 
-    const duration = 1800; // 1.8 seconds
+    const duration = 3200; // 3.2 seconds for a natural, premium flow
     const startTimestamp = performance.now();
     let frameId: number;
 
@@ -550,7 +550,8 @@ function AnimatedCounter({ targetValue, startValue, start }: { targetValue: numb
       if (!active) return;
       const elapsed = now - startTimestamp;
       const progress = Math.min(elapsed / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      // Smooth sinusoidal ease-in-out: starts slow, accelerates smoothly, decelerates gently at the end
+      const easeProgress = -(Math.cos(Math.PI * progress) - 1) / 2;
       
       const currentValue = Math.floor(startValue + easeProgress * (targetValue - startValue));
       setDisplayVal(currentValue);
@@ -598,17 +599,17 @@ function StreamingText({ content, onComplete }: { content: string; onComplete?: 
       return;
     }
 
-    let currentIndex = 0;
-    const charsPerSecond = 32; // Speed increased to ~32 characters per second (30-35 cps range)
-    const delay = 1000 / charsPerSecond;
-
     if (!content) return;
 
+    const tokens = content.split(/(\s+)/).filter(Boolean);
+    let currentTokenIndex = 0;
+    const delay = 45; // ~45ms per token for natural, premium word-by-word flow
+
     const timer = setInterval(() => {
-      currentIndex += 1;
-      setDisplayedText(content.substring(0, currentIndex));
+      currentTokenIndex += 1;
+      setDisplayedText(tokens.slice(0, currentTokenIndex).join(''));
       
-      if (currentIndex >= content.length) {
+      if (currentTokenIndex >= tokens.length) {
         clearInterval(timer);
         if (onCompleteRef.current) onCompleteRef.current();
       }
