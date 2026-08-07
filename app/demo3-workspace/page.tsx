@@ -926,6 +926,7 @@ export default function Demo2WorkspacePage() {
     uploadedDocs: [],
     currentProgressDoc: null,
   });
+  const [isGstFlowComplete, setIsGstFlowComplete] = useState(false);
 
   // Assign Owner Modal & Toast States
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -1650,6 +1651,13 @@ export default function Demo2WorkspacePage() {
 
   // GST Flow: Post-unlock opportunity question triggers
   const askGstOpportunity1 = () => {
+    const alertMsg: MessageBlock = {
+      id: `gst-opp-alert-bank-statements-${Date.now()}`,
+      role: 'assistant',
+      type: 'enterprise_alert',
+      gstValueText: '₹3.7 Lakhs',
+      content: 'Improve GST payment reconciliation and identify unmatched GST payment transactions.'
+    };
     const docReq: MessageBlock = {
       id: `gst-doc-req-bank-statements-${Date.now()}`,
       role: 'assistant',
@@ -1658,15 +1666,16 @@ export default function Demo2WorkspacePage() {
         { id: 'bank-statements', name: 'Bank Statements', description: 'Upload bank statements' }
       ]
     };
-    setConversation(prev => [...prev, docReq]);
+    setConversation(prev => [...prev, alertMsg, docReq]);
   };
 
   const askGstOpportunity2 = () => {
-    const textMsg: MessageBlock = {
-      id: `ai-gst-opp-2-txt-${Date.now()}`,
+    const alertMsg: MessageBlock = {
+      id: `gst-opp-alert-tds-report-${Date.now()}`,
       role: 'assistant',
-      type: 'text',
-      content: "Let's check for tax withholding credits next."
+      type: 'enterprise_alert',
+      gstValueText: '₹4.4 Lakhs',
+      content: 'Identify GST recovery opportunities through TDS credit reconciliation.'
     };
     const docReq: MessageBlock = {
       id: `gst-doc-req-tds-report-${Date.now()}`,
@@ -1676,15 +1685,16 @@ export default function Demo2WorkspacePage() {
         { id: 'tds-report', name: 'TDS Report', description: 'Upload TDS report' }
       ]
     };
-    setConversation(prev => [...prev, textMsg, docReq]);
+    setConversation(prev => [...prev, alertMsg, docReq]);
   };
 
   const askGstOpportunity3 = () => {
-    const textMsg: MessageBlock = {
-      id: `ai-gst-opp-3-txt-${Date.now()}`,
+    const alertMsg: MessageBlock = {
+      id: `gst-opp-alert-statement-of-account-${Date.now()}`,
       role: 'assistant',
-      type: 'text',
-      content: "Let's look at ledger records next."
+      type: 'enterprise_alert',
+      gstValueText: '₹5.7 Lakhs',
+      content: 'Perform vendor ledger reconciliation and identify additional GST recovery opportunities.'
     };
     const docReq: MessageBlock = {
       id: `gst-doc-req-statement-of-account-${Date.now()}`,
@@ -1694,10 +1704,11 @@ export default function Demo2WorkspacePage() {
         { id: 'statement-of-account', name: 'Statement of Account', description: 'Upload Statement of Account' }
       ]
     };
-    setConversation(prev => [...prev, textMsg, docReq]);
+    setConversation(prev => [...prev, alertMsg, docReq]);
   };
 
   const showGstFlowComplete = () => {
+    setIsGstFlowComplete(true);
     const finishMsg: MessageBlock = {
       id: `gst-finish-${Date.now()}`,
       role: 'assistant',
@@ -2911,7 +2922,7 @@ To perform an initial assessment, please upload the following financial document
                                   )}
 
                                   {/* Persistent Unlocked Report Access Card */}
-                                  {reportUnlocked && (
+                                  {reportUnlocked && (!isGstFlow || isGstFlowComplete) && (
                                     <div style={{
                                       border: '1px solid var(--color-success-border)',
                                       background: 'var(--color-success-bg)',
@@ -3808,7 +3819,10 @@ To perform an initial assessment, please upload the following financial document
             </h3>
             
             <p className={styles.successSubtitle} style={{ textAlign: 'center', margin: '0 0 var(--space-4) 0', fontSize: 'var(--font-size-body)' }}>
-              Your Executive Recovery Report workspace is ready.
+              {isGstFlow 
+                ? "Executive assessment unlocked. Let's validate additional recovery opportunities to maximize your return." 
+                : "Your Executive Recovery Report workspace is ready."
+              }
             </p>
 
             <div className={styles.modalActions}>
@@ -3816,19 +3830,25 @@ To perform an initial assessment, please upload the following financial document
                 type="button" 
                 className={styles.modalPrimaryBtn}
                 onClick={() => {
-                  launchReportWorkspace(selectedPlan);
-                  setIsPaymentSuccessModalOpen(false);
+                  if (isGstFlow) {
+                    setIsPaymentSuccessModalOpen(false);
+                  } else {
+                    launchReportWorkspace(selectedPlan);
+                    setIsPaymentSuccessModalOpen(false);
+                  }
                 }}
               >
-                Open Report Workspace (New Tab)
+                {isGstFlow ? "Continue Assessment" : "Open Report Workspace (New Tab)"}
               </button>
-              <button 
-                type="button" 
-                className={styles.modalSecondaryBtn}
-                onClick={() => setIsPaymentSuccessModalOpen(false)}
-              >
-                Close
-              </button>
+              {!isGstFlow && (
+                <button 
+                  type="button" 
+                  className={styles.modalSecondaryBtn}
+                  onClick={() => setIsPaymentSuccessModalOpen(false)}
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>
