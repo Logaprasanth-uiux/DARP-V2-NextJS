@@ -876,6 +876,8 @@ export default function Demo2WorkspacePage() {
   const reconcile1ProcessingTriggeredRef = useRef(false);
   const reconcile2ProcessingTriggeredRef = useRef(false);
   const triggeredGstOppsRef = useRef<Set<string>>(new Set());
+  const triggeredInitialProcessingRef = useRef<Set<string>>(new Set());
+  const triggeredOppCardsRef = useRef<Set<string>>(new Set());
   const [promptValue, setPromptValue] = useState("");
   const [conversation, setConversation] = useState<MessageBlock[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -1046,6 +1048,7 @@ export default function Demo2WorkspacePage() {
 
   // Auto scroll to the bottom when the conversation changes
   useEffect(() => {
+    if (scrollStage === 'executive_assessment') return;
     if (chatScrollRef.current && conversation.length > 0) {
       if (scrollTimerRef.current) {
         clearTimeout(scrollTimerRef.current);
@@ -1057,7 +1060,7 @@ export default function Demo2WorkspacePage() {
     } else if (chatScrollRef.current && conversation.length === 0) {
       chatScrollRef.current.scrollTop = 0;
     }
-  }, [conversation, completedMessageIds]);
+  }, [conversation, completedMessageIds, scrollStage]);
 
   const openAssignModal = (contextName: string) => {
     setAssignModalData({
@@ -1446,7 +1449,7 @@ export default function Demo2WorkspacePage() {
         }
       ]);
       setTimeout(() => {
-        runGstInitialAnalysis([...gstUploadedDocs, 'gstr2b-report']);
+        triggerGstInitialAnalysis();
       }, 1000);
     }
   }, [uploadStates, isGstFlow, reportUnlocked, gstUploadedDocs]);
@@ -1457,14 +1460,17 @@ export default function Demo2WorkspacePage() {
     
     // Check if bank-statements is validated
     if (uploadStates['bank-statements'].status === 'validated' && !gstUploadedDocs.includes('bank-statements')) {
+      setGstUploadedDocs(prev => [...prev, 'bank-statements']);
       handleGstOpportunityDocumentValidated('bank-statements');
     }
     // Check if tds-report is validated
     if (uploadStates['tds-report'].status === 'validated' && !gstUploadedDocs.includes('tds-report')) {
+      setGstUploadedDocs(prev => [...prev, 'tds-report']);
       handleGstOpportunityDocumentValidated('tds-report');
     }
     // Check if statement-of-account is validated
     if (uploadStates['statement-of-account'].status === 'validated' && !gstUploadedDocs.includes('statement-of-account')) {
+      setGstUploadedDocs(prev => [...prev, 'statement-of-account']);
       handleGstOpportunityDocumentValidated('statement-of-account');
     }
   }, [uploadStates, isGstFlow, gstUploadedDocs]);
@@ -1594,7 +1600,7 @@ export default function Demo2WorkspacePage() {
 
         // Run reconciliation immediately
         setTimeout(() => {
-          runGstInitialAnalysis([...gstUploadedDocs, 'gstin_otp']);
+          triggerGstInitialAnalysis();
         }, 1000);
 
       }, 3500);
@@ -1602,34 +1608,41 @@ export default function Demo2WorkspacePage() {
     }, 600);
   };
 
-  const runGstInitialAnalysis = (finalDocs: string[]) => {
-    const processingMsgId = `gst-recon-processing-${Date.now()}`;
+  const triggerGstInitialAnalysis = () => {
+    setScrollStage('ai_acknowledgement');
+    const introMsg: MessageBlock = {
+      id: `ai-gst-initial-intro-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: "Enough financial evidence has been collected. Running AI reconciliation..."
+    };
+    setConversation(prev => [...prev, introMsg]);
+  };
+
+  const runGstInitialAnalysisProcessing = (suffix: string) => {
+    const processingMsgId = `gst-recon-processing-${suffix}`;
     const processingMsg: MessageBlock = {
       id: processingMsgId,
       role: 'assistant',
       type: 'processing_indicator'
     };
 
-    setConversation(prev => [...prev, {
-      id: `ai-recon-start-${Date.now()}`,
-      role: 'assistant',
-      type: 'text',
-      content: `Enough financial evidence has been collected. Running AI reconciliation...`
-    }, processingMsg]);
+    setScrollStage('processing');
+    setConversation(prev => [...prev, processingMsg]);
 
     setTimeout(() => {
       setConversation(prev => {
         const filtered = prev.filter(msg => msg.id !== processingMsgId);
         
         const completedTextMsg: MessageBlock = {
-          id: `gst-completed-text-1-${Date.now()}`,
+          id: `gst-completed-text-1-${suffix}`,
           role: 'assistant',
           type: 'text',
           content: `✓ Analysis completed successfully.`
         };
 
         const assessmentMsg: MessageBlock = {
-          id: `gst-assessment-card-1-${Date.now()}`,
+          id: `gst-assessment-card-1-${suffix}`,
           role: 'assistant',
           type: 'executive_assessment',
           gstValue: 1480000,
@@ -1644,7 +1657,7 @@ export default function Demo2WorkspacePage() {
       setGstFlowState(prev => ({
         ...prev,
         step: 'recon_completed',
-        uploadedDocs: finalDocs
+        uploadedDocs: gstUploadedDocs
       }));
       setTimeout(() => {
         askGstOpportunity1();
@@ -1654,60 +1667,36 @@ export default function Demo2WorkspacePage() {
 
   // GST Flow: Post-unlock opportunity question triggers
   const askGstOpportunity1 = () => {
-    const alertMsg: MessageBlock = {
-      id: `gst-opp-alert-bank-statements-${Date.now()}`,
+    setScrollStage('ai_acknowledgement');
+    const textMsg: MessageBlock = {
+      id: `ai-gst-opp-text-1-${Date.now()}`,
       role: 'assistant',
-      type: 'enterprise_alert',
-      gstValueText: '₹3.7 Lakhs',
-      content: 'Improve GST payment reconciliation and identify unmatched GST payment transactions.'
+      type: 'text',
+      content: 'Based on the initial assessment, I identified additional recovery opportunities that require further financial validation.'
     };
-    const docReq: MessageBlock = {
-      id: `gst-doc-req-bank-statements-${Date.now()}`,
-      role: 'assistant',
-      type: 'document_request',
-      documents: [
-        { id: 'bank-statements', name: 'Bank Statements', description: 'Upload bank statements' }
-      ]
-    };
-    setConversation(prev => [...prev, alertMsg, docReq]);
+    setConversation(prev => [...prev, textMsg]);
   };
 
   const askGstOpportunity2 = () => {
-    const alertMsg: MessageBlock = {
-      id: `gst-opp-alert-tds-report-${Date.now()}`,
+    setScrollStage('ai_acknowledgement');
+    const textMsg: MessageBlock = {
+      id: `ai-gst-opp-text-2-${Date.now()}`,
       role: 'assistant',
-      type: 'enterprise_alert',
-      gstValueText: '₹4.4 Lakhs',
-      content: 'Identify GST recovery opportunities through TDS credit reconciliation.'
+      type: 'text',
+      content: "I have identified another potential recovery area related to tax withholding credits. Let's analyze this opportunity next."
     };
-    const docReq: MessageBlock = {
-      id: `gst-doc-req-tds-report-${Date.now()}`,
-      role: 'assistant',
-      type: 'document_request',
-      documents: [
-        { id: 'tds-report', name: 'TDS Report', description: 'Upload TDS report' }
-      ]
-    };
-    setConversation(prev => [...prev, alertMsg, docReq]);
+    setConversation(prev => [...prev, textMsg]);
   };
 
   const askGstOpportunity3 = () => {
-    const alertMsg: MessageBlock = {
-      id: `gst-opp-alert-statement-of-account-${Date.now()}`,
+    setScrollStage('ai_acknowledgement');
+    const textMsg: MessageBlock = {
+      id: `ai-gst-opp-text-3-${Date.now()}`,
       role: 'assistant',
-      type: 'enterprise_alert',
-      gstValueText: '₹5.7 Lakhs',
-      content: 'Perform vendor ledger reconciliation and identify additional GST recovery opportunities.'
+      type: 'text',
+      content: "Lastly, we can perform a ledger reconciliation to identify any remaining recovery opportunities."
     };
-    const docReq: MessageBlock = {
-      id: `gst-doc-req-statement-of-account-${Date.now()}`,
-      role: 'assistant',
-      type: 'document_request',
-      documents: [
-        { id: 'statement-of-account', name: 'Statement of Account', description: 'Upload Statement of Account' }
-      ]
-    };
-    setConversation(prev => [...prev, alertMsg, docReq]);
+    setConversation(prev => [...prev, textMsg]);
   };
 
   const showGstFlowComplete = () => {
@@ -2068,6 +2057,81 @@ export default function Demo2WorkspacePage() {
       const cardId = matchingGstCompletedText.replace('gst-completed-text-opp-', 'gst-assessment-card-opp-');
       if (!scrolledCards[cardId]) {
         setScrollStage('executive_assessment');
+      }
+    }
+
+    // 7. GST Initial Analysis Intro completed: Trigger processing indicator
+    const matchingGstInitialIntro = Array.from(completedMessageIds).find(id => id.startsWith('ai-gst-initial-intro-'));
+    if (matchingGstInitialIntro && !triggeredInitialProcessingRef.current.has(matchingGstInitialIntro)) {
+      triggeredInitialProcessingRef.current.add(matchingGstInitialIntro);
+      const parts = matchingGstInitialIntro.split('-');
+      const suffix = parts[parts.length - 1];
+      setTimeout(() => {
+        runGstInitialAnalysisProcessing(suffix);
+      }, 200);
+    }
+
+    // 8. GST Opportunity Text completed: Trigger Opportunity cards
+    const matchingGstOppText = Array.from(completedMessageIds).find(id => id.startsWith('ai-gst-opp-text-'));
+    if (matchingGstOppText && !triggeredOppCardsRef.current.has(matchingGstOppText)) {
+      triggeredOppCardsRef.current.add(matchingGstOppText);
+      const parts = matchingGstOppText.split('-');
+      const oppNum = parts[4];
+      const suffix = parts[parts.length - 1];
+
+      setScrollStage('ai_acknowledgement');
+
+      if (oppNum === '1') {
+        const alertMsg: MessageBlock = {
+          id: `gst-opp-alert-bank-statements-${suffix}`,
+          role: 'assistant',
+          type: 'enterprise_alert',
+          gstValueText: '₹3.7 Lakhs',
+          content: 'Improve GST payment reconciliation and identify unmatched GST payment transactions.'
+        };
+        const docReq: MessageBlock = {
+          id: `gst-doc-req-bank-statements-${suffix}`,
+          role: 'assistant',
+          type: 'document_request',
+          documents: [
+            { id: 'bank-statements', name: 'Bank Statements', description: 'Upload bank statements' }
+          ]
+        };
+        setConversation(prev => [...prev, alertMsg, docReq]);
+      } else if (oppNum === '2') {
+        const alertMsg: MessageBlock = {
+          id: `gst-opp-alert-tds-report-${suffix}`,
+          role: 'assistant',
+          type: 'enterprise_alert',
+          gstValueText: '₹4.4 Lakhs',
+          content: 'Identify GST recovery opportunities through TDS credit reconciliation.'
+        };
+        const docReq: MessageBlock = {
+          id: `gst-doc-req-tds-report-${suffix}`,
+          role: 'assistant',
+          type: 'document_request',
+          documents: [
+            { id: 'tds-report', name: 'TDS Report', description: 'Upload TDS report' }
+          ]
+        };
+        setConversation(prev => [...prev, alertMsg, docReq]);
+      } else if (oppNum === '3') {
+        const alertMsg: MessageBlock = {
+          id: `gst-opp-alert-statement-of-account-${suffix}`,
+          role: 'assistant',
+          type: 'enterprise_alert',
+          gstValueText: '₹5.7 Lakhs',
+          content: 'Perform vendor ledger reconciliation and identify additional GST recovery opportunities.'
+        };
+        const docReq: MessageBlock = {
+          id: `gst-doc-req-statement-of-account-${suffix}`,
+          role: 'assistant',
+          type: 'document_request',
+          documents: [
+            { id: 'statement-of-account', name: 'Statement of Account', description: 'Upload Statement of Account' }
+          ]
+        };
+        setConversation(prev => [...prev, alertMsg, docReq]);
       }
     }
   }, [completedMessageIds, scrollStage, scrolledCards]);
