@@ -875,6 +875,7 @@ export default function Demo2WorkspacePage() {
   const [isTransitioned, setIsTransitioned] = useState(false);
   const reconcile1ProcessingTriggeredRef = useRef(false);
   const reconcile2ProcessingTriggeredRef = useRef(false);
+  const triggeredGstOppsRef = useRef<Set<string>>(new Set());
   const [promptValue, setPromptValue] = useState("");
   const [conversation, setConversation] = useState<MessageBlock[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -1722,55 +1723,68 @@ export default function Demo2WorkspacePage() {
   const handleGstOpportunityDocumentValidated = (docType: string) => {
     setGstUploadedDocs(prev => [...prev, docType]);
 
-    const processingMsgId = `gst-opp-processing-${docType}-${Date.now()}`;
+    let introText = "";
+    if (docType === 'bank-statements') {
+      introText = "Additional reconciliation opportunities have been identified using your Bank Statement. Running analysis...";
+    } else if (docType === 'tds-report') {
+      introText = "TDS reconciliation has identified further recoverable opportunities. Running analysis...";
+    } else if (docType === 'statement-of-account') {
+      introText = "Statement of Account reconciliation has unlocked additional GST recovery opportunities. Running analysis...";
+    }
+
+    setScrollStage('ai_acknowledgement');
+
+    const introMsg: MessageBlock = {
+      id: `ai-opp-recon-start-${docType}-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: introText
+    };
+    setConversation(prev => [...prev, introMsg]);
+  };
+
+  const runGstOpportunityProcessing = (docType: string, suffix: string) => {
+    const processingMsgId = `gst-opp-processing-${docType}-${suffix}`;
     const processingMsg: MessageBlock = {
       id: processingMsgId,
       role: 'assistant',
       type: 'processing_indicator'
     };
 
-    let introText = "";
+    setScrollStage('processing');
+    setConversation(prev => [...prev, processingMsg]);
+
     let nextValue = 1480000;
     let prevValue = 1480000;
     let nextCount = 4;
 
     if (docType === 'bank-statements') {
-      introText = "Additional reconciliation opportunities have been identified using your Bank Statement. Running analysis...";
       prevValue = 1480000;
       nextValue = 1850000;
       nextCount = 5;
     } else if (docType === 'tds-report') {
-      introText = "TDS reconciliation has identified further recoverable opportunities. Running analysis...";
       prevValue = 1850000;
       nextValue = 2290000;
       nextCount = 7;
     } else if (docType === 'statement-of-account') {
-      introText = "Statement of Account reconciliation has unlocked additional GST recovery opportunities. Running analysis...";
       prevValue = 2290000;
       nextValue = 2860000;
       nextCount = 9;
     }
-
-    setConversation(prev => [...prev, {
-      id: `ai-opp-recon-start-${docType}-${Date.now()}`,
-      role: 'assistant',
-      type: 'text',
-      content: introText
-    }, processingMsg]);
 
     setTimeout(() => {
       setConversation(prev => {
         const filtered = prev.filter(msg => msg.id !== processingMsgId);
 
         const completedTextMsg: MessageBlock = {
-          id: `gst-completed-text-opp-${docType}-${Date.now()}`,
+          id: `gst-completed-text-opp-${docType}-${suffix}`,
           role: 'assistant',
           type: 'text',
           content: `✓ Reconciled successfully.`
         };
 
         const assessmentMsg: MessageBlock = {
-          id: `gst-assessment-card-opp-${docType}-${Date.now()}`,
+          id: `gst-assessment-card-opp-${docType}-${suffix}`,
           role: 'assistant',
           type: 'executive_assessment',
           isUpdated: true,
@@ -2028,6 +2042,33 @@ export default function Demo2WorkspacePage() {
     const matchingCompletedText2 = Array.from(completedMessageIds).find(id => id.startsWith('ai-completed-text-2-'));
     if (matchingCompletedText2 && scrollStage !== 'executive_assessment' && !scrolledCards[matchingCompletedText2.replace('ai-completed-text-2-', 'ai-assessment-card-2-')]) {
       setScrollStage('executive_assessment');
+    }
+
+    // 5. GST Opportunity Intro completed: Trigger processing indicator
+    const matchingGstIntro = Array.from(completedMessageIds).find(id => id.startsWith('ai-opp-recon-start-'));
+    if (matchingGstIntro && !triggeredGstOppsRef.current.has(matchingGstIntro)) {
+      triggeredGstOppsRef.current.add(matchingGstIntro);
+      
+      const parts = matchingGstIntro.split('-');
+      let actualDocType = 'bank-statements';
+      if (matchingGstIntro.includes('bank-statements')) actualDocType = 'bank-statements';
+      else if (matchingGstIntro.includes('tds-report')) actualDocType = 'tds-report';
+      else if (matchingGstIntro.includes('statement-of-account')) actualDocType = 'statement-of-account';
+
+      const suffix = parts[parts.length - 1];
+
+      setTimeout(() => {
+        runGstOpportunityProcessing(actualDocType, suffix);
+      }, 200);
+    }
+
+    // 6. GST Opportunity Reconciled success text completed: Scroll card into view
+    const matchingGstCompletedText = Array.from(completedMessageIds).find(id => id.startsWith('gst-completed-text-opp-'));
+    if (matchingGstCompletedText && scrollStage !== 'executive_assessment') {
+      const cardId = matchingGstCompletedText.replace('gst-completed-text-opp-', 'gst-assessment-card-opp-');
+      if (!scrolledCards[cardId]) {
+        setScrollStage('executive_assessment');
+      }
     }
   }, [completedMessageIds, scrollStage, scrolledCards]);
 
