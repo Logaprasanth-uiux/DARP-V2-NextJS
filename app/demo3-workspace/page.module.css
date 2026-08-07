@@ -361,7 +361,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: 0 var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-20) var(--space-4);
 }
 
 /* ==========================================================================
@@ -893,6 +893,7 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border-subtle);
+  min-height: 390px;
 }
 
 .blurredOpportunityTableWrapper {

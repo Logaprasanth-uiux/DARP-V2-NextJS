@@ -18,7 +18,7 @@ const welcomeMessage = {
 interface MessageBlock {
   id: string;
   role: 'user' | 'assistant';
-  type: 'text' | 'document_request' | 'processing_indicator' | 'executive_assessment' | 'recommended_documents' | 'enterprise_alert';
+  type: 'text' | 'document_request' | 'processing_indicator' | 'executive_assessment' | 'recommended_documents' | 'enterprise_alert' | 'gst_guided_question' | 'gstin_otp_input' | 'gst_progress_indicator' | 'gst_portal_summary';
   content?: string;
   documents?: {
     id: string;
@@ -27,6 +27,12 @@ interface MessageBlock {
     optional?: boolean;
   }[];
   isUpdated?: boolean;
+  options?: { label: string; action: string; }[];
+  gstQuestionType?: string;
+  gstValue?: number;
+  gstPrevValue?: number;
+  gstOpportunityCount?: number;
+  gstInputType?: 'gstin' | 'otp';
 }
 
 interface DocumentUploadState {
@@ -681,6 +687,175 @@ function AnimatedAiBubble({
   );
 }
 
+const GstProgressIndicator: React.FC = () => {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const timer1 = setTimeout(() => setStep(1), 800);
+    const timer2 = setTimeout(() => setStep(2), 1600);
+    const timer3 = setTimeout(() => setStep(3), 2400);
+    const timer4 = setTimeout(() => setStep(4), 3200);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
+    };
+  }, []);
+
+  return (
+    <div className={styles.processingBlock}>
+      <div className={styles.processingItem}>
+        {step >= 1 ? (
+          <span className={styles.badgeCheckIcon} style={{ color: 'var(--color-success)', marginRight: '8px' }}>✓</span>
+        ) : (
+          <div className={styles.processingSpinner} />
+        )}
+        <span>Connecting to GST Portal...</span>
+      </div>
+      {step >= 1 && (
+        <div className={styles.processingItem}>
+          {step >= 2 ? (
+            <span className={styles.badgeCheckIcon} style={{ color: 'var(--color-success)', marginRight: '8px' }}>✓</span>
+          ) : (
+            <div className={styles.processingSpinner} />
+          )}
+          <span>Authenticating...</span>
+        </div>
+      )}
+      {step >= 2 && (
+        <div className={styles.processingItem}>
+          {step >= 3 ? (
+            <span className={styles.badgeCheckIcon} style={{ color: 'var(--color-success)', marginRight: '8px' }}>✓</span>
+          ) : (
+            <div className={styles.processingSpinner} />
+          )}
+          <span>Fetching GSTR-2B...</span>
+        </div>
+      )}
+      {step >= 3 && (
+        <div className={styles.processingItem}>
+          {step >= 4 ? (
+            <span className={styles.badgeCheckIcon} style={{ color: 'var(--color-success)', marginRight: '8px' }}>✓</span>
+          ) : (
+            <div className={styles.processingSpinner} />
+          )}
+          <span>GST Return Retrieved Successfully</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface GstInputCardProps {
+  msg: MessageBlock;
+  onSubmit: (val: string) => void;
+}
+
+const GstInputCard: React.FC<GstInputCardProps> = ({ msg, onSubmit }) => {
+  const [val, setVal] = useState('');
+
+  if (msg.gstInputType === 'gstin' && msg.isValidated) {
+    return (
+      <div className={styles.aiMessageRow}>
+        <div className={styles.aiAvatarPlaceholder} />
+        <div className={styles.assessmentMainCard} style={{ 
+          maxWidth: '440px', 
+          padding: 'var(--space-4) var(--space-5)', 
+          margin: 0,
+          border: '1px solid var(--color-success-border)',
+          backgroundColor: 'var(--color-success-bg)',
+          color: 'var(--color-success-text)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 'bold', marginBottom: 'var(--space-3)', color: 'var(--color-success)' }}>
+            <span>✅ GST Registration Validated</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', fontSize: 'var(--font-size-body)' }}>
+            <div>
+              <span style={{ color: 'var(--color-text-secondary)', display: 'block', fontSize: 'var(--font-size-caption)' }}>Company Name:</span>
+              <strong style={{ color: 'var(--color-text-primary)' }}>ABC Industries Pvt. Ltd.</strong> <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>(Mock Data)</span>
+            </div>
+            <div>
+              <span style={{ color: 'var(--color-text-secondary)', display: 'block', fontSize: 'var(--font-size-caption)' }}>GSTIN:</span>
+              <strong style={{ color: 'var(--color-text-primary)' }}>{msg.validatedValue || '29ABCDE1234F1Z5'}</strong> <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>(Mock)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (msg.gstInputType === 'otp' && msg.isOtpVerified) {
+    return (
+      <div className={styles.aiMessageRow}>
+        <div className={styles.aiAvatarPlaceholder} />
+        <div className={styles.assessmentMainCard} style={{ 
+          maxWidth: '440px', 
+          padding: 'var(--space-4) var(--space-5)', 
+          margin: 0,
+          border: '1px solid var(--color-success-border)',
+          backgroundColor: 'var(--color-success-bg)',
+          color: 'var(--color-success-text)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 'bold', color: 'var(--color-success)' }}>
+            <span>✅ OTP Verified Successfully</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.aiMessageRow}>
+      <div className={styles.aiAvatarPlaceholder} />
+      <div className={styles.assessmentMainCard} style={{ maxWidth: '440px', padding: 'var(--space-4) var(--space-5)', margin: 0 }}>
+        <p style={{ margin: '0 0 var(--space-3) 0', fontWeight: '500', color: 'var(--color-text-primary)', fontSize: 'var(--font-size-body)' }}>{msg.content}</p>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <input
+            type="text"
+            className={styles.promptInput}
+            style={{ 
+              flex: 1, 
+              padding: 'var(--space-2) var(--space-3)', 
+              borderRadius: 'var(--radius-md)', 
+              border: '1px solid var(--color-border)',
+              outline: 'none',
+              background: 'white',
+              color: 'var(--color-text-primary)'
+            }}
+            placeholder={msg.gstInputType === 'otp' ? 'Enter 6-digit OTP' : 'Enter 15-character GSTIN'}
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+          />
+          <button
+            style={{ 
+              padding: 'var(--space-2) var(--space-4)', 
+              borderRadius: 'var(--radius-md)', 
+              fontSize: 'var(--font-size-body)',
+              fontWeight: '600',
+              cursor: 'pointer',
+              border: '1px solid var(--color-primary)',
+              background: 'var(--color-surface)',
+              color: 'var(--color-primary)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-surface-hover)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'var(--color-surface)'}
+            onClick={() => {
+              if (val.trim()) {
+                onSubmit(val.trim());
+              }
+            }}
+          >
+            {msg.gstInputType === 'otp' ? 'Submit OTP' : 'Submit GSTIN'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 type ScrollStage = 'none' | 'ai_acknowledgement' | 'processing' | 'executive_assessment';
 
 export default function Demo2WorkspacePage() {
@@ -732,6 +907,21 @@ export default function Demo2WorkspacePage() {
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
   const [expandedVendorId, setExpandedVendorId] = useState<string | null>(null);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+
+  // Guided GST Flow State Variables
+  const [isGstFlow, setIsGstFlow] = useState(false);
+  const [gstUploadedDocs, setGstUploadedDocs] = useState<string[]>([]);
+  const [gstRecoverableValue, setGstRecoverableValue] = useState(1480000);
+  const [gstPrevRecoverableValue, setGstPrevRecoverableValue] = useState(370000);
+  const [gstFlowState, setGstFlowState] = useState<{
+    step: 'none' | 'ask_purchase_register' | 'ask_vendor_bills' | 'ask_expense_report' | 'ask_gstin' | 'ask_otp' | 'ask_gstr2b' | 'running_reconciliation' | 'recon_completed';
+    uploadedDocs: string[];
+    currentProgressDoc: string | null;
+  }>({
+    step: 'none',
+    uploadedDocs: [],
+    currentProgressDoc: null,
+  });
 
   // Assign Owner Modal & Toast States
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -804,28 +994,65 @@ export default function Demo2WorkspacePage() {
       description: 'Customer outstanding balances',
       status: 'idle',
       progress: 0
+    },
+    'purchase-register': {
+      id: 'purchase-register',
+      name: 'Purchase Register',
+      description: 'Upload purchase ledger register',
+      status: 'idle',
+      progress: 0
+    },
+    'vendor-bills': {
+      id: 'vendor-bills',
+      name: 'Vendor Bills',
+      description: 'Upload vendor invoices',
+      status: 'idle',
+      progress: 0
+    },
+    'expense-report': {
+      id: 'expense-report',
+      name: 'Expense Report',
+      description: 'Upload expense claim files',
+      status: 'idle',
+      progress: 0
+    },
+    'gstr2b-report': {
+      id: 'gstr2b-report',
+      name: 'GSTR-2B Report',
+      description: 'Upload GSTR-2B document',
+      status: 'idle',
+      progress: 0
+    },
+    'tds-report': {
+      id: 'tds-report',
+      name: 'TDS Report',
+      description: 'Upload TDS report',
+      status: 'idle',
+      progress: 0
+    },
+    'statement-of-account': {
+      id: 'statement-of-account',
+      name: 'Statement of Account',
+      description: 'Upload Statement of Account',
+      status: 'idle',
+      progress: 0
     }
   });
 
   // Auto scroll to the bottom when the conversation changes
   useEffect(() => {
     if (chatScrollRef.current && conversation.length > 0) {
-      const lastMsg = conversation[conversation.length - 1];
-      const isUserMessage = lastMsg?.role === 'user';
-      
-      if (isUserMessage) {
-        if (scrollTimerRef.current) {
-          clearTimeout(scrollTimerRef.current);
-        }
-        chatScrollRef.current.scrollTo({
-          top: chatScrollRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
       }
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     } else if (chatScrollRef.current && conversation.length === 0) {
       chatScrollRef.current.scrollTop = 0;
     }
-  }, [conversation]);
+  }, [conversation, completedMessageIds]);
 
   const openAssignModal = (contextName: string) => {
     setAssignModalData({
@@ -848,7 +1075,34 @@ export default function Demo2WorkspacePage() {
 
   const launchReportWorkspace = (plan: 'individual' | 'teams' | null) => {
     const selectedPlanValue = plan || 'teams';
-    window.open(`/demo3-report?plan=${selectedPlanValue}`, '_blank');
+    if (isGstFlow) {
+      const docsArr: string[] = [];
+      if (gstUploadedDocs.includes('purchase-register') || gstUploadedDocs.includes('purchase_register')) {
+        docsArr.push('pr');
+      } else if (gstUploadedDocs.includes('vendor-bills') || gstUploadedDocs.includes('vendor_bills')) {
+        docsArr.push('bills');
+      } else if (gstUploadedDocs.includes('expense-report') || gstUploadedDocs.includes('expense_report')) {
+        docsArr.push('expense');
+      }
+      
+      if (gstUploadedDocs.includes('gstr2b-report') || gstUploadedDocs.includes('gstr2b_report') || gstUploadedDocs.includes('gstin_otp')) {
+        docsArr.push('g2b');
+      }
+      if (gstUploadedDocs.includes('bank-statements') || gstUploadedDocs.includes('bank_statements')) {
+        docsArr.push('bs');
+      }
+      if (gstUploadedDocs.includes('tds-report') || gstUploadedDocs.includes('tds_report')) {
+        docsArr.push('tds');
+      }
+      if (gstUploadedDocs.includes('statement-of-account') || gstUploadedDocs.includes('statement_of_account')) {
+        docsArr.push('soa');
+      }
+      
+      const docsParam = docsArr.join(',');
+      window.open(`/demo3-report?plan=${selectedPlanValue}&flow=gst&docs=${docsParam}`, '_blank');
+    } else {
+      window.open(`/demo3-report?plan=${selectedPlanValue}`, '_blank');
+    }
   };
 
   const handleUpgradeToTeams = () => {
@@ -1081,6 +1335,7 @@ export default function Demo2WorkspacePage() {
 
   // Trigger AI response when all documents are validated
   useEffect(() => {
+    if (isGstFlow) return;
     const coreDocs = ['bank-statements', 'ar-report', 'ap-ledger'];
     const allCoreValidated = coreDocs.every(id => uploadStates[id].status === 'validated');
     
@@ -1098,10 +1353,11 @@ export default function Demo2WorkspacePage() {
 
       setConversation(prevHistory => [...prevHistory, aiMsg]);
     }
-  }, [uploadStates, isTransitioned, reconcile1Started]);
+  }, [uploadStates, isTransitioned, reconcile1Started, isGstFlow]);
 
   // Trigger second reconciliation when all recommended documents are validated
   useEffect(() => {
+    if (isGstFlow) return;
     const recommendedDocs = ['gst-returns', 'sales-register', 'customer-ledger'];
     const allRecommendedValidated = recommendedDocs.every(id => uploadStates[id].status === 'validated');
     
@@ -1119,7 +1375,466 @@ export default function Demo2WorkspacePage() {
 
       setConversation(prevHistory => [...prevHistory, aiMsg]);
     }
-  }, [uploadStates, isTransitioned, reconcile2Started]);
+  }, [uploadStates, isTransitioned, reconcile2Started, isGstFlow]);
+
+  // GST Flow: Onboarding document validation listener
+  useEffect(() => {
+    if (!isGstFlow || reportUnlocked) return;
+
+    if (uploadStates['purchase-register'].status === 'validated' && !gstUploadedDocs.includes('purchase-register')) {
+      setGstUploadedDocs(prev => [...prev, 'purchase-register']);
+      setConversation(prev => [
+        ...prev,
+        {
+          id: `ai-gst-pr-success-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `✓ Purchase Register uploaded and validated successfully.`
+        }
+      ]);
+      setTimeout(() => {
+        askGstr2BOption();
+      }, 1000);
+    }
+
+    if (uploadStates['vendor-bills'].status === 'validated' && !gstUploadedDocs.includes('vendor-bills')) {
+      setGstUploadedDocs(prev => [...prev, 'vendor-bills']);
+      setConversation(prev => [
+        ...prev,
+        {
+          id: `ai-gst-vb-success-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `✓ Vendor Bills uploaded and validated successfully.`
+        }
+      ]);
+      setTimeout(() => {
+        askGstr2BOption();
+      }, 1000);
+    }
+
+    if (uploadStates['expense-report'].status === 'validated' && !gstUploadedDocs.includes('expense-report')) {
+      setGstUploadedDocs(prev => [...prev, 'expense-report']);
+      setConversation(prev => [
+        ...prev,
+        {
+          id: `ai-gst-er-success-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `✓ Expense Report uploaded and validated successfully.`
+        }
+      ]);
+      setTimeout(() => {
+        askGstr2BOption();
+      }, 1000);
+    }
+
+    if (uploadStates['gstr2b-report'].status === 'validated' && !gstUploadedDocs.includes('gstr2b-report')) {
+      setGstUploadedDocs(prev => [...prev, 'gstr2b-report']);
+      setConversation(prev => [
+        ...prev,
+        {
+          id: `ai-gst-g2b-success-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `✓ GSTR-2B Report uploaded and validated successfully.`
+        }
+      ]);
+      setTimeout(() => {
+        runGstInitialAnalysis([...gstUploadedDocs, 'gstr2b-report']);
+      }, 1000);
+    }
+  }, [uploadStates, isGstFlow, reportUnlocked, gstUploadedDocs]);
+
+  // GST Flow: Post-unlock document validation listener
+  useEffect(() => {
+    if (!isGstFlow || !reportUnlocked) return;
+    
+    // Check if bank-statements is validated
+    if (uploadStates['bank-statements'].status === 'validated' && !gstUploadedDocs.includes('bank-statements')) {
+      handleGstOpportunityDocumentValidated('bank-statements');
+    }
+    // Check if tds-report is validated
+    if (uploadStates['tds-report'].status === 'validated' && !gstUploadedDocs.includes('tds-report')) {
+      handleGstOpportunityDocumentValidated('tds-report');
+    }
+    // Check if statement-of-account is validated
+    if (uploadStates['statement-of-account'].status === 'validated' && !gstUploadedDocs.includes('statement-of-account')) {
+      handleGstOpportunityDocumentValidated('statement-of-account');
+    }
+  }, [uploadStates, isGstFlow, reportUnlocked, gstUploadedDocs]);
+
+  // GST Flow Onboarding question triggers
+  const askVendorBills = () => {
+    const textMsg: MessageBlock = {
+      id: `ai-gst-vb-txt-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: "No problem. Let's check for other available financial documents."
+    };
+    const docReq: MessageBlock = {
+      id: `gst-doc-req-vendor-bills-${Date.now()}`,
+      role: 'assistant',
+      type: 'document_request',
+      documents: [
+        { id: 'vendor-bills', name: 'Vendor Bills', description: 'Upload vendor invoices' }
+      ]
+    };
+    setConversation(prev => [...prev, textMsg, docReq]);
+  };
+
+  const askExpenseReport = () => {
+    const textMsg: MessageBlock = {
+      id: `ai-gst-er-txt-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: "Understood. Let's check for corporate expense reports next."
+    };
+    const docReq: MessageBlock = {
+      id: `gst-doc-req-expense-report-${Date.now()}`,
+      role: 'assistant',
+      type: 'document_request',
+      documents: [
+        { id: 'expense-report', name: 'Expense Report', description: 'Upload expense claim files' }
+      ]
+    };
+    setConversation(prev => [...prev, textMsg, docReq]);
+  };
+
+  const askGstr2BOption = () => {
+    const docReq: MessageBlock = {
+      id: `gst-doc-req-gstr2b-report-${Date.now()}`,
+      role: 'assistant',
+      type: 'document_request',
+      documents: [
+        { id: 'gstr2b-report', name: 'GSTR-2B Report', description: 'Upload GSTR-2B document' }
+      ]
+    };
+    setConversation(prev => [...prev, docReq]);
+  };
+
+  const askForGstInput = (type: 'gstin' | 'otp') => {
+    if (type === 'gstin') {
+      const textMsg: MessageBlock = {
+        id: `ai-gst-gstin-txt-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: "No problem. We can pull GSTR-2B data directly from the GST Portal to proceed."
+      };
+      const qMsg: MessageBlock = {
+        id: `ai-gst-input-gstin-${Date.now()}`,
+        role: 'assistant',
+        type: 'gstin_otp_input',
+        gstInputType: 'gstin',
+        content: "Please enter your GST Registration Number."
+      };
+      setConversation(prev => [...prev, textMsg, qMsg]);
+    } else {
+      const textMsg: MessageBlock = {
+        id: `ai-gst-otp-txt-${Date.now()}`,
+        role: 'assistant',
+        type: 'text',
+        content: "GSTIN validated successfully. Establishing secure portal handshake..."
+      };
+      const qMsg: MessageBlock = {
+        id: `ai-gst-input-otp-${Date.now()}`,
+        role: 'assistant',
+        type: 'gstin_otp_input',
+        gstInputType: 'otp',
+        content: "Please enter the OTP sent to your registered mobile number."
+      };
+      setConversation(prev => [...prev, textMsg, qMsg]);
+    }
+  };
+
+  const handleOtpSubmit = (otpValue: string) => {
+    // 1. Mark OTP as verified in conversation state
+    setConversation(prev => {
+      return prev.map(m => {
+        if (m.type === 'gstin_otp_input' && m.gstInputType === 'otp') {
+          return {
+            ...m,
+            isOtpVerified: true
+          };
+        }
+        return m;
+      });
+    });
+
+    // 2. Start progress indicator sequence immediately
+    setTimeout(() => {
+      const retrievalProgressId = `gst-retrieval-${Date.now()}`;
+      setConversation(prev => [
+        ...prev,
+        {
+          id: retrievalProgressId,
+          role: 'assistant',
+          type: 'gst_progress_indicator'
+        }
+      ]);
+
+      // Complete portal fetch after 3.5s
+      setTimeout(() => {
+        const summaryMsg: MessageBlock = {
+          id: `gst-summary-${Date.now()}`,
+          role: 'assistant',
+          type: 'gst_portal_summary',
+          content: `✓ GSTR-2B Retrieved Successfully`
+        };
+
+        setConversation(prev => {
+          const filtered = prev.filter(msg => msg.id !== retrievalProgressId);
+          return [...filtered, summaryMsg];
+        });
+
+        // Run reconciliation immediately
+        setTimeout(() => {
+          runGstInitialAnalysis([...gstUploadedDocs, 'gstin_otp']);
+        }, 1000);
+
+      }, 3500);
+
+    }, 600);
+  };
+
+  const runGstInitialAnalysis = (finalDocs: string[]) => {
+    const processingMsgId = `gst-recon-processing-${Date.now()}`;
+    const processingMsg: MessageBlock = {
+      id: processingMsgId,
+      role: 'assistant',
+      type: 'processing_indicator'
+    };
+
+    setConversation(prev => [...prev, {
+      id: `ai-recon-start-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: `Enough financial evidence has been collected. Running AI reconciliation...`
+    }, processingMsg]);
+
+    setTimeout(() => {
+      setConversation(prev => {
+        const filtered = prev.filter(msg => msg.id !== processingMsgId);
+        
+        const completedTextMsg: MessageBlock = {
+          id: `gst-completed-text-1-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `✓ Analysis completed successfully.`
+        };
+
+        const assessmentMsg: MessageBlock = {
+          id: `gst-assessment-card-1-${Date.now()}`,
+          role: 'assistant',
+          type: 'executive_assessment',
+          gstValue: 1480000,
+          gstPrevValue: 370000,
+          gstOpportunityCount: 4
+        };
+
+        return [...filtered, completedTextMsg, assessmentMsg];
+      });
+
+      setScrollStage('executive_assessment');
+      setGstFlowState(prev => ({
+        ...prev,
+        step: 'recon_completed',
+        uploadedDocs: finalDocs
+      }));
+    }, 3500);
+  };
+
+  // GST Flow: Post-unlock opportunity question triggers
+  const askGstOpportunity1 = () => {
+    const docReq: MessageBlock = {
+      id: `gst-doc-req-bank-statements-${Date.now()}`,
+      role: 'assistant',
+      type: 'document_request',
+      documents: [
+        { id: 'bank-statements', name: 'Bank Statements', description: 'Upload bank statements' }
+      ]
+    };
+    setConversation(prev => [...prev, docReq]);
+  };
+
+  const askGstOpportunity2 = () => {
+    const textMsg: MessageBlock = {
+      id: `ai-gst-opp-2-txt-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: "Let's check for tax withholding credits next."
+    };
+    const docReq: MessageBlock = {
+      id: `gst-doc-req-tds-report-${Date.now()}`,
+      role: 'assistant',
+      type: 'document_request',
+      documents: [
+        { id: 'tds-report', name: 'TDS Report', description: 'Upload TDS report' }
+      ]
+    };
+    setConversation(prev => [...prev, textMsg, docReq]);
+  };
+
+  const askGstOpportunity3 = () => {
+    const textMsg: MessageBlock = {
+      id: `ai-gst-opp-3-txt-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: "Let's look at ledger records next."
+    };
+    const docReq: MessageBlock = {
+      id: `gst-doc-req-statement-of-account-${Date.now()}`,
+      role: 'assistant',
+      type: 'document_request',
+      documents: [
+        { id: 'statement-of-account', name: 'Statement of Account', description: 'Upload Statement of Account' }
+      ]
+    };
+    setConversation(prev => [...prev, textMsg, docReq]);
+  };
+
+  const showGstFlowComplete = () => {
+    const finishMsg: MessageBlock = {
+      id: `gst-finish-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: "All available financial evidence has been reconciled. Your Executive Recovery Report has been updated successfully and is ready for review."
+    };
+    setConversation(prev => [...prev, finishMsg]);
+  };
+
+  const handleGstOpportunityDocumentValidated = (docType: string) => {
+    setGstUploadedDocs(prev => [...prev, docType]);
+
+    const processingMsgId = `gst-opp-processing-${docType}-${Date.now()}`;
+    const processingMsg: MessageBlock = {
+      id: processingMsgId,
+      role: 'assistant',
+      type: 'processing_indicator'
+    };
+
+    let introText = "";
+    let nextValue = 1480000;
+    let prevValue = 1480000;
+    let nextCount = 4;
+
+    if (docType === 'bank-statements') {
+      introText = "Additional reconciliation opportunities have been identified using your Bank Statement. Running analysis...";
+      prevValue = 1480000;
+      nextValue = 1850000;
+      nextCount = 5;
+    } else if (docType === 'tds-report') {
+      introText = "TDS reconciliation has identified further recoverable opportunities. Running analysis...";
+      prevValue = 1850000;
+      nextValue = 2290000;
+      nextCount = 7;
+    } else if (docType === 'statement-of-account') {
+      introText = "Statement of Account reconciliation has unlocked additional GST recovery opportunities. Running analysis...";
+      prevValue = 2290000;
+      nextValue = 2860000;
+      nextCount = 9;
+    }
+
+    setConversation(prev => [...prev, {
+      id: `ai-opp-recon-start-${docType}-${Date.now()}`,
+      role: 'assistant',
+      type: 'text',
+      content: introText
+    }, processingMsg]);
+
+    setTimeout(() => {
+      setConversation(prev => {
+        const filtered = prev.filter(msg => msg.id !== processingMsgId);
+
+        const completedTextMsg: MessageBlock = {
+          id: `gst-completed-text-opp-${docType}-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: `✓ Reconciled successfully.`
+        };
+
+        const assessmentMsg: MessageBlock = {
+          id: `gst-assessment-card-opp-${docType}-${Date.now()}`,
+          role: 'assistant',
+          type: 'executive_assessment',
+          isUpdated: true,
+          gstValue: nextValue,
+          gstPrevValue: prevValue,
+          gstOpportunityCount: nextCount
+        };
+
+        return [...filtered, completedTextMsg, assessmentMsg];
+      });
+
+      // Update recoverable values in main state for the report tab context
+      setGstRecoverableValue(nextValue);
+      setGstPrevRecoverableValue(prevValue);
+
+      setScrollStage('executive_assessment');
+
+      setTimeout(() => {
+        if (docType === 'bank-statements') {
+          askGstOpportunity2();
+        } else if (docType === 'tds-report') {
+          askGstOpportunity3();
+        } else if (docType === 'statement-of-account') {
+          showGstFlowComplete();
+        }
+      }, 1500);
+
+    }, 3500);
+  };
+
+  const handleGstOptionClick = (optionAction: string, docType: string) => {
+    let userText = "";
+    const normDoc = docType.replace(/_/g, '-');
+    if (normDoc === 'purchase-register') {
+      userText = "I don't have a Purchase Register.";
+    } else if (normDoc === 'vendor-bills') {
+      userText = "I don't have Vendor Bills.";
+    } else if (normDoc === 'expense-report') {
+      userText = "I don't have an Expense Report.";
+    } else if (normDoc === 'gstr2b-report') {
+      userText = "Fetch GSTR-2B using GST Registration Number.";
+    } else if (normDoc === 'bank-statements') {
+      userText = "Skip Bank Statement upload for now.";
+    } else if (normDoc === 'tds-report') {
+      userText = "Skip TDS Report upload for now.";
+    } else if (normDoc === 'statement-of-account') {
+      userText = "Skip Statement of Account upload for now.";
+    }
+
+    const userMsg: MessageBlock = {
+      id: `user-opt-${Date.now()}`,
+      role: 'user',
+      type: 'text',
+      content: userText
+    };
+
+    setConversation(prev => [...prev, userMsg]);
+
+    if (optionAction === 'skip') {
+      setTimeout(() => {
+        if (normDoc === 'purchase-register') {
+          askVendorBills();
+        } else if (normDoc === 'vendor-bills') {
+          askExpenseReport();
+        } else if (normDoc === 'expense-report') {
+          askForGstInput('gstin');
+        } else if (normDoc === 'bank-statements') {
+          askGstOpportunity2();
+        } else if (normDoc === 'tds-report') {
+          askGstOpportunity3();
+        } else if (normDoc === 'statement-of-account') {
+          showGstFlowComplete();
+        }
+      }, 800);
+    } else if (optionAction === 'fetch') {
+      setTimeout(() => {
+        askForGstInput('gstin');
+      }, 800);
+    }
+  };
 
   // Listen for AI message completions to trigger subsequent workflow stages sequentially
   useEffect(() => {
@@ -1362,6 +2077,12 @@ export default function Demo2WorkspacePage() {
         else if (docId === 'gst-returns') fileName = 'GST_Returns_FY26.xlsx';
         else if (docId === 'sales-register') fileName = 'Sales_Register_Q1-Q2.csv';
         else if (docId === 'customer-ledger') fileName = 'Customer_Ledger_Balances.xlsx';
+        else if (docId === 'purchase-register') fileName = 'Purchase_Register_FY26.xlsx';
+        else if (docId === 'vendor-bills') fileName = 'Vendor_Bills_Reconciled_Q2.zip';
+        else if (docId === 'expense-report') fileName = 'Corporate_Expense_Report_2026.csv';
+        else if (docId === 'gstr2b-report') fileName = 'GSTR-2B_Reconciliation_Report.xlsx';
+        else if (docId === 'tds-report') fileName = 'TDS_Form_26AS_Statement.pdf';
+        else if (docId === 'statement-of-account') fileName = 'Statement_of_Account_Reconciled.xlsx';
 
         // Move to Uploaded state
         setUploadStates(prev => ({
@@ -1464,18 +2185,35 @@ To perform an initial assessment, please upload the following financial document
       if (reportUnlocked) {
         const lower = queryText.toLowerCase();
         let responseContent = "";
-        if (lower.includes("recommendation") || lower.includes("prioritize") || lower.includes("action")) {
-          responseContent = "Based on the Executive Recovery Report, we recommend prioritizing these top items:\n\n1. **Consolidate vendor records weekly**: This will mitigate Duplicate Vendor Payments (₹4,20,000 opportunity).\n2. **Automate AR alerts**: This targets the Outstanding Customer Recoveries (₹5,80,000 opportunity) where sync latency causes leakage.\n3. **Resolve GST reconciliation variances**: This captures input tax credits (₹3,10,000 opportunity).";
-        } else if (lower.includes("recoverable") || lower.includes("why") || lower.includes("amount") || lower.includes("value")) {
-          responseContent = "The ₹31,40,000 recoverable value is derived from cross-document reconciliation of bank statements, AP ledgers, sales registers, and GST filings. Leakage was validated in duplicate payments (₹4,20,000) and outstanding recoveries (₹5,80,000).";
-        } else if (lower.includes("transaction") || lower.includes("invoice") || lower.includes("detail")) {
-          responseContent = "The report identifies 42 pricing variances and 17 duplicate payments. Under the Recovery Opportunity Breakdown, you can review the specific transactions matching Duplicate Vendor Payments (₹4,20,000) and pricing variance opportunities (₹2,40,000).";
-        } else if (lower.includes("confidence") || lower.includes("score")) {
-          responseContent = "The recovery assessment holds a 98.6% AI Confidence score. This is backed by comprehensive cross-document reconciliation and double-entry validation across 8 identified opportunity categories.";
-        } else if (lower.includes("summarize") || lower.includes("cfo") || lower.includes("leadership")) {
-          responseContent = "Here is a summary for leadership: DARP successfully reconciled ₹31,40,000 in verified recoverable value with 98.6% confidence. The leakage stems primarily from system sync latency in Accounts Receivable and duplicate vendor payments. Addressing these yields immediate cash flow recovery.";
+        
+        if (isGstFlow) {
+          if (lower.includes("recommendation") || lower.includes("prioritize") || lower.includes("action")) {
+            responseContent = "Based on the GST Recovery Report, we recommend prioritizing these top items:\n\n1. **Claim Input Tax Credit (ITC) from Vardhaman Enterprises** (₹2,80,000 opportunity).\n2. **Resolve GSTR-2B ITC Mismatches for Apex Systems** (₹1,80,000 opportunity).\n3. **Follow up with Shree Cement for missing GSTR-1 filings** (₹2,20,000 opportunity).";
+          } else if (lower.includes("recoverable") || lower.includes("why") || lower.includes("amount") || lower.includes("value")) {
+            responseContent = `The estimated GST recoverable value is ₹${gstRecoverableValue.toLocaleString('en-IN')}, derived from cross-document reconciliation of purchase registers, vendor bills, expense reports, GSTR-2B filings, bank statements, and TDS credits.`;
+          } else if (lower.includes("transaction") || lower.includes("invoice") || lower.includes("detail")) {
+            responseContent = "Under the Recovery Opportunity Breakdown, you can review the specific transactions matching GST claims and mismatches, such as Vardhaman Enterprises Invoice GST-9910 (₹1,20,000) and Apex Systems Invoice APX-2026-90 (₹1,80,000).";
+          } else if (lower.includes("confidence") || lower.includes("score")) {
+            responseContent = "The recovery assessment holds a 98.6% AI Confidence score. This is backed by comprehensive cross-document reconciliation and double-entry validation across all identified GST opportunity categories.";
+          } else if (lower.includes("summarize") || lower.includes("cfo") || lower.includes("leadership")) {
+            responseContent = `Here is a summary for leadership: DARP successfully reconciled ₹${gstRecoverableValue.toLocaleString('en-IN')} in verified GST recoverable value. The leakage stems primarily from unclaimed Input Tax Credits and vendor filing mismatch. Addressing these yields immediate cash flow recovery.`;
+          } else {
+            responseContent = "The GST Recovery Report has been compiled successfully. I am ready to answer any questions or summarize findings regarding the recovery opportunities, recommendations, or root cause analysis.";
+          }
         } else {
-          responseContent = "The Executive Recovery Report has been compiled successfully. I am ready to answer any questions or summarize findings regarding the recovery opportunities, recommendations, or root cause analysis.";
+          if (lower.includes("recommendation") || lower.includes("prioritize") || lower.includes("action")) {
+            responseContent = "Based on the Executive Recovery Report, we recommend prioritizing these top items:\n\n1. **Consolidate vendor records weekly**: This will mitigate Duplicate Vendor Payments (₹4,20,000 opportunity).\n2. **Automate AR alerts**: This targets the Outstanding Customer Recoveries (₹5,80,000 opportunity) where sync latency causes leakage.\n3. **Resolve GST reconciliation variances**: This captures input tax credits (₹3,10,000 opportunity).";
+          } else if (lower.includes("recoverable") || lower.includes("why") || lower.includes("amount") || lower.includes("value")) {
+            responseContent = "The ₹31,40,000 recoverable value is derived from cross-document reconciliation of bank statements, AP ledgers, sales registers, and GST filings. Leakage was validated in duplicate payments (₹4,20,000) and outstanding recoveries (₹5,80,000).";
+          } else if (lower.includes("transaction") || lower.includes("invoice") || lower.includes("detail")) {
+            responseContent = "The report identifies 42 pricing variances and 17 duplicate payments. Under the Recovery Opportunity Breakdown, you can review the specific transactions matching Duplicate Vendor Payments (₹4,20,000) and pricing variance opportunities (₹2,40,000).";
+          } else if (lower.includes("confidence") || lower.includes("score")) {
+            responseContent = "The recovery assessment holds a 98.6% AI Confidence score. This is backed by comprehensive cross-document reconciliation and double-entry validation across 8 identified opportunity categories.";
+          } else if (lower.includes("summarize") || lower.includes("cfo") || lower.includes("leadership")) {
+            responseContent = "Here is a summary for leadership: DARP successfully reconciled ₹31,40,000 in verified recoverable value with 98.6% confidence. The leakage stems primarily from system sync latency in Accounts Receivable and duplicate vendor payments. Addressing these yields immediate cash flow recovery.";
+          } else {
+            responseContent = "The Executive Recovery Report has been compiled successfully. I am ready to answer any questions or summarize findings regarding the recovery opportunities, recommendations, or root cause analysis.";
+          }
         }
 
         const replyId = `ai-reply-${Math.random().toString(36).substring(2, 9)}`;
@@ -1518,6 +2256,42 @@ To perform an initial assessment, please upload the following financial document
   };
 
   const handlePillClick = (pillText: string) => {
+    if (pillText === "GST Flow (For Demo)") {
+      setIsGstFlow(true);
+      setCurrentAssessmentTitle("Guided GST Recovery Assessment");
+      setIsTransitioned(true);
+      setPromptValue("");
+      
+      const userMsg: MessageBlock = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        type: 'text',
+        content: "I want to start a guided GST Recovery Assessment.",
+      };
+      setConversation([userMsg]);
+      
+      setTimeout(() => {
+        const aiMsg1: MessageBlock = {
+          id: `ai-gst-intro-${Date.now()}`,
+          role: 'assistant',
+          type: 'text',
+          content: "I can estimate your GST recovery opportunities using progressively available financial evidence.\n\nLet's begin with the documents you already have."
+        };
+        
+        const aiMsg2: MessageBlock = {
+          id: `gst-doc-req-purchase-register-${Date.now()}`,
+          role: 'assistant',
+          type: 'document_request',
+          documents: [
+            { id: 'purchase-register', name: 'Purchase Register', description: 'Upload purchase ledger register' }
+          ]
+        };
+        
+        setConversation(prev => [...prev, aiMsg1, aiMsg2]);
+      }, 800);
+      return;
+    }
+
     let customText = pillText;
     if (pillText === "Revenue Recovery") {
       customText = "We are facing revenue leakage in our company and would like to identify potential recovery opportunities.";
@@ -1650,107 +2424,135 @@ To perform an initial assessment, please upload the following financial document
                         );
                       } else if (msg.type === 'document_request') {
                         if (isPrecedingTextPending) return null;
+                        const isGst = isGstFlow;
+                        const firstDoc = msg.documents?.[0];
                         return (
-                          <div key={msg.id} className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
-                            <div className={styles.documentRequestCard}>
-                              <div className={styles.docRequestHeader}>
-                                <h3 className={styles.docRequestTitle}>Documents Required for Initial Assessment</h3>
-                                <p className={styles.docRequestDesc}>
-                                  Upload the following financial documents to perform an initial recovery assessment.
-                                </p>
-                              </div>
-                              
-                              <div className={styles.docRequestList}>
-                                {msg.documents?.map((doc) => {
-                                  const state = uploadStates[doc.id];
-                                  if (!state) return null;
+                          <div key={msg.id} className={isGst ? styles.aiMessageRow : `${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
+                            {isGst && <div className={styles.aiAvatarPlaceholder} />}
+                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: isGst ? '600px' : 'none' }}>
+                              <div className={styles.documentRequestCard} style={isGst ? { margin: 0 } : undefined}>
+                                <div className={styles.docRequestHeader}>
+                                  <h3 className={styles.docRequestTitle}>
+                                    {isGst ? 'Document Required for GST Assessment' : 'Documents Required for Initial Assessment'}
+                                  </h3>
+                                  <p className={styles.docRequestDesc}>
+                                    {isGst ? 'Upload the requested document to perform your GST recovery assessment.' : 'Upload the following financial documents to perform an initial recovery assessment.'}
+                                  </p>
+                                </div>
+                                
+                                <div className={styles.docRequestList} style={msg.documents?.length === 1 ? { gridTemplateColumns: '1fr' } : undefined}>
+                                  {msg.documents?.map((doc) => {
+                                    const state = uploadStates[doc.id];
+                                    if (!state) return null;
 
-                                  const isDisabled = isAnyDocProcessing || state.status !== 'idle';
+                                    const isDisabled = isAnyDocProcessing || state.status !== 'idle';
 
-                                  return (
-                                    <div key={doc.id} className={`${styles.uploadCard} ${state.status !== 'idle' ? styles.activeUploadCard : ''}`}>
-                                      <div className={styles.uploadCardContent}>
-                                        <span className={styles.docTitle}>
-                                          {state.name}
-                                          {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
-                                        </span>
-                                        
-                                        {/* Helper descriptions by state */}
-                                        {state.status === 'idle' && (
+                                    return (
+                                      <div key={doc.id} className={`${styles.uploadCard} ${state.status !== 'idle' ? styles.activeUploadCard : ''}`}>
+                                        <div className={styles.uploadCardContent}>
+                                          <span className={styles.docTitle}>
+                                            {state.name}
+                                            {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
+                                          </span>
+                                          
+                                          {/* Helper descriptions - always visible for visual stability */}
                                           <span className={styles.docDesc}>{state.description}</span>
+                                          
+                                          {state.status === 'uploading' && (
+                                            <span className={styles.docDescUploading}>Uploading: {state.fileName}</span>
+                                          )}
+                                          {state.status === 'uploaded' && (
+                                            <span className={styles.docDescUploaded}>{state.fileName}</span>
+                                          )}
+                                          {state.status === 'validating' && (
+                                            <span className={styles.docDescValidating}>Validating: {state.fileName}</span>
+                                          )}
+                                          {state.status === 'validated' && (
+                                            <span className={styles.docDescValidated}>{state.fileName}</span>
+                                          )}
+                                        </div>
+                                        
+                                        {/* Action configurations by state */}
+                                        {state.status === 'idle' && (
+                                          <button 
+                                            className={`${styles.uploadIconButton} ${isDisabled ? styles.disabledButton : ''}`}
+                                            type="button" 
+                                            aria-label={`Upload ${state.name}`}
+                                            onClick={() => handleUploadClick(doc.id)}
+                                            disabled={isDisabled}
+                                          >
+                                            <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                              <polyline points="17 8 12 3 7 8" />
+                                              <line x1="12" y1="3" x2="12" y2="15" />
+                                            </svg>
+                                          </button>
                                         )}
+
                                         {state.status === 'uploading' && (
-                                          <span className={styles.docDescUploading}>Uploading document...</span>
+                                          <div className={styles.uploadingActionArea}>
+                                            <svg className={styles.spinner} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3">
+                                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" />
+                                              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" />
+                                            </svg>
+                                            <span className={styles.progressText}>{state.progress}%</span>
+                                          </div>
                                         )}
+
                                         {state.status === 'uploaded' && (
-                                          <span className={styles.docDescUploaded}>{state.fileName}</span>
+                                          <span className={styles.badgeUploaded}>
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                              <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                            Uploaded
+                                          </span>
                                         )}
+
                                         {state.status === 'validating' && (
-                                          <span className={styles.docDescValidating}>{state.fileName}</span>
+                                          <span className={styles.badgeValidating}>
+                                            <span>Validating...</span>
+                                            <div className={styles.pulseDots}>
+                                              <div className={styles.pulseDot} />
+                                              <div className={styles.pulseDot} />
+                                              <div className={styles.pulseDot} />
+                                            </div>
+                                          </span>
                                         )}
+
                                         {state.status === 'validated' && (
-                                          <span className={styles.docDescValidated}>{state.fileName}</span>
+                                          <span className={styles.badgeValidated}>
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                              <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                            Ready for Analysis
+                                          </span>
                                         )}
                                       </div>
-                                      
-                                      {/* Action configurations by state */}
-                                      {state.status === 'idle' && (
-                                        <button 
-                                          className={`${styles.uploadIconButton} ${isDisabled ? styles.disabledButton : ''}`}
-                                          type="button" 
-                                          aria-label={`Upload ${state.name}`}
-                                          onClick={() => handleUploadClick(doc.id)}
-                                          disabled={isDisabled}
-                                        >
-                                          <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                            <polyline points="17 8 12 3 7 8" />
-                                            <line x1="12" y1="3" x2="12" y2="15" />
-                                          </svg>
-                                        </button>
-                                      )}
+                                    );
+                                  })}
+                                </div>
 
-                                      {state.status === 'uploading' && (
-                                        <div className={styles.uploadingActionArea}>
-                                          <svg className={styles.spinner} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3">
-                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" />
-                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" />
-                                          </svg>
-                                          <span className={styles.progressText}>{state.progress}%</span>
-                                        </div>
-                                      )}
-
-                                      {state.status === 'uploaded' && (
-                                        <span className={styles.badgeUploaded}>
-                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
-                                            <polyline points="20 6 9 17 4 12" />
-                                          </svg>
-                                          Uploaded
-                                        </span>
-                                      )}
-
-                                      {state.status === 'validating' && (
-                                        <span className={styles.badgeValidating}>
-                                          <span>Validating...</span>
-                                          <div className={styles.pulseDots}>
-                                            <div className={styles.pulseDot} />
-                                            <div className={styles.pulseDot} />
-                                            <div className={styles.pulseDot} />
-                                          </div>
-                                        </span>
-                                      )}
-
-                                      {state.status === 'validated' && (
-                                        <span className={styles.badgeValidated}>
-                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
-                                            <polyline points="20 6 9 17 4 12" />
-                                          </svg>
-                                          Ready for Analysis
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                {/* Skip Action inside the card container */}
+                                {isGst && firstDoc && uploadStates[firstDoc.id]?.status === 'idle' && (
+                                  <div style={{ marginTop: 'var(--space-4)', display: 'flex', justifyContent: 'flex-start' }}>
+                                    <button
+                                      type="button"
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--color-text-secondary)',
+                                        fontSize: 'var(--font-size-caption)',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        padding: 'var(--space-1) 0',
+                                        textDecoration: 'underline'
+                                      }}
+                                      onClick={() => handleGstOptionClick(firstDoc.id === 'gstr2b-report' ? 'fetch' : 'skip', firstDoc.id)}
+                                    >
+                                      {firstDoc.id === 'gstr2b-report' ? 'Fetch from Portal' : (firstDoc.id === 'purchase-register' || firstDoc.id === 'vendor-bills' || firstDoc.id === 'expense-report' ? "I don't have it" : "Skip for Now")}
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1809,29 +2611,40 @@ To perform an initial assessment, please upload the following financial document
                             <div className={styles.assessmentMainCard}>
                               {/* Header */}
                               <div className={styles.assessmentHeader}>
-                                <h3 className={styles.assessmentTitle}>Initial Recovery Assessment</h3>
+                                <h3 className={styles.assessmentTitle}>{isGstFlow ? 'GST Recovery Assessment' : 'Initial Recovery Assessment'}</h3>
                                 <p className={styles.assessmentSubtitle}>Generated from the uploaded financial documents.</p>
                               </div>
                               
                               {/* Primary Metric Section */}
                               <div className={styles.metricSection}>
                                 <span className={styles.primaryMetric}>
-                                  {isCard2 ? (
+                                  {isGstFlow ? (
+                                    <AnimatedCounter 
+                                      targetValue={msg.gstValue ?? gstRecoverableValue} 
+                                      startValue={msg.gstPrevValue ?? (msg.gstValue ? msg.gstValue / 4 : 370000)} 
+                                      start={!!scrolledCards[msg.id]} 
+                                    />
+                                  ) : isCard2 ? (
                                     <AnimatedCounter targetValue={3140000} startValue={785000} start={!!scrolledCards[msg.id]} />
                                   ) : (
                                     <AnimatedCounter targetValue={1860000} startValue={465000} start={!!scrolledCards[msg.id]} />
                                   )}
                                 </span>
                                 <p className={styles.metricLabel}>
-                                  {isCard2 
-                                    ? 'Cross-document reconciliation has increased assessment confidence and uncovered additional verified recovery opportunities worth an estimated ₹31,40,000.'
-                                    : 'Estimated recoverable value identified from the uploaded financial records.'
-                                  }
+                                  {isGstFlow ? (
+                                    msg.isUpdated 
+                                      ? `Cross-document reconciliation has increased assessment confidence and uncovered additional verified GST recovery opportunities worth an estimated ₹${(msg.gstValue ?? gstRecoverableValue).toLocaleString('en-IN')}.`
+                                      : `Estimated GST recoverable value identified from the uploaded financial records.`
+                                  ) : isCard2 ? (
+                                    'Cross-document reconciliation has increased assessment confidence and uncovered additional verified recovery opportunities worth an estimated ₹31,40,000.'
+                                  ) : (
+                                    'Estimated recoverable value identified from the uploaded financial records.'
+                                  )}
                                 </p>
                               </div>
-
-                              {/* Enterprise Indicators Row for Card 2 */}
-                              {isCard2 && (
+ 
+                              {/* Enterprise Indicators Row */}
+                              {(isCard2 || (isGstFlow && msg.gstValue)) && (
                                 <div className={styles.assessmentIndicatorsRow}>
                                   <div className={styles.indicatorBadge}>
                                     <span className={styles.indicatorLabel}>AI Confidence:</span>
@@ -1839,7 +2652,9 @@ To perform an initial assessment, please upload the following financial document
                                   </div>
                                   <div className={styles.indicatorBadge}>
                                     <span className={styles.indicatorLabel}>Recovery Opportunities:</span>
-                                    <span className={styles.indicatorValue}>8 Identified</span>
+                                    <span className={styles.indicatorValue}>
+                                      {isGstFlow ? `${msg.gstOpportunityCount || 4} Identified` : '8 Identified'}
+                                    </span>
                                   </div>
                                   <div className={styles.indicatorBadge}>
                                     <span className={styles.indicatorLabel}>Cross Validation:</span>
@@ -1856,10 +2671,24 @@ To perform an initial assessment, please upload the following financial document
                                     <line x1="12" y1="9" x2="12" y2="13" />
                                     <line x1="12" y1="17" x2="12.01" y2="17" />
                                   </svg>
-                                  <span className={styles.insightTitle}>Enterprise Insight</span>
+                                  <span className={styles.insightTitle}>{isGstFlow ? 'GST Leakage Insight' : 'Enterprise Insight'}</span>
                                 </div>
                                 <div className={styles.insightText}>
-                                  {isCard2 ? (
+                                  {isGstFlow ? (
+                                    msg.isUpdated ? (
+                                      <>
+                                        <strong>Cross-document validation confirms additional GST recovery opportunities.</strong>
+                                        <br /><br />
+                                        Projected Annual Exposure: <strong>₹{((msg.gstValue ?? gstRecoverableValue) * 1.5).toLocaleString('en-IN')}</strong>
+                                        <br />
+                                        If current financial patterns continue, the projected annual GST credit leakage could exceed ₹{((msg.gstValue ?? gstRecoverableValue) * 1.5).toLocaleString('en-IN')}.
+                                      </>
+                                    ) : (
+                                      <>
+                                        GST credit leakage has been identified across the current financial period. If similar compliance patterns continue, your annual exposure could exceed <strong>₹{((msg.gstValue ?? gstRecoverableValue) * 1.8).toLocaleString('en-IN')}</strong>.
+                                      </>
+                                    )
+                                  ) : isCard2 ? (
                                     <>
                                       <strong>Cross-document validation confirms additional financial recovery opportunities.</strong>
                                       <br /><br />
@@ -1895,56 +2724,127 @@ To perform an initial assessment, please upload the following financial document
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        <tr>
-                                          <td>Duplicate Vendor Payments</td>
-                                          <td>₹4,20,000</td>
-                                          <td>98%</td>
-                                          <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
-                                        </tr>
-                                        <tr>
-                                          <td>Outstanding Customer Recoveries</td>
-                                          <td>₹5,80,000</td>
-                                          <td>94%</td>
-                                          <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
-                                        </tr>
-                                        <tr>
-                                          <td>Unclaimed Tax Credits</td>
-                                          <td>₹3,10,000</td>
-                                          <td>90%</td>
-                                          <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
-                                        </tr>
-                                        <tr>
-                                          <td>Pricing Variance Opportunities</td>
-                                          <td>₹2,40,000</td>
-                                          <td>88%</td>
-                                          <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
-                                        </tr>
-                                        <tr>
-                                          <td>Contract Billing Exceptions</td>
-                                          <td>₹1,80,000</td>
-                                          <td>92%</td>
-                                          <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
-                                        </tr>
-                                        <tr>
-                                          <td>Early Payment Discount Recovery</td>
-                                          <td>₹1,30,000</td>
-                                          <td>96%</td>
-                                          <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
-                                        </tr>
-                                        {isCard2 && (
+                                        {isGstFlow ? (
                                           <>
                                             <tr>
-                                              <td>Tax Compliance Variances</td>
-                                              <td>₹8,50,000</td>
+                                              <td>Input Tax Credit Recovery</td>
+                                              <td>₹4,80,000</td>
+                                              <td>97%</td>
+                                              <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>ITC Mismatch</td>
+                                              <td>₹3,20,000</td>
                                               <td>95%</td>
                                               <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
                                             </tr>
                                             <tr>
-                                              <td>Cross-border Billing Audit</td>
-                                              <td>₹4,30,000</td>
-                                              <td>91%</td>
+                                              <td>Vendor GST Reconciliation</td>
+                                              <td>₹3,80,000</td>
+                                              <td>94%</td>
+                                              <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Blocked Credit Identification</td>
+                                              <td>₹3,00,000</td>
+                                              <td>93%</td>
                                               <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
                                             </tr>
+                                            {(gstUploadedDocs.includes('bank-statements') || (msg.gstValue && msg.gstValue >= 1850000)) && (
+                                              <tr>
+                                                <td>GST Payment Reconciliation</td>
+                                                <td>₹3,70,000</td>
+                                                <td>96%</td>
+                                                <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                              </tr>
+                                            )}
+                                            {(gstUploadedDocs.includes('tds-report') || (msg.gstValue && msg.gstValue >= 2290000)) && (
+                                              <>
+                                                <tr>
+                                                  <td>TDS Credit Recovery</td>
+                                                  <td>₹2,60,000</td>
+                                                  <td>95%</td>
+                                                  <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>Vendor Compliance Recovery</td>
+                                                  <td>₹1,80,000</td>
+                                                  <td>92%</td>
+                                                  <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                                </tr>
+                                              </>
+                                            )}
+                                            {(gstUploadedDocs.includes('statement-of-account') || (msg.gstValue && msg.gstValue >= 2860000)) && (
+                                              <>
+                                                <tr>
+                                                  <td>Duplicate GST Claims</td>
+                                                  <td>₹3,50,000</td>
+                                                  <td>97%</td>
+                                                  <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>Vendor Ledger Reconciliation</td>
+                                                  <td>₹2,20,000</td>
+                                                  <td>94%</td>
+                                                  <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                                </tr>
+                                              </>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <>
+                                            <tr>
+                                              <td>Duplicate Vendor Payments</td>
+                                              <td>₹4,20,000</td>
+                                              <td>98%</td>
+                                              <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Outstanding Customer Recoveries</td>
+                                              <td>₹5,80,000</td>
+                                              <td>94%</td>
+                                              <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Unclaimed Tax Credits</td>
+                                              <td>₹3,10,000</td>
+                                              <td>90%</td>
+                                              <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Pricing Variance Opportunities</td>
+                                              <td>₹2,40,000</td>
+                                              <td>88%</td>
+                                              <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Contract Billing Exceptions</td>
+                                              <td>₹1,80,000</td>
+                                              <td>92%</td>
+                                              <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                            </tr>
+                                            <tr>
+                                              <td>Early Payment Discount Recovery</td>
+                                              <td>₹1,30,000</td>
+                                              <td>96%</td>
+                                              <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                            </tr>
+                                            {isCard2 && (
+                                              <>
+                                                <tr>
+                                                  <td>Tax Compliance Variances</td>
+                                                  <td>₹8,50,000</td>
+                                                  <td>95%</td>
+                                                  <td><span className={styles.badgeSuccess}>High Opportunity</span></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>Cross-border Billing Audit</td>
+                                                  <td>₹4,30,000</td>
+                                                  <td>91%</td>
+                                                  <td><span className={styles.badgeWarning}>Medium Opportunity</span></td>
+                                                </tr>
+                                              </>
+                                            )}
                                           </>
                                         )}
                                       </tbody>
@@ -1961,17 +2861,17 @@ To perform an initial assessment, please upload the following financial document
                                         </svg>
                                       </div>
                                       <h5 className={styles.lockPanelTitle}>
-                                        {isCard2 ? 'Executive Recovery Report Ready' : 'Unlock Complete Recovery Report'}
+                                        {isCard2 || isGstFlow ? 'Executive Recovery Report Ready' : 'Unlock Complete Recovery Report'}
                                       </h5>
                                       <p className={styles.lockPanelDescription}>
-                                        {isCard2 
+                                        {isCard2 || isGstFlow
                                           ? 'Unlock the complete executive recovery report to access detailed recovery intelligence and business recommendations.'
                                           : 'Continue the assessment to explore all identified recovery opportunities, AI recommendations, and executive insights.'
                                         }
                                       </p>
-
-                                      {/* Premium lock bullet list for Card 2 */}
-                                      {isCard2 && (
+ 
+                                      {/* Premium lock bullet list */}
+                                      {(isCard2 || isGstFlow) && (
                                         <ul className={styles.lockBulletList}>
                                           <li className={styles.lockBulletItem}>Executive Summary</li>
                                           <li className={styles.lockBulletItem}>Detailed Recovery Opportunities</li>
@@ -1987,7 +2887,7 @@ To perform an initial assessment, please upload the following financial document
                                         type="button"
                                         onClick={() => setPaymentStep('upgrade_modal')}
                                       >
-                                        {isCard2 ? '🔒 Unlock Executive Recovery Report' : '🔒 Unlock Full Recovery Report'}
+                                        {isCard2 || isGstFlow ? '🔒 Unlock Executive Recovery Report' : '🔒 Unlock Full Recovery Report'}
                                         <svg className={styles.arrowIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
                                           <line x1="5" y1="12" x2="19" y2="12" />
                                           <polyline points="12 5 19 12 12 19" />
@@ -2057,22 +2957,28 @@ To perform an initial assessment, please upload the following financial document
                         );
                       } else if (msg.type === 'enterprise_alert') {
                         if (isPrecedingTextPending) return null;
+                        const isGst = isGstFlow;
                         return (
-                          <div key={msg.id} className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
-                            <div className={styles.recommendAlertBox}>
+                          <div key={msg.id} className={isGst ? styles.aiMessageRow : `${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
+                            {isGst && <div className={styles.aiAvatarPlaceholder} />}
+                            <div className={styles.recommendAlertBox} style={isGst ? { margin: 0, maxWidth: '520px' } : undefined}>
                               <div className={styles.recommendAlertHeader}>
                                 <svg className={styles.warningIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
                                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                                   <line x1="12" y1="9" x2="12" y2="13" />
                                   <line x1="12" y1="17" x2="12.01" y2="17" />
                                 </svg>
-                                <span className={styles.recommendAlertTitle}>Additional Recoverable Value Detected</span>
+                                <span className={styles.recommendAlertTitle}>
+                                  {isGst ? 'Additional GST Recovery Opportunity Detected' : 'Additional Recoverable Value Detected'}
+                                </span>
                               </div>
                               <div className={styles.recommendAlertBody}>
                                 <span className={styles.recommendAlertLabel}>Estimated Additional Recovery Potential</span>
-                                <h1 className={styles.recommendAlertValue}>₹12–15 Lakhs</h1>
+                                <h1 className={styles.recommendAlertValue}>
+                                  {isGst ? (msg.gstValueText || '₹3.7 Lakhs') : '₹12–15 Lakhs'}
+                                </h1>
                                 <p className={styles.recommendAlertDesc}>
-                                  Upload the supporting financial documents below to validate these findings and uncover additional recovery opportunities.
+                                  {isGst ? msg.content : 'Upload the supporting financial documents below to validate these findings and uncover additional recovery opportunities.'}
                                 </p>
                               </div>
                             </div>
@@ -2080,111 +2986,246 @@ To perform an initial assessment, please upload the following financial document
                         );
                       } else if (msg.type === 'recommended_documents') {
                         if (isPrecedingTextPending) return null;
+                        const isGst = isGstFlow;
+                        const firstDoc = msg.documents?.[0];
                         return (
                           <div 
                             key={msg.id} 
                             ref={el => scrollToElement(el, msg.id, 'ai_acknowledgement')}
-                            className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}
+                            className={isGst ? styles.aiMessageRow : `${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}
                           >
-                            <div className={styles.documentRequestCard}>
-                              <div className={styles.docRequestHeader}>
-                                <h3 className={styles.docRequestTitle}>Additional Documents Recommended</h3>
-                                <p className={styles.docRequestDesc}>
-                                  Upload any of the following supporting documents to improve analysis confidence and discover additional recovery opportunities.
-                                </p>
-                              </div>
-                              
-                              <div className={styles.docRequestList}>
-                                {msg.documents?.map((doc) => {
-                                  const state = uploadStates[doc.id];
-                                  if (!state) return null;
+                            {isGst && <div className={styles.aiAvatarPlaceholder} />}
+                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: isGst ? '600px' : 'none' }}>
+                              <div className={styles.documentRequestCard} style={isGst ? { margin: 0 } : undefined}>
+                                <div className={styles.docRequestHeader}>
+                                  <h3 className={styles.docRequestTitle}>Additional Documents Recommended</h3>
+                                  <p className={styles.docRequestDesc}>
+                                    Upload any of the following supporting documents to improve analysis confidence and discover additional recovery opportunities.
+                                  </p>
+                                </div>
+                                
+                                <div className={styles.docRequestList} style={msg.documents?.length === 1 ? { gridTemplateColumns: '1fr' } : undefined}>
+                                  {msg.documents?.map((doc) => {
+                                    const state = uploadStates[doc.id];
+                                    if (!state) return null;
 
-                                  const isDisabled = isAnyDocProcessing || state.status !== 'idle';
+                                    const isDisabled = isAnyDocProcessing || state.status !== 'idle';
 
-                                  return (
-                                    <div key={doc.id} className={`${styles.uploadCard} ${state.status !== 'idle' ? styles.activeUploadCard : ''}`}>
-                                      <div className={styles.uploadCardContent}>
-                                        <span className={styles.docTitle}>
-                                          {state.name}
-                                          {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
-                                        </span>
-                                        
-                                        {/* Helper descriptions by state */}
-                                        {state.status === 'idle' && (
+                                    return (
+                                      <div key={doc.id} className={`${styles.uploadCard} ${state.status !== 'idle' ? styles.activeUploadCard : ''}`}>
+                                        <div className={styles.uploadCardContent}>
+                                          <span className={styles.docTitle}>
+                                            {state.name}
+                                            {doc.optional && <span className={styles.optionalText}> (Optional)</span>}
+                                          </span>
+                                          
+                                          {/* Helper descriptions - always visible for visual stability */}
                                           <span className={styles.docDesc}>{state.description}</span>
+                                          
+                                          {state.status === 'uploading' && (
+                                            <span className={styles.docDescUploading}>Uploading: {state.fileName}</span>
+                                          )}
+                                          {state.status === 'uploaded' && (
+                                            <span className={styles.docDescUploaded}>{state.fileName}</span>
+                                          )}
+                                          {state.status === 'validating' && (
+                                            <span className={styles.docDescValidating}>Validating: {state.fileName}</span>
+                                          )}
+                                          {state.status === 'validated' && (
+                                            <span className={styles.docDescValidated}>{state.fileName}</span>
+                                          )}
+                                        </div>
+                                        
+                                        {/* Action configurations by state */}
+                                        {state.status === 'idle' && (
+                                          <button 
+                                            className={`${styles.uploadIconButton} ${isDisabled ? styles.disabledButton : ''}`}
+                                            type="button" 
+                                            aria-label={`Upload ${state.name}`}
+                                            onClick={() => handleUploadClick(doc.id)}
+                                            disabled={isDisabled}
+                                          >
+                                            <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                              <polyline points="17 8 12 3 7 8" />
+                                              <line x1="12" y1="3" x2="12" y2="15" />
+                                            </svg>
+                                          </button>
                                         )}
+
                                         {state.status === 'uploading' && (
-                                          <span className={styles.docDescUploading}>Uploading document...</span>
+                                          <div className={styles.uploadingActionArea}>
+                                            <svg className={styles.spinner} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3">
+                                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" />
+                                              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" />
+                                            </svg>
+                                            <span className={styles.progressText}>{state.progress}%</span>
+                                          </div>
                                         )}
+
                                         {state.status === 'uploaded' && (
-                                          <span className={styles.docDescUploaded}>{state.fileName}</span>
+                                          <span className={styles.badgeUploaded}>
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                              <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                            Uploaded
+                                          </span>
                                         )}
+
                                         {state.status === 'validating' && (
-                                          <span className={styles.docDescValidating}>{state.fileName}</span>
+                                          <span className={styles.badgeValidating}>
+                                            <span>Validating...</span>
+                                            <div className={styles.pulseDots}>
+                                              <div className={styles.pulseDot} />
+                                              <div className={styles.pulseDot} />
+                                              <div className={styles.pulseDot} />
+                                            </div>
+                                          </span>
                                         )}
+
                                         {state.status === 'validated' && (
-                                          <span className={styles.docDescValidated}>{state.fileName}</span>
+                                          <span className={styles.badgeValidated}>
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
+                                              <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                            Ready for Analysis
+                                          </span>
                                         )}
                                       </div>
-                                      
-                                      {/* Action configurations by state */}
-                                      {state.status === 'idle' && (
-                                        <button 
-                                          className={`${styles.uploadIconButton} ${isDisabled ? styles.disabledButton : ''}`}
-                                          type="button" 
-                                          aria-label={`Upload ${state.name}`}
-                                          onClick={() => handleUploadClick(doc.id)}
-                                          disabled={isDisabled}
-                                        >
-                                          <svg className={styles.uploadBtnIcon} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                            <polyline points="17 8 12 3 7 8" />
-                                            <line x1="12" y1="3" x2="12" y2="15" />
-                                          </svg>
-                                        </button>
-                                      )}
+                                    );
+                                  })}
+                                </div>
 
-                                      {state.status === 'uploading' && (
-                                        <div className={styles.uploadingActionArea}>
-                                          <svg className={styles.spinner} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3">
-                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" />
-                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" />
-                                          </svg>
-                                          <span className={styles.progressText}>{state.progress}%</span>
-                                        </div>
-                                      )}
-
-                                      {state.status === 'uploaded' && (
-                                        <span className={styles.badgeUploaded}>
-                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
-                                            <polyline points="20 6 9 17 4 12" />
-                                          </svg>
-                                          Uploaded
-                                        </span>
-                                      )}
-
-                                      {state.status === 'validating' && (
-                                        <span className={styles.badgeValidating}>
-                                          <span>Validating...</span>
-                                          <div className={styles.pulseDots}>
-                                            <div className={styles.pulseDot} />
-                                            <div className={styles.pulseDot} />
-                                            <div className={styles.pulseDot} />
-                                          </div>
-                                        </span>
-                                      )}
-
-                                      {state.status === 'validated' && (
-                                        <span className={styles.badgeValidated}>
-                                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" className={styles.badgeCheckIcon}>
-                                            <polyline points="20 6 9 17 4 12" />
-                                          </svg>
-                                          Ready for Analysis
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                {/* Skip Action inside the card container */}
+                                {isGst && firstDoc && uploadStates[firstDoc.id]?.status === 'idle' && (
+                                  <div style={{ marginTop: 'var(--space-4)', display: 'flex', justifyContent: 'flex-start' }}>
+                                    <button
+                                      type="button"
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--color-text-secondary)',
+                                        fontSize: 'var(--font-size-caption)',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        padding: 'var(--space-1) 0',
+                                        textDecoration: 'underline'
+                                      }}
+                                      onClick={() => handleGstOptionClick('skip', firstDoc.id)}
+                                    >
+                                      Skip for Now
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'gst_guided_question') {
+                        if (isPrecedingTextPending) return null;
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRow}>
+                            <div className={styles.aiAvatarPlaceholder} />
+                            <div className={styles.assessmentMainCard} style={{ maxWidth: '520px', padding: 'var(--space-4) var(--space-5)', margin: 0 }}>
+                              <h4 style={{ margin: '0 0 var(--space-4) 0', fontWeight: '600', fontSize: 'var(--font-size-base)', color: 'var(--color-text-primary)' }}>
+                                {msg.content}
+                              </h4>
+                              <div style={{ display: 'flex', gap: 'var(--space-3)', width: '100%' }}>
+                                {msg.options?.map((opt, optIdx) => (
+                                  <button
+                                    key={optIdx}
+                                    style={{
+                                      flex: 1,
+                                      padding: 'var(--space-2-5) var(--space-4)',
+                                      fontSize: 'var(--font-size-body)',
+                                      fontWeight: '600',
+                                      borderRadius: 'var(--radius-md)',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease',
+                                      border: opt.action === 'upload' || opt.action === 'fetch'
+                                        ? '1px solid var(--color-primary)'
+                                        : '1px solid var(--color-border)',
+                                      background: opt.action === 'upload' || opt.action === 'fetch'
+                                        ? 'var(--color-surface)'
+                                        : 'var(--color-surface-subtle)',
+                                      color: opt.action === 'upload' || opt.action === 'fetch'
+                                        ? 'var(--color-primary)'
+                                        : 'var(--color-text-secondary)',
+                                    }}
+                                    onClick={() => handleGstOptionClick(opt.action, msg.gstQuestionType || '')}
+                                    onMouseOver={(e) => {
+                                      e.currentTarget.style.background = opt.action === 'upload' || opt.action === 'fetch'
+                                        ? 'var(--color-surface-hover)'
+                                        : 'var(--color-border)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                      e.currentTarget.style.background = opt.action === 'upload' || opt.action === 'fetch'
+                                        ? 'var(--color-surface)'
+                                        : 'var(--color-surface-subtle)';
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'gstin_otp_input') {
+                        if (isPrecedingTextPending) return null;
+                        return (
+                          <GstInputCard 
+                            key={msg.id}
+                            msg={msg}
+                            onSubmit={msg.gstInputType === 'otp' ? handleOtpSubmit : (val) => {
+                              // Mark GSTIN as validated in place in conversation
+                              setConversation(prev => {
+                                return prev.map(m => {
+                                  if (m.id === msg.id) {
+                                    return {
+                                      ...m,
+                                      isValidated: true,
+                                      validatedValue: val
+                                    };
+                                  }
+                                  return m;
+                                });
+                              });
+                              setTimeout(() => {
+                                askForGstInput('otp');
+                              }, 800);
+                            }}
+                          />
+                        );
+                      } else if (msg.type === 'gst_progress_indicator') {
+                        if (isPrecedingTextPending) return null;
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRow}>
+                            <div className={styles.aiAvatarPlaceholder} />
+                            <div className={styles.assessmentMainCard} style={{ maxWidth: '440px', padding: 'var(--space-4) var(--space-5)', margin: 0 }}>
+                              <GstProgressIndicator />
+                            </div>
+                          </div>
+                        );
+                      } else if (msg.type === 'gst_portal_summary') {
+                        if (isPrecedingTextPending) return null;
+                        return (
+                          <div key={msg.id} className={styles.aiMessageRow}>
+                            <div className={styles.aiAvatarPlaceholder} />
+                            <div className={styles.assessmentMainCard} style={{ 
+                              maxWidth: '440px', 
+                              padding: 'var(--space-4) var(--space-5)', 
+                              margin: 0,
+                              border: '1px solid var(--color-success-border)',
+                              background: 'var(--color-success-bg)' 
+                            }}>
+                              <h4 style={{ margin: '0 0 var(--space-2) 0', color: 'var(--color-success)', fontWeight: 'bold' }}>
+                                {msg.content}
+                              </h4>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
+                                <span>Tax Period: Apr 2026 – Mar 2027</span>
+                                <span>Vendors Processed: 482</span>
+                                <span>Eligible ITC Records: 3,214</span>
                               </div>
                             </div>
                           </div>
@@ -2244,6 +3285,9 @@ To perform an initial assessment, please upload the following financial document
                 </button>
                 <button className={styles.pill} onClick={() => handlePillClick("Tax Recovery")}>
                   Tax Recovery
+                </button>
+                <button className={styles.pill} onClick={() => handlePillClick("GST Flow (For Demo)")}>
+                  GST Flow (For Demo)
                 </button>
               </div>
             </div>
@@ -2391,16 +3435,32 @@ To perform an initial assessment, please upload the following financial document
                       setPaymentStep('none');
                       setReportUnlocked(true);
                       setIsPaymentSuccessModalOpen(true);
-                      setConversation(prev => [
-                        ...prev,
-                        {
-                          id: `ai-post-unlock-${Date.now()}`,
-                          role: 'assistant',
-                          type: 'text',
-                          content: 'Your Executive Recovery Report has been successfully generated and is ready for review.'
-                        }
-                      ]);
-                      launchReportWorkspace(selectedPlan);
+                      
+                      if (isGstFlow) {
+                        setConversation(prev => [
+                          ...prev,
+                          {
+                            id: `ai-post-unlock-${Date.now()}`,
+                            role: 'assistant',
+                            type: 'text',
+                            content: 'Your Executive Recovery Report has been successfully generated and is ready for review.'
+                          }
+                        ]);
+                        setTimeout(() => {
+                          askGstOpportunity1();
+                        }, 1500);
+                      } else {
+                        setConversation(prev => [
+                          ...prev,
+                          {
+                            id: `ai-post-unlock-${Date.now()}`,
+                            role: 'assistant',
+                            type: 'text',
+                            content: 'Your Executive Recovery Report has been successfully generated and is ready for review.'
+                          }
+                        ]);
+                        launchReportWorkspace(selectedPlan);
+                      }
                     }, 2000);
                   }}
                 >

@@ -43,6 +43,598 @@ interface RecoveryCategory {
   vendors: VendorOpportunity[];
 }
 
+const gstInitialCategories: RecoveryCategory[] = [
+  {
+    id: 'itc-recovery',
+    name: 'Input Tax Credit Recovery',
+    recoverableValue: '₹4,80,000',
+    confidence: '97%',
+    vendors: [
+      {
+        id: 'gst-vardhaman',
+        name: 'Vardhaman Enterprises',
+        potentialRecovery: '₹2,80,000',
+        invoiceCount: 3,
+        invoices: [
+          {
+            id: 'inv-gst-9910',
+            invoiceNo: 'GST-9910',
+            potentialRecovery: '₹1,20,000',
+            matchedBankEntries: 1,
+            confidence: '98%',
+            details: {
+              invoiceNo: 'GST-9910',
+              poNo: 'PO-2026-902',
+              vendor: 'Vardhaman Enterprises',
+              invoiceDate: '10-Jan-2026',
+              paymentDate: '28-Jan-2026',
+              recoveryValue: '₹1,20,000',
+              gstInfo: 'GSTIN-27AAAAA1111A1Z1 (Eligible)',
+              confidenceScore: '98%',
+              aiExplanation: 'Eligible Input Tax Credit (ITC) was not claimed in GSTR-3B filings despite the vendor uploading the invoice in GSTR-1 and appearing in GSTR-2B.',
+              recommendedAction: 'Re-file or adjust ITC in the next GSTR-3B return cycle to claim the ₹1,20,000 credit.'
+            }
+          },
+          {
+            id: 'inv-gst-9912',
+            invoiceNo: 'GST-9912',
+            potentialRecovery: '₹1,00,000',
+            matchedBankEntries: 1,
+            confidence: '97%',
+            details: {
+              invoiceNo: 'GST-9912',
+              poNo: 'PO-2026-902',
+              vendor: 'Vardhaman Enterprises',
+              invoiceDate: '12-Jan-2026',
+              paymentDate: '30-Jan-2026',
+              recoveryValue: '₹1,00,000',
+              gstInfo: 'GSTIN-27AAAAA1111A1Z1 (Eligible)',
+              confidenceScore: '97%',
+              aiExplanation: 'ITC missed during year-end reconciliation cycles.',
+              recommendedAction: 'Claim the missed credit in the current month GSTR-3B adjustment.'
+            }
+          },
+          {
+            id: 'inv-gst-9945',
+            invoiceNo: 'GST-9945',
+            potentialRecovery: '₹60,000',
+            matchedBankEntries: 1,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'GST-9945',
+              poNo: 'PO-2026-915',
+              vendor: 'Vardhaman Enterprises',
+              invoiceDate: '28-Jan-2026',
+              paymentDate: '12-Feb-2026',
+              recoveryValue: '₹60,000',
+              gstInfo: 'GSTIN-27AAAAA1111A1Z1 (Eligible)',
+              confidenceScore: '96%',
+              aiExplanation: 'Eligible credit overlooked due to manual entry discrepancy in invoice date.',
+              recommendedAction: 'Validate vendor GST filing status and claim credit in GSTR-3B.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-kiran',
+        name: 'Kiran Logistics',
+        potentialRecovery: '₹2,00,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'inv-log-4401',
+            invoiceNo: 'LOG-4401',
+            potentialRecovery: '₹1,20,000',
+            matchedBankEntries: 1,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'LOG-4401',
+              poNo: 'PO-2026-302',
+              vendor: 'Kiran Logistics',
+              invoiceDate: '14-Jan-2026',
+              paymentDate: '05-Feb-2026',
+              recoveryValue: '₹1,20,000',
+              gstInfo: 'GSTIN-27BBBBB2222B2Z2 (RCM)',
+              confidenceScore: '96%',
+              aiExplanation: 'ITC not availed for transport services where RCM (Reverse Charge Mechanism) was paid but credit was not claimed in returns.',
+              recommendedAction: 'Claim input credit under RCM section in the upcoming GSTR-3B return.'
+            }
+          },
+          {
+            id: 'inv-log-4422',
+            invoiceNo: 'LOG-4422',
+            potentialRecovery: '₹80,000',
+            matchedBankEntries: 1,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'LOG-4422',
+              poNo: 'PO-2026-305',
+              vendor: 'Kiran Logistics',
+              invoiceDate: '18-Jan-2026',
+              paymentDate: '08-Feb-2026',
+              recoveryValue: '₹80,000',
+              gstInfo: 'GSTIN-27BBBBB2222B2Z2 (RCM)',
+              confidenceScore: '95%',
+              aiExplanation: 'RCM credit missed due to ledger categorization error.',
+              recommendedAction: 'Reclassify the ledger entries and process the RCM credit claim.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'itc-mismatch',
+    name: 'ITC Mismatch',
+    recoverableValue: '₹3,20,000',
+    confidence: '95%',
+    vendors: [
+      {
+        id: 'gst-apex',
+        name: 'Apex Systems',
+        potentialRecovery: '₹1,80,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-apx-90',
+            invoiceNo: 'APX-2026-90',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 1,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'APX-2026-90',
+              poNo: 'PO-2026-112',
+              vendor: 'Apex Systems',
+              invoiceDate: '12-Jan-2026',
+              paymentDate: '15-Feb-2026',
+              recoveryValue: '₹1,80,000',
+              gstInfo: 'GSTIN-27CCCCC3333C3Z3 (Mismatch)',
+              confidenceScore: '95%',
+              aiExplanation: 'Mismatch between ITC claimed in GSTR-3B (₹5,20,000) and invoice values uploaded by vendor in GSTR-2B (₹3,40,000), leaving ₹1,80,000 in unreconciled variance.',
+              recommendedAction: 'Reach out to the vendor to upload the correct invoice value and update GSTR-1.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-bharat',
+        name: 'Bharat Petrol',
+        potentialRecovery: '₹1,40,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-pet-881',
+            invoiceNo: 'PET-881',
+            potentialRecovery: '₹1,40,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'PET-881',
+              poNo: 'N/A',
+              vendor: 'Bharat Petrol',
+              invoiceDate: '15-Jan-2026',
+              paymentDate: '20-Jan-2026',
+              recoveryValue: '₹1,40,000',
+              gstInfo: 'GSTIN-27DDDDD4444D4Z4 (Rate Mismatch)',
+              confidenceScore: '94%',
+              aiExplanation: 'Tax rate mismatch where 18% was claimed in ledgers but vendor filed under 12% category.',
+              recommendedAction: 'Reconcile invoice tax rates and submit corrected GSTR-3B.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'vendor-reconciliation',
+    name: 'Vendor GST Reconciliation',
+    recoverableValue: '₹3,80,000',
+    confidence: '94%',
+    vendors: [
+      {
+        id: 'gst-shree',
+        name: 'Shree Cement',
+        potentialRecovery: '₹2,20,000',
+        invoiceCount: 2,
+        invoices: [
+          {
+            id: 'inv-cem-771',
+            invoiceNo: 'CEM-771',
+            potentialRecovery: '₹1,20,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'CEM-771',
+              poNo: 'PO-2026-440',
+              vendor: 'Shree Cement',
+              invoiceDate: '10-Jan-2026',
+              paymentDate: '02-Feb-2026',
+              recoveryValue: '₹1,20,000',
+              gstInfo: 'GSTIN-27EEEEE5555E5Z5 (Not Filed)',
+              confidenceScore: '94%',
+              aiExplanation: 'Vendor collected GST from your company but failed to file their GSTR-1, preventing you from claiming the credit.',
+              recommendedAction: 'Request Shree Cement to file their pending returns immediately to release the ITC.'
+            }
+          },
+          {
+            id: 'inv-cem-774',
+            invoiceNo: 'CEM-774',
+            potentialRecovery: '₹1,00,000',
+            matchedBankEntries: 1,
+            confidence: '93%',
+            details: {
+              invoiceNo: 'CEM-774',
+              poNo: 'PO-2026-440',
+              vendor: 'Shree Cement',
+              invoiceDate: '12-Jan-2026',
+              paymentDate: '05-Feb-2026',
+              recoveryValue: '₹1,00,000',
+              gstInfo: 'GSTIN-27EEEEE5555E5Z5 (Wrong GSTIN)',
+              confidenceScore: '93%',
+              aiExplanation: 'GST return filed by vendor under an incorrect GSTIN.',
+              recommendedAction: 'Ask vendor to amend GSTIN details in GSTR-1 Amendment.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-om',
+        name: 'Om Logistics',
+        potentialRecovery: '₹1,60,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-om-992',
+            invoiceNo: 'OM-992',
+            potentialRecovery: '₹1,60,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'OM-992',
+              poNo: 'PO-2026-442',
+              vendor: 'Om Logistics',
+              invoiceDate: '20-Jan-2026',
+              paymentDate: '15-Feb-2026',
+              recoveryValue: '₹1,60,000',
+              gstInfo: 'GSTIN-27FFFFF6666F6Z6 (Suspended)',
+              confidenceScore: '94%',
+              aiExplanation: 'Vendor return status shows "Suspended" resulting in blocked credits in GSTR-2B.',
+              recommendedAction: 'Withhold equivalent tax amount from pending vendor payouts until status resolved.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'blocked-credit',
+    name: 'Blocked Credit Identification',
+    recoverableValue: '₹3,00,000',
+    confidence: '93%',
+    vendors: [
+      {
+        id: 'gst-deco',
+        name: 'Deco Builders',
+        potentialRecovery: '₹1,80,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-dec-202',
+            invoiceNo: 'DEC-202',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 1,
+            confidence: '93%',
+            details: {
+              invoiceNo: 'DEC-202',
+              poNo: 'N/A',
+              vendor: 'Deco Builders',
+              invoiceDate: '18-Jan-2026',
+              paymentDate: '22-Feb-2026',
+              recoveryValue: '₹1,80,000',
+              gstInfo: 'GSTIN-27GGGGG7777G7Z7 (Blocked)',
+              confidenceScore: '93%',
+              aiExplanation: 'GST claimed on construction services (blocked under Section 17(5)(c) of CGST Act) which needs to be reversed to avoid interest penalties.',
+              recommendedAction: 'Reverse the blocked construction credit entry and pay the differential tax.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-gourmet',
+        name: 'Gourmet Catering',
+        potentialRecovery: '₹1,20,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-cater-992',
+            invoiceNo: 'CATER-992',
+            potentialRecovery: '₹1,20,000',
+            matchedBankEntries: 1,
+            confidence: '92%',
+            details: {
+              invoiceNo: 'CATER-992',
+              poNo: 'N/A',
+              vendor: 'Gourmet Catering',
+              invoiceDate: '22-Jan-2026',
+              paymentDate: '25-Feb-2026',
+              recoveryValue: '₹1,20,000',
+              gstInfo: 'GSTIN-27HHHHH8888H8Z8 (Blocked)',
+              confidenceScore: '92%',
+              aiExplanation: 'Blocked credit claimed on food and beverage catering services under Section 17(5)(b).',
+              recommendedAction: 'Process reversing voucher entry for blocked catering input tax.'
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const gstBankCategories: RecoveryCategory[] = [
+  {
+    id: 'gst-payment-recon',
+    name: 'GST Payment Reconciliation',
+    recoverableValue: '₹3,70,000',
+    confidence: '96%',
+    vendors: [
+      {
+        id: 'gst-national',
+        name: 'National Steels',
+        potentialRecovery: '₹2,10,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-stl-409',
+            invoiceNo: 'STL-409',
+            potentialRecovery: '₹2,10,000',
+            matchedBankEntries: 2,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'STL-409',
+              poNo: 'PO-2026-601',
+              vendor: 'National Steels',
+              invoiceDate: '12-Jan-2026',
+              paymentDate: '30-Jan-2026',
+              recoveryValue: '₹2,10,000',
+              gstInfo: 'GSTIN-27IIIII9999I9Z9',
+              confidenceScore: '96%',
+              aiExplanation: 'GST payment processed twice for a single invoice due to ledger duplication during manual transaction posting.',
+              recommendedAction: 'Offset the ₹2,10,000 duplicate tax payout in the next vendor settlement.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-hindustan',
+        name: 'Hindustan Traders',
+        potentialRecovery: '₹1,60,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-ht-8812',
+            invoiceNo: 'HT-8812',
+            potentialRecovery: '₹1,60,000',
+            matchedBankEntries: 2,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'HT-8812',
+              poNo: 'PO-2026-608',
+              vendor: 'Hindustan Traders',
+              invoiceDate: '15-Jan-2026',
+              paymentDate: '02-Feb-2026',
+              recoveryValue: '₹1,60,000',
+              gstInfo: 'GSTIN-27JJJJJ0000J0Z0',
+              confidenceScore: '95%',
+              aiExplanation: 'GST component of vendor invoice was paid directly to the vendor and also paid under RCM in error.',
+              recommendedAction: 'Recover the overpaid RCM tax value from GST department or request vendor credit note.'
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const gstTdsCategories: RecoveryCategory[] = [
+  {
+    id: 'tds-credit-recovery',
+    name: 'TDS Credit Recovery',
+    recoverableValue: '₹2,60,000',
+    confidence: '95%',
+    vendors: [
+      {
+        id: 'gst-secure',
+        name: 'Secure Guards',
+        potentialRecovery: '₹1,50,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-sec-902',
+            invoiceNo: 'SEC-902',
+            potentialRecovery: '₹1,50,000',
+            matchedBankEntries: 1,
+            confidence: '95%',
+            details: {
+              invoiceNo: 'SEC-902',
+              poNo: 'PO-2026-702',
+              vendor: 'Secure Guards',
+              invoiceDate: '10-Jan-2026',
+              paymentDate: '28-Jan-2026',
+              recoveryValue: '₹1,50,000',
+              gstInfo: 'GSTIN-27KKKKK1111K1Z1',
+              confidenceScore: '95%',
+              aiExplanation: 'TDS on GST (under Section 51) was deducted but not matching with vendor GSTR-2B filings. Reconciled certificates are missing.',
+              recommendedAction: 'Submit formal TDS-GST certificate request to treasury team to match filing records.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-prime',
+        name: 'Prime Services',
+        potentialRecovery: '₹1,10,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-prm-009',
+            invoiceNo: 'PRM-009',
+            potentialRecovery: '₹1,10,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'PRM-009',
+              poNo: 'PO-2026-710',
+              vendor: 'Prime Services',
+              invoiceDate: '18-Jan-2026',
+              paymentDate: '02-Feb-2026',
+              recoveryValue: '₹1,10,000',
+              gstInfo: 'GSTIN-27LLLLL2222L2Z2',
+              confidenceScore: '94%',
+              aiExplanation: 'TDS credit filed under wrong PAN/GSTIN by the withholding department.',
+              recommendedAction: 'File amendment correction on portal to transfer TDS credit back.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'vendor-compliance',
+    name: 'Vendor Compliance Recovery',
+    recoverableValue: '₹1,80,000',
+    confidence: '92%',
+    vendors: [
+      {
+        id: 'gst-dynamic',
+        name: 'Dynamic Software',
+        potentialRecovery: '₹1,80,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-dyn-110',
+            invoiceNo: 'DYN-110',
+            potentialRecovery: '₹1,80,000',
+            matchedBankEntries: 1,
+            confidence: '92%',
+            details: {
+              invoiceNo: 'DYN-110',
+              poNo: 'PO-2026-801',
+              vendor: 'Dynamic Software',
+              invoiceDate: '14-Jan-2026',
+              paymentDate: '12-Feb-2026',
+              recoveryValue: '₹1,80,000',
+              gstInfo: 'GSTIN-27MMMMM3333M3Z3',
+              confidenceScore: '92%',
+              aiExplanation: 'Vendor filed GST return after the due date for ITC claim (Nov 30 of next fiscal year), causing permanent credit loss. Penalty recovery clause applies.',
+              recommendedAction: 'Deduct ₹1,80,000 credit loss directly from Dynamic Software payable ledger as per penalty clauses.'
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const gstSoaCategories: RecoveryCategory[] = [
+  {
+    id: 'duplicate-gst-claims',
+    name: 'Duplicate GST Claims',
+    recoverableValue: '₹3,50,000',
+    confidence: '97%',
+    vendors: [
+      {
+        id: 'gst-reliable',
+        name: 'Reliable Packers',
+        potentialRecovery: '₹2,00,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-pac-401',
+            invoiceNo: 'PAC-401',
+            potentialRecovery: '₹2,00,000',
+            matchedBankEntries: 1,
+            confidence: '97%',
+            details: {
+              invoiceNo: 'PAC-401',
+              poNo: 'PO-2026-550',
+              vendor: 'Reliable Packers',
+              invoiceDate: '10-Jan-2026',
+              paymentDate: '25-Jan-2026',
+              recoveryValue: '₹2,00,000',
+              gstInfo: 'GSTIN-27NNNNN4444N4Z4',
+              confidenceScore: '97%',
+              aiExplanation: 'The same IGST credit was claimed twice under separate manual voucher entries in the purchase journal.',
+              recommendedAction: 'Reverse duplicate ITC entry and submit updated ledger records.'
+            }
+          }
+        ]
+      },
+      {
+        id: 'gst-vertex',
+        name: 'Vertex Solutions',
+        potentialRecovery: '₹1,50,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-vtx-882',
+            invoiceNo: 'VTX-882',
+            potentialRecovery: '₹1,50,000',
+            matchedBankEntries: 1,
+            confidence: '96%',
+            details: {
+              invoiceNo: 'VTX-882',
+              poNo: 'PO-2026-558',
+              vendor: 'Vertex Solutions',
+              invoiceDate: '22-Jan-2026',
+              paymentDate: '15-Feb-2026',
+              recoveryValue: '₹1,50,000',
+              gstInfo: 'GSTIN-27OOOOO5555O5Z5',
+              confidenceScore: '96%',
+              aiExplanation: 'Credit claimed on duplicate copy of invoice filed across different branch offices.',
+              recommendedAction: 'Audit regional branch records and reverse duplicate credit posting.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'vendor-ledger-recon',
+    name: 'Vendor Ledger Reconciliation',
+    recoverableValue: '₹2,20,000',
+    confidence: '94%',
+    vendors: [
+      {
+        id: 'gst-garg',
+        name: 'Garg Enterprises',
+        potentialRecovery: '₹2,20,000',
+        invoiceCount: 1,
+        invoices: [
+          {
+            id: 'inv-ger-903',
+            invoiceNo: 'GER-903',
+            potentialRecovery: '₹2,20,000',
+            matchedBankEntries: 1,
+            confidence: '94%',
+            details: {
+              invoiceNo: 'GER-903',
+              poNo: 'PO-2026-880',
+              vendor: 'Garg Enterprises',
+              invoiceDate: '25-Jan-2026',
+              paymentDate: '24-Feb-2026',
+              recoveryValue: '₹2,20,000',
+              gstInfo: 'GSTIN-27PPPPP6666P6Z6',
+              confidenceScore: '94%',
+              aiExplanation: 'GST ledger balances do not match the vendor statement due to credit note adjustments that were omitted from GST returns.',
+              recommendedAction: 'Reconcile GSTR-2B credit note entries against Garg Enterprises outstanding ledger statement.'
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
 const mockRecoveryCategories: RecoveryCategory[] = [
   {
     id: 'duplicate-payments',
@@ -615,8 +1207,52 @@ function ReportWorkspaceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan') === 'individual' ? 'individual' : 'teams';
+  const flow = searchParams.get('flow');
+  const docsParam = searchParams.get('docs') || '';
 
-  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>('duplicate-payments');
+  const isGst = flow === 'gst';
+  const hasPurchaseRegister = docsParam.includes('pr') || docsParam.includes('bills') || docsParam.includes('expense');
+  const hasGstr2B = docsParam.includes('g2b');
+  const hasBankStatements = docsParam.includes('bs');
+  const hasTds = docsParam.includes('tds');
+  const hasSoa = docsParam.includes('soa');
+
+  const categories = isGst ? (() => {
+    const list: RecoveryCategory[] = [];
+    if (hasPurchaseRegister && hasGstr2B) {
+      list.push(...gstInitialCategories);
+    }
+    if (hasBankStatements) {
+      list.push(...gstBankCategories);
+    }
+    if (hasTds) {
+      list.push(...gstTdsCategories);
+    }
+    if (hasSoa) {
+      list.push(...gstSoaCategories);
+    }
+    return list;
+  })() : mockRecoveryCategories;
+
+  const totalValue = isGst ? (() => {
+    let sum = 0;
+    if (hasPurchaseRegister && hasGstr2B) sum += 1480000;
+    if (hasBankStatements) sum += 370000;
+    if (hasTds) sum += 440000;
+    if (hasSoa) sum += 570000;
+    return sum;
+  })() : 3140000;
+
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isGst) {
+      setExpandedCategoryId('itc-recovery');
+    } else {
+      setExpandedCategoryId('duplicate-payments');
+    }
+  }, [isGst]);
+
   const [expandedVendorId, setExpandedVendorId] = useState<string | null>(null);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
   const [startedRecoveries, setStartedRecoveries] = useState<Set<string>>(new Set());
@@ -686,6 +1322,22 @@ What would you like to know?`
   // Contextual mock answers for Demo 3
   const getContextualAnswer = (query: string): string => {
     const q = query.toLowerCase();
+    if (isGst) {
+      if (q.includes('summarize') || q.includes('summary')) {
+        return `Here is a summary of the GST Recovery Report:\n• **Total Recoverable Value**: ₹${totalValue.toLocaleString('en-IN')} detected across your GST compliance records.\n• **Primary Leakage Category**: Input Tax Credit Recovery (₹4,80,000 detected across Vardhaman Enterprises and Kiran Logistics).\n• **Key Recommendation**: Claim ₹2,80,000 immediately from Vardhaman Enterprises and reconcile Shree Cement GSTR-1 filings (₹2,20,000).`;
+      }
+      if (q.includes('mismatch') || q.includes('itc') || q.includes('credit')) {
+        return `GST credit discrepancies total **₹8,00,000** representing key leakage points:\n1. **Input Tax Credit Recovery**: ₹4,80,000 in eligible but unclaimed credits from Vardhaman Enterprises and Kiran Logistics.\n2. **ITC Mismatch**: ₹3,20,000 in unreconciled differences between GSTR-3B claims and GSTR-2B filings for Apex Systems and Bharat Petrol.`;
+      }
+      if (q.includes('highest') || q.includes('value') || q.includes('opportunity')) {
+        return `The highest recovery opportunity detected is in **Input Tax Credit Recovery** for a total of **₹4,80,000**.\nWithin this, **Vardhaman Enterprises** represents the highest individual vendor leak of **₹2,80,000** across three eligible invoices.`;
+      }
+      if (q.includes('affected') || q.includes('vendors') || q.includes('companies')) {
+        return `The key affected vendors identified under GST compliance discrepancies are:\n• **Vardhaman Enterprises**: ₹2,80,000 in eligible unclaimed ITC.\n• **Shree Cement**: ₹2,20,000 in unreconciled GSTR-1 filings.\n• **Apex Systems**: ₹1,80,000 in GSTR-3B mismatch.\nWe recommend initiating the compliance recovery workflows for these vendors.`;
+      }
+      return `That's an interesting question about the GST recovery report. Reconciled audit records show total leakage of ₹${totalValue.toLocaleString('en-IN')}. Reclaiming this includes executing the GSTR-2B input credit claims (₹4,80,000) and resolving vendor mismatches. Would you like me to summarize the top GST opportunities?`;
+    }
+
     if (q.includes('summarize') || q.includes('summary')) {
       return `Here is a summary of the Executive Recovery Report:
 • **Total Recoverable Value**: ₹31,40,000 detected with 98.6% average confidence.
@@ -768,15 +1420,15 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
     let lastUpdated = '1 hour ago';
 
     if (type === 'category') {
-      const cat = mockRecoveryCategories.find(c => c.name === name || c.id === name);
+      const cat = categories.find(c => c.name === name || c.id === name);
       vendorName = 'All Affected Vendors';
-      status = name === 'Duplicate Vendor Payments' ? 'In Progress' : 'Awaiting Review';
+      status = name === 'Duplicate Vendor Payments' || name === 'Input Tax Credit Recovery' ? 'In Progress' : 'Awaiting Review';
       amount = cat ? cat.recoverableValue : '₹0';
       stage = 'Initial AI Audit';
       lastUpdated = '2 hours ago';
     } else if (type === 'vendor') {
       let foundVendor = null;
-      for (const cat of mockRecoveryCategories) {
+      for (const cat of categories) {
         const v = cat.vendors.find(v => v.name === name || v.id === name);
         if (v) {
           foundVendor = v;
@@ -786,15 +1438,15 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
       vendorName = name;
       amount = foundVendor ? foundVendor.potentialRecovery : '₹0';
       
-      if (name.includes('ABC')) {
+      if (name.includes('ABC') || name.includes('Vardhaman')) {
         status = 'Completed';
         stage = 'Recovery Completed';
         lastUpdated = 'Just now';
-      } else if (name.includes('Global')) {
+      } else if (name.includes('Global') || name.includes('Apex')) {
         status = 'Escalated';
         stage = 'Escalation Tier 2';
         lastUpdated = '10 mins ago';
-      } else if (name.includes('Acme')) {
+      } else if (name.includes('Acme') || name.includes('Shree')) {
         status = 'Waiting for Vendor';
         stage = 'Vendor Document Audit';
         lastUpdated = '1 day ago';
@@ -810,7 +1462,7 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
     } else if (type === 'invoice') {
       let foundInv = null;
       let foundVen = null;
-      for (const cat of mockRecoveryCategories) {
+      for (const cat of categories) {
         for (const v of cat.vendors) {
           const inv = v.invoices.find(i => i.invoiceNo === name || i.id === name);
           if (inv) {
@@ -823,11 +1475,11 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
       vendorName = foundVen ? foundVen.name : 'Unknown Vendor';
       amount = foundInv ? foundInv.potentialRecovery : '₹0';
       
-      if (name.includes('20341')) {
+      if (name.includes('20341') || name.includes('9910')) {
         status = 'Completed';
         stage = 'Settlement Received';
         lastUpdated = 'Just now';
-      } else if (name.includes('11482')) {
+      } else if (name.includes('11482') || name.includes('90')) {
         status = 'Escalated';
         stage = 'Internal Audit Panel';
         lastUpdated = '15 mins ago';
@@ -1044,7 +1696,7 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
 
             <div className={styles.reportMetricCard}>
               <div className={styles.reportMetricTitle}>Total Recoverable Value</div>
-              <div className={styles.reportMetricValue}>₹31,40,000</div>
+              <div className={styles.reportMetricValue}>₹{totalValue.toLocaleString('en-IN')}</div>
               <p className={styles.reportText} style={{ fontSize: '12px', opacity: 0.8, margin: 'var(--space-1) 0 0 0' }}>
                 Cross-document verification score: 98.6% Confidence
               </p>
@@ -1053,7 +1705,7 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>Recovery Opportunities</h3>
               <div className={styles.opportunitiesList}>
-                {mockRecoveryCategories.map((cat) => {
+                {categories.map((cat) => {
                   const isCatExpanded = expandedCategoryId === cat.id;
 
                   return (
