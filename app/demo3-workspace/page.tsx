@@ -926,7 +926,6 @@ export default function Demo2WorkspacePage() {
     uploadedDocs: [],
     currentProgressDoc: null,
   });
-  const [isGstFlowComplete, setIsGstFlowComplete] = useState(false);
 
   // Assign Owner Modal & Toast States
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -1646,6 +1645,9 @@ export default function Demo2WorkspacePage() {
         step: 'recon_completed',
         uploadedDocs: finalDocs
       }));
+      setTimeout(() => {
+        askGstOpportunity1();
+      }, 1500);
     }, 3500);
   };
 
@@ -1708,7 +1710,6 @@ export default function Demo2WorkspacePage() {
   };
 
   const showGstFlowComplete = () => {
-    setIsGstFlowComplete(true);
     const finishMsg: MessageBlock = {
       id: `gst-finish-${Date.now()}`,
       role: 'assistant',
@@ -2922,7 +2923,7 @@ To perform an initial assessment, please upload the following financial document
                                   )}
 
                                   {/* Persistent Unlocked Report Access Card */}
-                                  {reportUnlocked && (!isGstFlow || isGstFlowComplete) && (
+                                  {reportUnlocked && (
                                     <div style={{
                                       border: '1px solid var(--color-success-border)',
                                       background: 'var(--color-success-bg)',
@@ -3451,31 +3452,16 @@ To perform an initial assessment, please upload the following financial document
                       setReportUnlocked(true);
                       setIsPaymentSuccessModalOpen(true);
                       
-                      if (isGstFlow) {
-                        setConversation(prev => [
-                          ...prev,
-                          {
-                            id: `ai-post-unlock-${Date.now()}`,
-                            role: 'assistant',
-                            type: 'text',
-                            content: 'Your Executive Recovery Report has been successfully generated and is ready for review.'
-                          }
-                        ]);
-                        setTimeout(() => {
-                          askGstOpportunity1();
-                        }, 1500);
-                      } else {
-                        setConversation(prev => [
-                          ...prev,
-                          {
-                            id: `ai-post-unlock-${Date.now()}`,
-                            role: 'assistant',
-                            type: 'text',
-                            content: 'Your Executive Recovery Report has been successfully generated and is ready for review.'
-                          }
-                        ]);
-                        launchReportWorkspace(selectedPlan);
-                      }
+                      setConversation(prev => [
+                        ...prev,
+                        {
+                          id: `ai-post-unlock-${Date.now()}`,
+                          role: 'assistant',
+                          type: 'text',
+                          content: 'Your Executive Recovery Report has been successfully generated and is ready for review.'
+                        }
+                      ]);
+                      launchReportWorkspace(selectedPlan);
                     }, 2000);
                   }}
                 >
