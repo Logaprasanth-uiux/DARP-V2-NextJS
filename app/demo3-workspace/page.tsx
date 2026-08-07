@@ -1450,9 +1450,9 @@ export default function Demo2WorkspacePage() {
     }
   }, [uploadStates, isGstFlow, reportUnlocked, gstUploadedDocs]);
 
-  // GST Flow: Post-unlock document validation listener
+  // GST Flow: Opportunity document validation listener
   useEffect(() => {
-    if (!isGstFlow || !reportUnlocked) return;
+    if (!isGstFlow) return;
     
     // Check if bank-statements is validated
     if (uploadStates['bank-statements'].status === 'validated' && !gstUploadedDocs.includes('bank-statements')) {
@@ -1466,7 +1466,7 @@ export default function Demo2WorkspacePage() {
     if (uploadStates['statement-of-account'].status === 'validated' && !gstUploadedDocs.includes('statement-of-account')) {
       handleGstOpportunityDocumentValidated('statement-of-account');
     }
-  }, [uploadStates, isGstFlow, reportUnlocked, gstUploadedDocs]);
+  }, [uploadStates, isGstFlow, gstUploadedDocs]);
 
   // GST Flow Onboarding question triggers
   const askVendorBills = () => {
@@ -2975,9 +2975,8 @@ To perform an initial assessment, please upload the following financial document
                         if (isPrecedingTextPending) return null;
                         const isGst = isGstFlow;
                         return (
-                          <div key={msg.id} className={isGst ? styles.aiMessageRow : `${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
-                            {isGst && <div className={styles.aiAvatarPlaceholder} />}
-                            <div className={styles.recommendAlertBox} style={isGst ? { margin: 0, maxWidth: '520px' } : undefined}>
+                          <div key={msg.id} className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}>
+                            <div className={styles.recommendAlertBox}>
                               <div className={styles.recommendAlertHeader}>
                                 <svg className={styles.warningIcon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
                                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -3008,11 +3007,10 @@ To perform an initial assessment, please upload the following financial document
                           <div 
                             key={msg.id} 
                             ref={el => scrollToElement(el, msg.id, 'ai_acknowledgement')}
-                            className={isGst ? styles.aiMessageRow : `${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}
+                            className={`${styles.aiMessageRowCentered} ${styles.actionContainerFadeIn}`}
                           >
-                            {isGst && <div className={styles.aiAvatarPlaceholder} />}
-                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: isGst ? '600px' : 'none' }}>
-                              <div className={styles.documentRequestCard} style={isGst ? { margin: 0 } : undefined}>
+                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                              <div className={styles.documentRequestCard}>
                                 <div className={styles.docRequestHeader}>
                                   <h3 className={styles.docRequestTitle}>Additional Documents Recommended</h3>
                                   <p className={styles.docRequestDesc}>
