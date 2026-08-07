@@ -1049,6 +1049,16 @@ export default function Demo2WorkspacePage() {
   // Auto scroll to the bottom when the conversation changes
   useEffect(() => {
     if (scrollStage === 'executive_assessment') return;
+    
+    // Prevent scrolling past the initial assessment card if the report is still locked
+    const hasInitialCard = conversation.some(msg => 
+      msg.id.startsWith('gst-assessment-card-1-') || 
+      msg.id.startsWith('ai-assessment-card-1-')
+    );
+    if (hasInitialCard && !reportUnlocked) {
+      return;
+    }
+
     if (chatScrollRef.current && conversation.length > 0) {
       if (scrollTimerRef.current) {
         clearTimeout(scrollTimerRef.current);
@@ -1060,7 +1070,7 @@ export default function Demo2WorkspacePage() {
     } else if (chatScrollRef.current && conversation.length === 0) {
       chatScrollRef.current.scrollTop = 0;
     }
-  }, [conversation, completedMessageIds, scrollStage]);
+  }, [conversation, completedMessageIds, scrollStage, reportUnlocked]);
 
   const openAssignModal = (contextName: string) => {
     setAssignModalData({
@@ -1609,7 +1619,6 @@ export default function Demo2WorkspacePage() {
   };
 
   const triggerGstInitialAnalysis = () => {
-    setScrollStage('ai_acknowledgement');
     const introMsg: MessageBlock = {
       id: `ai-gst-initial-intro-${Date.now()}`,
       role: 'assistant',
@@ -1627,7 +1636,6 @@ export default function Demo2WorkspacePage() {
       type: 'processing_indicator'
     };
 
-    setScrollStage('processing');
     setConversation(prev => [...prev, processingMsg]);
 
     setTimeout(() => {
@@ -1653,7 +1661,6 @@ export default function Demo2WorkspacePage() {
         return [...filtered, completedTextMsg, assessmentMsg];
       });
 
-      setScrollStage('executive_assessment');
       setGstFlowState(prev => ({
         ...prev,
         step: 'recon_completed',
@@ -1667,7 +1674,6 @@ export default function Demo2WorkspacePage() {
 
   // GST Flow: Post-unlock opportunity question triggers
   const askGstOpportunity1 = () => {
-    setScrollStage('ai_acknowledgement');
     const textMsg: MessageBlock = {
       id: `ai-gst-opp-text-1-${Date.now()}`,
       role: 'assistant',
@@ -1678,7 +1684,6 @@ export default function Demo2WorkspacePage() {
   };
 
   const askGstOpportunity2 = () => {
-    setScrollStage('ai_acknowledgement');
     const textMsg: MessageBlock = {
       id: `ai-gst-opp-text-2-${Date.now()}`,
       role: 'assistant',
@@ -1689,7 +1694,6 @@ export default function Demo2WorkspacePage() {
   };
 
   const askGstOpportunity3 = () => {
-    setScrollStage('ai_acknowledgement');
     const textMsg: MessageBlock = {
       id: `ai-gst-opp-text-3-${Date.now()}`,
       role: 'assistant',
@@ -1721,8 +1725,6 @@ export default function Demo2WorkspacePage() {
       introText = "Statement of Account reconciliation has unlocked additional GST recovery opportunities. Running analysis...";
     }
 
-    setScrollStage('ai_acknowledgement');
-
     const introMsg: MessageBlock = {
       id: `ai-opp-recon-start-${docType}-${Date.now()}`,
       role: 'assistant',
@@ -1740,7 +1742,6 @@ export default function Demo2WorkspacePage() {
       type: 'processing_indicator'
     };
 
-    setScrollStage('processing');
     setConversation(prev => [...prev, processingMsg]);
 
     let nextValue = 1480000;
@@ -1788,8 +1789,6 @@ export default function Demo2WorkspacePage() {
       // Update recoverable values in main state for the report tab context
       setGstRecoverableValue(nextValue);
       setGstPrevRecoverableValue(prevValue);
-
-      setScrollStage('executive_assessment');
 
       setTimeout(() => {
         if (docType === 'bank-statements') {
@@ -2079,8 +2078,6 @@ export default function Demo2WorkspacePage() {
       const oppNum = parts[4];
       const suffix = parts[parts.length - 1];
 
-      setScrollStage('ai_acknowledgement');
-
       if (oppNum === '1') {
         const alertMsg: MessageBlock = {
           id: `gst-opp-alert-bank-statements-${suffix}`,
@@ -2132,6 +2129,15 @@ export default function Demo2WorkspacePage() {
           ]
         };
         setConversation(prev => [...prev, alertMsg, docReq]);
+      }
+    }
+
+    // 9. GST Initial Assessment Card Render Trigger: wait for completedTextMsgId to complete streaming
+    const matchingGstCompletedText1 = Array.from(completedMessageIds).find(id => id.startsWith('gst-completed-text-1-'));
+    if (matchingGstCompletedText1 && scrollStage !== 'executive_assessment') {
+      const cardId = matchingGstCompletedText1.replace('gst-completed-text-1-', 'gst-assessment-card-1-');
+      if (!scrolledCards[cardId]) {
+        setScrollStage('executive_assessment');
       }
     }
   }, [completedMessageIds, scrollStage, scrolledCards]);
