@@ -1289,6 +1289,17 @@ interface TimelineEvent {
     comments: string;
   } | null>(null);
 
+  useEffect(() => {
+    if (isFeatureGatingModalOpen || isAssignModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isFeatureGatingModalOpen, isAssignModalOpen]);
+
   // AI Drawer states
   const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -1622,8 +1633,10 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
   const handleUpgradeToTeamsInReport = () => {
     setIsFeatureGatingModalOpen(false);
     
-    // Upgrade URL plan parameter dynamically without reload!
-    router.replace(`/demo3-report?plan=teams`);
+    // Upgrade URL plan parameter dynamically without reload, preserving existing search query params!
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('plan', 'teams');
+    router.replace(`/demo3-report?${params.toString()}`);
     
     alert("Plan upgraded to Teams successfully! Unlocking owner assignment...");
     
@@ -1996,7 +2009,7 @@ We recommend starting the recovery workflow for both vendors to reclaim this lea
                                                     <button 
                                                       className={styles.drillSecondaryBtn} 
                                                       type="button"
-                                                      onClick={() => openAssignModal(inv.invoiceNo)}
+                                                      onClick={(e) => { e.stopPropagation(); openAssignModal(inv.invoiceNo); }}
                                                     >
                                                       👤 Assign Recovery Owner
                                                     </button>
